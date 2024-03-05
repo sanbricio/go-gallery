@@ -1,6 +1,6 @@
 <div class="status">
-    <p class="response {{if .Status}}correct{{else}}incorrect{{end}}">{{.Status}}</p> 
-    ID: {{.ID}}
+    <p class="response {{if eq .Response.Status "success"}}correct{{else}}incorrect{{end}}">{{.Response.Status}}</p> 
+    ID: {{.Response.Id}}
 </div>
 
 <style>
@@ -11,6 +11,6 @@
         color: red;
     }
     .status {
-            font-family: Arial, sans-serif;
+        font-family: Arial, sans-serif;
     }
 </style>
