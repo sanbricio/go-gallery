@@ -11,6 +11,7 @@ require github.com/google/uuid v1.5.0
 
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
+	github.com/dustin/go-humanize v1.0.1
 	github.com/gofiber/template v1.8.2 // indirect
 	github.com/gofiber/utils v1.1.0 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect

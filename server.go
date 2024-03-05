@@ -24,7 +24,31 @@ func main() {
 	})
 
 	app.Post("/uploadImage", func(c *fiber.Ctx) error {
-		return c.Render("status", infrastructure.AddImageToDataBase(c))
+		fileInput, err := c.FormFile("file")
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "Error al obtener la imagen del formulario")
+		}
+
+		response, err := infrastructure.AddImageToDataBase(fileInput)
+
+		if err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "Error: "+err.Error())
+		}
+		return c.Render("status", fiber.Map{
+			"Response": response,
+		})
+	})
+
+	app.Get("/getImage/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		image, err := infrastructure.GetImageByID(id)
+		if err != nil {
+			return fiber.NewError(fiber.StatusNotFound, "Imagen no encontrada")
+		}
+
+		return c.Render("showImage", fiber.Map{
+			"Response": image,
+		})
 	})
 
 	log.Fatal(app.Listen(":3000"))

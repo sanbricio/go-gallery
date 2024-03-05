@@ -1,56 +1,65 @@
-
 package domain
 
 type Image struct {
-	id string
-	fileName string
+	id          string
+	name        string
+	extension   string
 	contentFile string
-	owner string
-	size float64	
+	owner       string
+	size        string
 }
 
-
-func NewImage(id string, fileName string, contentFile string, owner string, size float64) *Image {
-    return &Image{
-        id:          id,
-        fileName:    fileName,
-        contentFile: contentFile,
-        owner:       owner,
-        size:        size,
-    }
+func NewImage(id string, name string, extension string, contentFile string, owner string, size string) *Image {
+	return &Image{
+		id:          id,
+		name:        name,
+		extension:   extension,
+		contentFile: contentFile,
+		owner:       owner,
+		size:        size,
+	}
 }
 
-
-func (img *Image) GetId () string{
+func (img *Image) GetId() string {
 	return img.id
 }
 
-func (img *Image) GetFileName () string{
-	return img.fileName
+func (img *Image) GetName() string {
+	return img.name
 }
 
-func (img *Image) GetContentFile () string{
+func (img *Image) GetExtension() string {
+	return img.extension
+}
+
+func (img *Image) GetContentFile() string {
 	return img.contentFile
 }
 
-func (img *Image) GetOwner () string{
+func (img *Image) GetOwner() string {
 	return img.owner
 }
- 
-func (img *Image) GetSize () float64{
+
+func (img *Image) GetSize() string {
 	return img.size
 }
 
-func (img *Image) SetFileName (fileName string){
-	img.fileName = fileName	
+func (img *Image) SetName(name string) {
+	img.name = name
 }
 
-func (img *Image) SetContentFile (contentFile string){
+func (img *Image) SetExtension(extension string) {
+	img.extension = extension
+}
+
+func (img *Image) SetContentFile(contentFile string) {
 	img.contentFile = contentFile
 }
 
-func (img *Image) SetOwner (owner string) {
+func (img *Image) SetOwner(owner string) {
 	img.owner = owner
 }
- 
 
+func (img *Image) ToDto(image *Image) *DTOImage {
+	return NewDTOImage(image.id, image.name, image.extension, image.contentFile, image.owner, image.size)
+}

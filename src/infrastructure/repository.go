@@ -2,99 +2,113 @@ package infrastructure
 
 import (
 	"api-upload-photos/src/domain"
-	"bytes"
-	"database/sql"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"mime/multipart"
+	"os"
+	"path/filepath"
+	"strings"
 
+	"github.com/dustin/go-humanize"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
 
-const (
-	DBUser     = "admin"
-	DBPassword = "password123"
-	DBName     = "discorddb"
-	DBPort     = "5432"
-)
+// TODO mirar como quitar el fiber a este nivel de repository
+func AddImageToDataBase(fileInput *multipart.FileHeader) (*domain.Response, error) {
 
-func AddImageToDataBase(c *fiber.Ctx) error {
-	file, err := c.FormFile("file")
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Error al obtener la imagen del formulario")
-	}
+	fileCompleteName := strings.Split(fileInput.Filename, ".")
 
-	fileBytes, err := file.Open()
+	name := fileCompleteName[0]
+
+	extension := fileCompleteName[1]
+
+	fileBytes, err := fileInput.Open()
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Error al abrir el archivo de imagen")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Error al abrir el archivo de imagen")
 	}
 	defer fileBytes.Close()
 
 	fileData, err := io.ReadAll(fileBytes)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Error al leer el archivo de imagen")
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Error al leer el archivo de imagen")
 	}
 
-	id := uuid.New()
+	encoded := base64.StdEncoding.EncodeToString(fileData)
 
-	connectionString := fmt.Sprintf("user=%s password=%s dbname=%s port=%s sslmode=disable",
-		DBUser, DBPassword, DBName, DBPort)
+	fileSizeHumanReadable := humanize.Bytes(uint64(fileInput.Size))
 
-	db, err := sql.Open("postgres", connectionString)
+	image := domain.NewImage(uuid.New().String(), name, extension, encoded, "SANTI", fileSizeHumanReadable)
+
+	dto := image.ToDto(image)
+
+	err = persist(dto)
+
 	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	if err := insertImage(db, id.String(), fileData); err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Error al insertar la imagen en la base de datos")
+		return nil, err
 	}
 
-	response := domain.Response{
+	response := &domain.Response{
 		Status: "success",
-		Id:     id.String(),
+		Id:     dto.Id,
 	}
 
-	return c.JSON(response)
+	return response, nil
 }
 
-func insertImage(db *sql.DB, id string, data []byte) error {
-	_, err := db.Exec("INSERT INTO images (id, data) VALUES ($1, $2)", id, data)
+func persist(image *domain.DTOImage) error {
+
+	err := os.MkdirAll("data", 0755)
+
 	if err != nil {
 		return err
 	}
+
+	filename := fmt.Sprintf("data/%s.json", image.Id)
+
+	data, err := json.Marshal(image)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(filename, data, 0644)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func GetImageByID(c *fiber.Ctx) error {
-	id := c.Params("id")
+func GetImageByID(id string) (*domain.DTOImage, error) {
+	files, err := os.ReadDir("data")
 
-	connectionString := fmt.Sprintf("user=%s password=%s dbname=%s port=%s sslmode=disable",
-		DBUser, DBPassword, DBName, DBPort)
-
-	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Error al leer el directorio")
 	}
-	defer db.Close()
+	var dtoImage *domain.DTOImage
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), ".json") {
+			idFilename := strings.TrimSuffix(file.Name(), ".json")
 
-	data := []byte{}
-	err = db.QueryRow("SELECT data FROM images WHERE id = $1", id).Scan(&data)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return fiber.NewError(fiber.StatusNotFound, "Imagen no encontrada")
+			if id == idFilename {
+				data, err := os.ReadFile(filepath.Join("data", file.Name()))
+				if err != nil {
+					return nil, fiber.NewError(fiber.StatusInternalServerError, "Error al leer el archivo JSON")
+				}
+
+				err = json.Unmarshal(data, &dtoImage)
+				if err != nil {
+					return nil, fiber.NewError(fiber.StatusInternalServerError, "Error al parsear el archivo JSON")
+				}
+
+				return dtoImage, nil
+
+			}
 		}
-		return fiber.NewError(fiber.StatusInternalServerError, "Error al recuperar la imagen")
 	}
-
-	c.Set("Content-Type", "image/jpeg")
-
-	_, err = io.Copy(c.Response().BodyWriter(), bytes.NewReader(data))
-	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Error al enviar la imagen como respuesta")
-	}
-
-	return nil
+	return nil, fiber.NewError(fiber.StatusNotFound, "Imagen no encontrada")
 }
