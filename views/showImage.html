@@ -1,7 +1,6 @@
 <div class="image-container">
-    <img src="data:image/png;base64,{{.Response.ContentFile}}" alt="{{.Response.Name}}">
+    <img src="data:image/{{.Response.Extension}};base64,{{.Response.ContentFile}}" alt="{{.Response.Name}}">
 </div>
-<h1>Detalle de la imagen</h1>
 <table>
     <tr>
         <th>ID:</th>
