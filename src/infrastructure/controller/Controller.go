@@ -7,13 +7,13 @@ import (
 )
 
 type Controller struct {
-	router  *fiber.App
+	app * fiber.App
 	service *service.Service
 }
 
-func NewController(router *fiber.App, service *service.Service) *Controller {
+func NewController(app *fiber.App, service *service.Service) *Controller {
 	return &Controller{
-		router:  router,
+		app:  app,
 		service: service,
 	}
 }
@@ -25,13 +25,13 @@ func (c *Controller) SetupRoutes() {
 }
 
 func (c *Controller) getIndexPage() {
-	c.router.Get("/", func(c *fiber.Ctx) error {
+	c.app.Get("/", func(c *fiber.Ctx) error {
 		return c.Render("index", fiber.Map{})
 	})
 }
 
 func (controller *Controller) setupUploadImage() {
-	controller.router.Post("/uploadImage", func(c *fiber.Ctx) error {
+	controller.app.Post("/uploadImage", func(c *fiber.Ctx) error {
 		fileInput, err := c.FormFile("file")
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, "Error al obtener la imagen del formulario")
@@ -48,7 +48,7 @@ func (controller *Controller) setupUploadImage() {
 }
 
 func (controller *Controller) setupGetImage() {
-	controller.router.Get("/getImage/:id", func(c *fiber.Ctx) error {
+	controller.app.Get("/getImage/:id", func(c *fiber.Ctx) error {
 		id := c.Params("id")
 		image, err := controller.service.Find(id)
 		if err != nil {
