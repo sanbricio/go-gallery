@@ -17,9 +17,41 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// TODO mirar como quitar el fiber a este nivel de repository
-func AddImageToDataBase(fileInput *multipart.FileHeader) (*domain.Response, error) {
+type RepositoryMemory struct {
+}
 
+
+func (r *RepositoryMemory) Find(id string) (*domain.DTOImage, error) {
+	files, err := os.ReadDir("data")
+
+	if err != nil {
+		return nil, fiber.NewError(fiber.StatusInternalServerError, "Error al leer el directorio")
+	}
+	var dtoImage *domain.DTOImage
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), ".json") {
+			idFilename := strings.TrimSuffix(file.Name(), ".json")
+
+			if id == idFilename {
+				data, err := os.ReadFile(filepath.Join("data", file.Name()))
+				if err != nil {
+					return nil, fiber.NewError(fiber.StatusInternalServerError, "Error al leer el archivo JSON")
+				}
+
+				err = json.Unmarshal(data, &dtoImage)
+				if err != nil {
+					return nil, fiber.NewError(fiber.StatusInternalServerError, "Error al parsear el archivo JSON")
+				}
+
+				return dtoImage, nil
+
+			}
+		}
+	}
+	return nil, fiber.NewError(fiber.StatusNotFound, "Imagen no encontrada")
+}
+
+func (r *RepositoryMemory) Insert(fileInput *multipart.FileHeader) (*domain.Response, error) {
 	fileCompleteName := strings.Split(fileInput.Filename, ".")
 
 	name := fileCompleteName[0]
@@ -81,34 +113,4 @@ func persist(image *domain.DTOImage) error {
 	}
 
 	return nil
-}
-
-func GetImageByID(id string) (*domain.DTOImage, error) {
-	files, err := os.ReadDir("data")
-
-	if err != nil {
-		return nil, fiber.NewError(fiber.StatusInternalServerError, "Error al leer el directorio")
-	}
-	var dtoImage *domain.DTOImage
-	for _, file := range files {
-		if strings.HasSuffix(file.Name(), ".json") {
-			idFilename := strings.TrimSuffix(file.Name(), ".json")
-
-			if id == idFilename {
-				data, err := os.ReadFile(filepath.Join("data", file.Name()))
-				if err != nil {
-					return nil, fiber.NewError(fiber.StatusInternalServerError, "Error al leer el archivo JSON")
-				}
-
-				err = json.Unmarshal(data, &dtoImage)
-				if err != nil {
-					return nil, fiber.NewError(fiber.StatusInternalServerError, "Error al parsear el archivo JSON")
-				}
-
-				return dtoImage, nil
-
-			}
-		}
-	}
-	return nil, fiber.NewError(fiber.StatusNotFound, "Imagen no encontrada")
 }
