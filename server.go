@@ -15,10 +15,11 @@ func main() {
 	app := fiber.New(fiber.Config{
 		Views: engine,
 	})
-
+	
 	repository := &infrastructure.RepositoryMemory{}
 	service := service.NewService(repository)
 	controller := controller.NewController(app, service)
 	controller.SetupRoutes()
 	
+	app.Listen(":3000")
 }
