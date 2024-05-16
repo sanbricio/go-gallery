@@ -1,4 +1,4 @@
-package domain
+package entity
 
 type Image struct {
 	id          string
@@ -58,8 +58,4 @@ func (img *Image) SetContentFile(contentFile string) {
 
 func (img *Image) SetOwner(owner string) {
 	img.owner = owner
-}
-
-func (img *Image) ToDto(image *Image) *DTOImage {
-	return NewDTOImage(image.id, image.name, image.extension, image.contentFile, image.owner, image.size)
 }
