@@ -1,7 +1,8 @@
 package infrastructure
 
 import (
-	"api-upload-photos/src/domain"
+	"api-upload-photos/src/domain/dto"
+	entity "api-upload-photos/src/domain/entities"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -20,14 +21,13 @@ import (
 type RepositoryMemory struct {
 }
 
-
-func (r *RepositoryMemory) Find(id string) (*domain.DTOImage, error) {
+func (r *RepositoryMemory) Find(id string) (*dto.DTOImage, error) {
 	files, err := os.ReadDir("data")
 
 	if err != nil {
 		return nil, fiber.NewError(fiber.StatusInternalServerError, "Error al leer el directorio")
 	}
-	var dtoImage *domain.DTOImage
+	var dtoImage *dto.DTOImage
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".json") {
 			idFilename := strings.TrimSuffix(file.Name(), ".json")
@@ -51,7 +51,7 @@ func (r *RepositoryMemory) Find(id string) (*domain.DTOImage, error) {
 	return nil, fiber.NewError(fiber.StatusNotFound, "Imagen no encontrada")
 }
 
-func (r *RepositoryMemory) Insert(fileInput *multipart.FileHeader) (*domain.Response, error) {
+func (r *RepositoryMemory) Insert(fileInput *multipart.FileHeader) (*entity.Response, error) {
 	fileCompleteName := strings.Split(fileInput.Filename, ".")
 
 	name := fileCompleteName[0]
@@ -73,9 +73,9 @@ func (r *RepositoryMemory) Insert(fileInput *multipart.FileHeader) (*domain.Resp
 
 	fileSizeHumanReadable := humanize.Bytes(uint64(fileInput.Size))
 
-	image := domain.NewImage(uuid.New().String(), name, extension, encoded, "SANTI", fileSizeHumanReadable)
+	image := entity.NewImage(uuid.New().String(), name, extension, encoded, "SANTI", fileSizeHumanReadable)
 
-	dto := image.ToDto(image)
+	dto := dto.FromImage(image)
 
 	err = persist(dto)
 
@@ -83,15 +83,12 @@ func (r *RepositoryMemory) Insert(fileInput *multipart.FileHeader) (*domain.Resp
 		return nil, err
 	}
 
-	response := &domain.Response{
-		Status: "success",
-		Id:     dto.Id,
-	}
+	response := entity.NewResponse(dto.Id, "success")
 
 	return response, nil
 }
 
-func persist(image *domain.DTOImage) error {
+func persist(image *dto.DTOImage) error {
 
 	err := os.MkdirAll("data", 0755)
 
