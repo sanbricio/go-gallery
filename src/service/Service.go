@@ -1,6 +1,7 @@
 package service
 
 import (
+	"api-upload-photos/src/commons/exception"
 	"api-upload-photos/src/domain/dto"
 	entity "api-upload-photos/src/domain/entities"
 	infrastructure "api-upload-photos/src/infrastructure/repository"
@@ -17,10 +18,10 @@ func NewService(repository infrastructure.IRepository) *Service {
 	}
 }
 
-func (s *Service) Insert(fileInput *multipart.FileHeader) (*entity.Response, error) {
+func (s *Service) Insert(fileInput *multipart.FileHeader) (*entity.Response, *exception.ApiException) {
 	return s.repository.Insert(fileInput)
 }
 
-func (s *Service) Find(id string) (*dto.DTOImage, error) {
+func (s *Service) Find(id string) (*dto.DTOImage, *exception.ApiException) {
 	return s.repository.Find(id)
 }

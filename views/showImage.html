@@ -1,28 +1,35 @@
-<div class="image-container">
-    <img src="data:image/{{.Response.Extension}};base64,{{.Response.ContentFile}}" alt="{{.Response.Name}}">
-</div>
-<table>
-    <tr>
-        <th>ID:</th>
-        <td>{{.Response.Id}}</td>
-    </tr>
-    <tr>
-        <th>Nombre:</th>
-        <td>{{.Response.Name}}</td>
-    </tr>
-    <tr>
-        <th>Extensión:</th>
-        <td>{{.Response.Extension}}</td>
-    </tr>
-    <tr>
-        <th>Propietario:</th>
-        <td>{{.Response.Owner}}</td>
-    </tr>
-    <tr>
-        <th>Tamaño:</th>
-        <td>{{.Response.Size}}</td>
-    </tr>
-</table>
+{{if .Error}}
+    <div class="error-message">
+        <p>Estado peticion: {{.Status}}</p>
+        <p>Mensaje de error: {{.Error}}</p>
+    </div>
+{{else}}
+    <div class="image-container">
+        <img src="data:image/{{.Response.Extension}};base64,{{.Response.ContentFile}}" alt="{{.Response.Name}}">
+    </div>
+    <table>
+        <tr>
+            <th>ID:</th>
+            <td>{{.Response.Id}}</td>
+        </tr>
+        <tr>
+            <th>Nombre:</th>
+            <td>{{.Response.Name}}</td>
+        </tr>
+        <tr>
+            <th>Extensión:</th>
+            <td>{{.Response.Extension}}</td>
+        </tr>
+        <tr>
+            <th>Propietario:</th>
+            <td>{{.Response.Owner}}</td>
+        </tr>
+        <tr>
+            <th>Tamaño:</th>
+            <td>{{.Response.Size}}</td>
+        </tr>
+    </table>
+{{end}}
 
 <style>
     .image-container {
@@ -41,5 +48,11 @@
         padding: 8px;
         text-align: left;
         border-bottom: 1px solid #ddd;
+    }
+    
+    .error-message {
+        color: red;
+        text-align: center;
+        font-size: 1.2em;
     }
 </style>

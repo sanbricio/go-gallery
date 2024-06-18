@@ -38,9 +38,9 @@ func (c *Controller) setupUploadImage() {
 			return fiber.NewError(fiber.StatusBadRequest, "Error al obtener la imagen del formulario")
 		}
 
-		response, err := c.service.Insert(fileInput)
-		if err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, "Error: "+err.Error())
+		response, errInsert := c.service.Insert(fileInput)
+		if errInsert != nil {
+			return fiber.NewError(errInsert.GetStatus(), errInsert.GetMessage())
 		}
 
 		dto := dto.FromResponse(response)
@@ -56,7 +56,10 @@ func (c *Controller) setupGetImage() {
 		id := ctx.Params("id")
 		image, err := c.service.Find(id)
 		if err != nil {
-			return fiber.NewError(fiber.StatusNotFound, "Imagen no encontrada")
+			return ctx.Render("showImage", fiber.Map{
+				"Status": err.GetStatus(),
+				"Error":  err.GetMessage(),
+			})
 		}
 
 		return ctx.Render("showImage", fiber.Map{
