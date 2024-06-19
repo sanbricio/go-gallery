@@ -119,3 +119,19 @@ func persist(image *dto.DTOImage) *exception.ApiException {
 
 	return nil
 }
+
+func (r *RepositoryMemory) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
+	image, err := r.Find(id)
+	if err != nil {
+		return nil, err
+	}
+
+	filename := filepath.Join("data", fmt.Sprintf("%s.json", id))
+
+	errRemove := os.Remove(filename)
+	if errRemove != nil {
+		return nil, exception.NewApiException(500, fmt.Sprintf("Error al eliminar el archivo de imagen: %s", filename))
+	}
+
+	return image, nil
+}

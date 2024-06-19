@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"api-upload-photos/src/commons/exception"
 	"api-upload-photos/src/domain/dto"
 	"api-upload-photos/src/service"
 
@@ -21,8 +22,9 @@ func NewController(app *fiber.App, service *service.Service) *Controller {
 
 func (c *Controller) SetupRoutes() {
 	c.getIndexPage()
-	c.setupUploadImage()
-	c.setupGetImage()
+	c.getImage()
+	c.uploadImage()
+	c.deleteImage()
 }
 
 func (c *Controller) getIndexPage() {
@@ -31,16 +33,34 @@ func (c *Controller) getIndexPage() {
 	})
 }
 
-func (c *Controller) setupUploadImage() {
+func (c *Controller) getImage() {
+	c.app.Get("/getImage/:id", func(ctx *fiber.Ctx) error {
+		id := ctx.Params("id")
+		image, err := c.service.Find(id)
+		if err != nil {
+			return ctx.Render("showImage", fiber.Map{
+				"Status": err.Status,
+				"Error":  err.Message,
+			})
+		}
+
+		return ctx.Render("showImage", fiber.Map{
+			"Response": image,
+		})
+	})
+}
+
+// TODO Mirar para futuro desacople como se haria el ctx.FormFile("file") si no tengo el front en el mismo proyecto
+func (c *Controller) uploadImage() {
 	c.app.Post("/uploadImage", func(ctx *fiber.Ctx) error {
 		fileInput, err := ctx.FormFile("file")
 		if err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, "Error al obtener la imagen del formulario")
+			return ctx.Status(404).JSON(exception.NewApiException(404, "Error al obtener la imagen del formulario"))
 		}
 
 		response, errInsert := c.service.Insert(fileInput)
 		if errInsert != nil {
-			return fiber.NewError(errInsert.GetStatus(), errInsert.GetMessage())
+			return ctx.Status(errInsert.Status).JSON(err)
 		}
 
 		dto := dto.FromResponse(response)
@@ -51,19 +71,14 @@ func (c *Controller) setupUploadImage() {
 	})
 }
 
-func (c *Controller) setupGetImage() {
-	c.app.Get("/getImage/:id", func(ctx *fiber.Ctx) error {
+func (c *Controller) deleteImage() {
+	c.app.Delete("/deleteImage/:id", func(ctx *fiber.Ctx) error {
 		id := ctx.Params("id")
-		image, err := c.service.Find(id)
+		image, err := c.service.Delete(id)
 		if err != nil {
-			return ctx.Render("showImage", fiber.Map{
-				"Status": err.GetStatus(),
-				"Error":  err.GetMessage(),
-			})
+			return ctx.Status(err.Status).JSON(err)
 		}
 
-		return ctx.Render("showImage", fiber.Map{
-			"Response": image,
-		})
+		return ctx.JSON(image)
 	})
 }

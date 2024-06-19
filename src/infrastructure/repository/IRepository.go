@@ -10,4 +10,5 @@ import (
 type IRepository interface {
 	Insert(fileInput *multipart.FileHeader) (*entity.Response, *exception.ApiException)
 	Find(id string) (*dto.DTOImage, *exception.ApiException)
+	Delete(id string) (*dto.DTOImage, *exception.ApiException)
 }

@@ -18,10 +18,14 @@ func NewService(repository infrastructure.IRepository) *Service {
 	}
 }
 
+func (s *Service) Find(id string) (*dto.DTOImage, *exception.ApiException) {
+	return s.repository.Find(id)
+}
+
 func (s *Service) Insert(fileInput *multipart.FileHeader) (*entity.Response, *exception.ApiException) {
 	return s.repository.Insert(fileInput)
 }
 
-func (s *Service) Find(id string) (*dto.DTOImage, *exception.ApiException) {
-	return s.repository.Find(id)
+func (s *Service) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
+	return s.repository.Delete(id)
 }
