@@ -1,6 +1,7 @@
 package infrastructure
 
 import (
+	utils "api-upload-photos/src/commons"
 	"api-upload-photos/src/commons/exception"
 	"api-upload-photos/src/domain/dto"
 	entity "api-upload-photos/src/domain/entities"
@@ -52,27 +53,22 @@ func (r *RepositoryMemory) Find(id string) (*dto.DTOImage, *exception.ApiExcepti
 }
 
 func (r *RepositoryMemory) Insert(fileInput *multipart.FileHeader) (*entity.Response, *exception.ApiException) {
-	//TODO Mirar bien el tratamiento de extensiones y el split de la manera correspondiente (no pueden pasar archivos .zip por ejemplo)
-	fileCompleteName := strings.Split(fileInput.Filename, ".")
-	name := fileCompleteName[0]
-	extension := fileCompleteName[1]
 
-	fileBytes, err := fileInput.Open()
-	if err != nil {
-		return nil, exception.NewApiException(500, "Error al abrir el archivo de imagen")
-	}
-	defer fileBytes.Close()
+	fileExtension := filepath.Ext(fileInput.Filename)
+	fileName := strings.TrimSuffix(fileInput.Filename, fileExtension)
 
-	fileData, err := io.ReadAll(fileBytes)
-	if err != nil {
-		return nil, exception.NewApiException(500, "Error al leer el archivo de imagen")
+	if !utils.IsValidExtension(fileExtension) {
+		return nil, exception.NewApiException(400, "Formato de archivo no soportado. Solo se aceptan imágenes jpg, jpeg, png y webp")
 	}
 
-	encoded := base64.StdEncoding.EncodeToString(fileData)
+	encoded, err := encodeToBase64(fileInput)
+	if err != nil {
+		return nil, err
+	}
 
 	fileSizeHumanReadable := humanize.Bytes(uint64(fileInput.Size))
 
-	image := entity.NewImage(uuid.New().String(), name, extension, encoded, "SANTI", fileSizeHumanReadable)
+	image := entity.NewImage(uuid.New().String(), fileName, fileExtension, encoded, "SANTI", fileSizeHumanReadable)
 
 	dto := dto.FromImage(image)
 
@@ -86,10 +82,25 @@ func (r *RepositoryMemory) Insert(fileInput *multipart.FileHeader) (*entity.Resp
 	return response, nil
 }
 
+func encodeToBase64(fileInput *multipart.FileHeader) (string, *exception.ApiException) {
+	fileBytes, err := fileInput.Open()
+	if err != nil {
+		return "", exception.NewApiException(500, "Error al abrir el archivo de imagen")
+	}
+
+	defer fileBytes.Close()
+
+	fileData, err := io.ReadAll(fileBytes)
+	if err != nil {
+		return "", exception.NewApiException(500, "Error al leer el archivo de imagen")
+	}
+
+	return base64.StdEncoding.EncodeToString(fileData), nil
+}
+
 func persist(image *dto.DTOImage) *exception.ApiException {
 
 	err := os.MkdirAll("data", 0755)
-
 	if err != nil {
 		return exception.NewApiException(500, "Error al crear el directorio de almacenamiento de datos")
 	}
