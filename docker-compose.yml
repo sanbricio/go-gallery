@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:7.0.11
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+
+  mongo-express:
+    container_name: mongo_express
+    image: mongo-express:1.0.2-18
+    restart: always
+    ports:
+      - 8082:8081
+    environment:
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_CONFIG_BASICAUTH_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_CONFIG_BASICAUTH_PASSWORD}
+      ME_CONFIG_MONGODB_URL: ${ME_CONFIG_MONGODB_URL}
+    depends_on:
+      - mongodb
