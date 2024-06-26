@@ -3,9 +3,8 @@ package service
 import (
 	"api-upload-photos/src/commons/exception"
 	"api-upload-photos/src/domain/dto"
-	entity "api-upload-photos/src/domain/entities"
+	handler "api-upload-photos/src/infrastructure"
 	infrastructure "api-upload-photos/src/infrastructure/repository"
-	"mime/multipart"
 )
 
 type Service struct {
@@ -22,8 +21,8 @@ func (s *Service) Find(id string) (*dto.DTOImage, *exception.ApiException) {
 	return s.repository.Find(id)
 }
 
-func (s *Service) Insert(fileInput *multipart.FileHeader) (*entity.Response, *exception.ApiException) {
-	return s.repository.Insert(fileInput)
+func (s *Service) Insert(processedImage *handler.ProcessedImage) (*dto.DTOImage, *exception.ApiException) {
+	return s.repository.Insert(processedImage)
 }
 
 func (s *Service) Delete(id string) (*dto.DTOImage, *exception.ApiException) {

@@ -6,15 +6,11 @@ import (
 	"api-upload-photos/src/service"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/template/html/v2"
 )
 
 func main() {
-	engine := html.New("./views", ".html")
 
-	app := fiber.New(fiber.Config{
-		Views: engine,
-	})
+	app := fiber.New()
 	
 	repository := &infrastructure.RepositoryMemory{}
 	service := service.NewService(repository)

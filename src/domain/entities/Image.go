@@ -1,5 +1,7 @@
 package entity
 
+import "github.com/google/uuid"
+
 type Image struct {
 	id          string
 	name        string
@@ -9,7 +11,18 @@ type Image struct {
 	size        string
 }
 
-func NewImage(id string, name string, extension string, contentFile string, owner string, size string) *Image {
+func NewImage(name string, extension string, contentFile string, owner string, size string) *Image {
+	return &Image{
+		id:          uuid.New().String(),
+		name:        name,
+		extension:   extension,
+		contentFile: contentFile,
+		owner:       owner,
+		size:        size,
+	}
+}
+
+func NewImageFromDTO(id string,name string, extension string, contentFile string, owner string, size string) *Image {
 	return &Image{
 		id:          id,
 		name:        name,

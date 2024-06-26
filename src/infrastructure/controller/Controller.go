@@ -2,7 +2,7 @@ package controller
 
 import (
 	"api-upload-photos/src/commons/exception"
-	"api-upload-photos/src/domain/dto"
+	handler "api-upload-photos/src/infrastructure"
 	"api-upload-photos/src/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -38,19 +38,13 @@ func (c *Controller) getImage() {
 		id := ctx.Params("id")
 		image, err := c.service.Find(id)
 		if err != nil {
-			return ctx.Render("showImage", fiber.Map{
-				"Status": err.Status,
-				"Error":  err.Message,
-			})
+			return ctx.Status(err.Status).JSON(err)
 		}
 
-		return ctx.Render("showImage", fiber.Map{
-			"Response": image,
-		})
+		return ctx.Status(200).JSON(image)
 	})
 }
 
-// TODO Mirar para futuro desacople como se haria el ctx.FormFile("file") si no tengo el front en el mismo proyecto
 func (c *Controller) uploadImage() {
 	c.app.Post("/uploadImage", func(ctx *fiber.Ctx) error {
 		fileInput, err := ctx.FormFile("file")
@@ -58,16 +52,17 @@ func (c *Controller) uploadImage() {
 			return ctx.Status(404).JSON(exception.NewApiException(404, "Error al obtener la imagen del formulario"))
 		}
 
-		response, errInsert := c.service.Insert(fileInput)
+		processedImage, errFile := handler.ProcessImageFile(fileInput)
+		if errFile != nil {
+			return ctx.Status(errFile.Status).JSON(err)
+		}
+
+		dto, errInsert := c.service.Insert(processedImage)
 		if errInsert != nil {
 			return ctx.Status(errInsert.Status).JSON(err)
 		}
 
-		dto := dto.FromResponse(response)
-
-		return ctx.Render("status", fiber.Map{
-			"Response": dto,
-		})
+		return ctx.Status(200).JSON(dto)
 	})
 }
 
@@ -79,6 +74,6 @@ func (c *Controller) deleteImage() {
 			return ctx.Status(err.Status).JSON(err)
 		}
 
-		return ctx.JSON(image)
+		return ctx.Status(200).JSON(image)
 	})
 }

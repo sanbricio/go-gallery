@@ -23,5 +23,5 @@ func FromImage(image *entity.Image) *DTOImage {
 }
 
 func (img *DTOImage) AsImageEntity() *entity.Image {
-	return entity.NewImage(img.Id, img.Name, img.Extension, img.ContentFile, img.Owner, img.Size)
+	return entity.NewImageFromDTO(img.Id, img.Name, img.Extension, img.ContentFile, img.Owner, img.Size)
 }

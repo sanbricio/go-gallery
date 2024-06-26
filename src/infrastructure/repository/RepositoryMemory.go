@@ -1,21 +1,16 @@
 package infrastructure
 
 import (
-	utils "api-upload-photos/src/commons"
 	"api-upload-photos/src/commons/exception"
 	"api-upload-photos/src/domain/dto"
 	entity "api-upload-photos/src/domain/entities"
-	"encoding/base64"
+	handler "api-upload-photos/src/infrastructure"
 	"encoding/json"
 	"fmt"
-	"io"
-	"mime/multipart"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/dustin/go-humanize"
-	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
 
@@ -52,23 +47,9 @@ func (r *RepositoryMemory) Find(id string) (*dto.DTOImage, *exception.ApiExcepti
 	return nil, exception.NewApiException(404, "Imagen no encontrada")
 }
 
-func (r *RepositoryMemory) Insert(fileInput *multipart.FileHeader) (*entity.Response, *exception.ApiException) {
+func (r *RepositoryMemory) Insert(processedImage *handler.ProcessedImage) (*dto.DTOImage, *exception.ApiException) {
 
-	fileExtension := filepath.Ext(fileInput.Filename)
-	fileName := strings.TrimSuffix(fileInput.Filename, fileExtension)
-
-	if !utils.IsValidExtension(fileExtension) {
-		return nil, exception.NewApiException(400, "Formato de archivo no soportado. Solo se aceptan imágenes jpg, jpeg, png y webp")
-	}
-
-	encoded, err := encodeToBase64(fileInput)
-	if err != nil {
-		return nil, err
-	}
-
-	fileSizeHumanReadable := humanize.Bytes(uint64(fileInput.Size))
-
-	image := entity.NewImage(uuid.New().String(), fileName, fileExtension, encoded, "SANTI", fileSizeHumanReadable)
+	image := entity.NewImage(processedImage.FileName, processedImage.FileExtension, processedImage.EncodedData, "SANTI", processedImage.FileSizeHumanReadable)
 
 	dto := dto.FromImage(image)
 
@@ -77,25 +58,7 @@ func (r *RepositoryMemory) Insert(fileInput *multipart.FileHeader) (*entity.Resp
 		return nil, errPersist
 	}
 
-	response := entity.NewResponse(dto.Id, "success")
-
-	return response, nil
-}
-
-func encodeToBase64(fileInput *multipart.FileHeader) (string, *exception.ApiException) {
-	fileBytes, err := fileInput.Open()
-	if err != nil {
-		return "", exception.NewApiException(500, "Error al abrir el archivo de imagen")
-	}
-
-	defer fileBytes.Close()
-
-	fileData, err := io.ReadAll(fileBytes)
-	if err != nil {
-		return "", exception.NewApiException(500, "Error al leer el archivo de imagen")
-	}
-
-	return base64.StdEncoding.EncodeToString(fileData), nil
+	return dto, nil
 }
 
 func persist(image *dto.DTOImage) *exception.ApiException {
