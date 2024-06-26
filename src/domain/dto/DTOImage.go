@@ -3,17 +3,17 @@ package dto
 import entity "api-upload-photos/src/domain/entities"
 
 type DTOImage struct {
-	Id          string `json:"id"`
-	Name        string `json:"name"`
-	Extension   string `json:"extension"`
-	ContentFile string `json:"content_file"`
-	Owner       string `json:"owner"`
-	Size        string `json:"size"`
+	IdImage     string `json:"id_image" bson:"id_image"`
+	Name        string `json:"name" bson:"name"`
+	Extension   string `json:"extension" bson:"extension"`
+	ContentFile string `json:"content_file" bson:"content_file"`
+	Owner       string `json:"owner" bson:"owner"`
+	Size        string `json:"size" bson:"size"`
 }
 
 func FromImage(image *entity.Image) *DTOImage {
 	return &DTOImage{
-		Id:          image.GetId(),
+		IdImage:     image.GetId(),
 		Name:        image.GetName(),
 		Extension:   image.GetExtension(),
 		ContentFile: image.GetContentFile(),
@@ -23,5 +23,5 @@ func FromImage(image *entity.Image) *DTOImage {
 }
 
 func (img *DTOImage) AsImageEntity() *entity.Image {
-	return entity.NewImageFromDTO(img.Id, img.Name, img.Extension, img.ContentFile, img.Owner, img.Size)
+	return entity.NewImageFromDTO(img.IdImage, img.Name, img.Extension, img.ContentFile, img.Owner, img.Size)
 }

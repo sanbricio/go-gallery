@@ -66,7 +66,7 @@ func persist(image *dto.DTOImage) *exception.ApiException {
 		return exception.NewApiException(500, "Error al crear el directorio de almacenamiento de datos")
 	}
 
-	filename := fmt.Sprintf("data/%s.json", image.Id)
+	filename := fmt.Sprintf("data/%s.json", image.IdImage)
 
 	data, err := json.Marshal(image)
 	if err != nil {

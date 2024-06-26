@@ -3,7 +3,7 @@ package entity
 import "github.com/google/uuid"
 
 type Image struct {
-	id          string
+	idImage     string
 	name        string
 	extension   string
 	contentFile string
@@ -13,7 +13,7 @@ type Image struct {
 
 func NewImage(name string, extension string, contentFile string, owner string, size string) *Image {
 	return &Image{
-		id:          uuid.New().String(),
+		idImage:     uuid.New().String(),
 		name:        name,
 		extension:   extension,
 		contentFile: contentFile,
@@ -22,9 +22,9 @@ func NewImage(name string, extension string, contentFile string, owner string, s
 	}
 }
 
-func NewImageFromDTO(id string,name string, extension string, contentFile string, owner string, size string) *Image {
+func NewImageFromDTO(idImage string, name string, extension string, contentFile string, owner string, size string) *Image {
 	return &Image{
-		id:          id,
+		idImage:     idImage,
 		name:        name,
 		extension:   extension,
 		contentFile: contentFile,
@@ -34,7 +34,7 @@ func NewImageFromDTO(id string,name string, extension string, contentFile string
 }
 
 func (img *Image) GetId() string {
-	return img.id
+	return img.idImage
 }
 
 func (img *Image) GetName() string {
