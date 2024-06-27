@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"api-upload-photos/src/commons/exception"
 	"api-upload-photos/src/domain/dto"
+	entity "api-upload-photos/src/domain/entities"
 	handler "api-upload-photos/src/infrastructure"
 	"context"
 	"fmt"
@@ -14,22 +15,12 @@ import (
 )
 
 const (
-	ImagesCollection ="Images"
-	KIdImage = "id_image"
+	ImagesCollection = "Images"
+	KIdImage         = "id_image"
 )
 
 type RepositoryMongoDB struct {
 	client *mongo.Database
-}
-
-// Delete implements IRepository.
-func (r *RepositoryMongoDB) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
-	panic("unimplemented")
-}
-
-// Insert implements IRepository.
-func (r *RepositoryMongoDB) Insert(fileInput *handler.ProcessedImage) (*dto.DTOImage, *exception.ApiException) {
-	panic("unimplemented")
 }
 
 func NewRepositoryMongoDB(urlConnection string, databaseName string) (*RepositoryMongoDB, *exception.ApiException) {
@@ -71,6 +62,38 @@ func (r *RepositoryMongoDB) Find(id string) (*dto.DTOImage, *exception.ApiExcept
 			return nil, exception.NewApiException(404, "No se encontró el documento en base de datos")
 		}
 		return nil, exception.NewApiException(500, "Error al buscar el documento")
+	}
+
+	return &result, nil
+}
+
+// TODO Probar cuando este terminado desarrollo front
+func (r *RepositoryMongoDB) Insert(processedImage *handler.ProcessedImage) (*dto.DTOImage, *exception.ApiException) {
+	collection := r.client.Collection(ImagesCollection)
+
+	image := entity.NewImage(processedImage.FileName, processedImage.FileExtension, processedImage.EncodedData, "SANTI", processedImage.FileSizeHumanReadable)
+
+	dto := dto.FromImage(image)
+	_, err := collection.InsertOne(context.Background(), dto)
+	if err != nil {
+		return nil, exception.NewApiException(500, "Error al insertal el documento")
+	}
+
+	return dto, nil
+}
+
+func (r *RepositoryMongoDB) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
+	collection := r.client.Collection(ImagesCollection)
+	var result dto.DTOImage
+	filter := bson.M{KIdImage: id}
+
+	err := collection.FindOneAndDelete(context.Background(), filter)
+	if err != nil {
+		if err.Err() == mongo.ErrNoDocuments {
+			return nil, exception.NewApiException(404, "No se encontró el documento en base de datos")
+		}
+
+		return nil, exception.NewApiException(500, "Error al eliminar el documento")
 	}
 
 	return &result, nil
