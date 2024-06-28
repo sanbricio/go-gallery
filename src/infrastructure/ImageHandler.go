@@ -11,7 +11,7 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
-// TODO Pensar si esta solución es correcta
+// TODO Pensar si esta solución es correcta (dominio) 
 type ProcessedImage struct {
 	FileName              string
 	FileExtension         string
