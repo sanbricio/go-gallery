@@ -18,7 +18,6 @@ func main() {
 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
-		AllowCredentials: true,
 	}))
 
 	err := godotenv.Load()
