@@ -1,4 +1,4 @@
-package infrastructure
+package repository
 
 import (
 	"api-upload-photos/src/commons/exception"
@@ -19,17 +19,17 @@ const (
 	KIdImage         = "id_image"
 )
 
-type RepositoryMongoDB struct {
+type RepositoryImageMongoDB struct {
 	client *mongo.Database
 }
 
-func NewRepositoryMongoDB(urlConnection string, databaseName string) (*RepositoryMongoDB, *exception.ApiException) {
+func NewRepositoryMongoDB(urlConnection string, databaseName string) (*RepositoryImageMongoDB, *exception.ApiException) {
 	db, err := connect(urlConnection, databaseName)
 	if err != nil {
 		return nil, err
 	}
 
-	repo := &RepositoryMongoDB{
+	repo := &RepositoryImageMongoDB{
 		client: db,
 	}
 	return repo, nil
@@ -51,7 +51,7 @@ func connect(urlConnection string, databaseName string) (*mongo.Database, *excep
 	return database, nil
 }
 
-func (r *RepositoryMongoDB) Find(id string) (*dto.DTOImage, *exception.ApiException) {
+func (r *RepositoryImageMongoDB) Find(id string) (*dto.DTOImage, *exception.ApiException) {
 	collection := r.client.Collection(ImagesCollection)
 	var result dto.DTOImage
 	filter := bson.M{KIdImage: id}
@@ -68,7 +68,7 @@ func (r *RepositoryMongoDB) Find(id string) (*dto.DTOImage, *exception.ApiExcept
 }
 
 // TODO Probar cuando este terminado desarrollo front
-func (r *RepositoryMongoDB) Insert(processedImage *handler.ProcessedImage) (*dto.DTOImage, *exception.ApiException) {
+func (r *RepositoryImageMongoDB) Insert(processedImage *handler.ProcessedImage) (*dto.DTOImage, *exception.ApiException) {
 	collection := r.client.Collection(ImagesCollection)
 
 	image := entity.NewImage(processedImage.FileName, processedImage.FileExtension, processedImage.EncodedData, "SANTI", processedImage.FileSizeHumanReadable)
@@ -82,7 +82,7 @@ func (r *RepositoryMongoDB) Insert(processedImage *handler.ProcessedImage) (*dto
 	return dto, nil
 }
 
-func (r *RepositoryMongoDB) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
+func (r *RepositoryImageMongoDB) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
 	collection := r.client.Collection(ImagesCollection)
 	var result dto.DTOImage
 	filter := bson.M{KIdImage: id}

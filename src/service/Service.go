@@ -4,14 +4,14 @@ import (
 	"api-upload-photos/src/commons/exception"
 	"api-upload-photos/src/domain/dto"
 	handler "api-upload-photos/src/infrastructure"
-	infrastructure "api-upload-photos/src/infrastructure/repository"
+	repository "api-upload-photos/src/infrastructure/repository/image"
 )
 
 type Service struct {
-	repository infrastructure.IRepository
+	repository repository.IRepositoryImage
 }
 
-func NewService(repository infrastructure.IRepository) *Service {
+func NewService(repository repository.IRepositoryImage) *Service {
 	return &Service{
 		repository: repository,
 	}

@@ -21,16 +21,10 @@ func NewController(app *fiber.App, service *service.Service) *Controller {
 }
 
 func (c *Controller) SetupRoutes() {
-	c.getIndexPage()
 	c.getImage()
 	c.uploadImage()
 	c.deleteImage()
-}
-
-func (c *Controller) getIndexPage() {
-	c.app.Get("/", func(ctx *fiber.Ctx) error {
-		return ctx.Render("index", fiber.Map{})
-	})
+	c.login()
 }
 
 func (c *Controller) getImage() {
@@ -76,4 +70,8 @@ func (c *Controller) deleteImage() {
 
 		return ctx.Status(200).JSON(image)
 	})
+}
+
+func (c *Controller) login() {
+
 }

@@ -1,4 +1,4 @@
-package infrastructure
+package repository
 
 import (
 	"api-upload-photos/src/commons/exception"
@@ -6,7 +6,7 @@ import (
 	handler "api-upload-photos/src/infrastructure"
 )
 
-type IRepository interface {
+type IRepositoryImage interface {
 	Insert(fileInput *handler.ProcessedImage) (*dto.DTOImage, *exception.ApiException)
 	Find(id string) (*dto.DTOImage, *exception.ApiException)
 	Delete(id string) (*dto.DTOImage, *exception.ApiException)

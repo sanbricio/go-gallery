@@ -2,7 +2,7 @@ package main
 
 import (
 	"api-upload-photos/src/infrastructure/controller"
-	infrastructure "api-upload-photos/src/infrastructure/repository"
+	repository "api-upload-photos/src/infrastructure/repository/image"
 	"api-upload-photos/src/service"
 	"log"
 	"os"
@@ -21,15 +21,15 @@ func main() {
 	}))
 
 	err := godotenv.Load()
-    if err != nil {
-        log.Fatalf("Error cargando el archivo .env: %v", err)
-    }
+	if err != nil {
+		log.Fatalf("Error cargando el archivo .env: %v", err)
+	}
 
 	mongoURL := os.Getenv("LOCAL_MONGODB_URL")
-    databaseName := os.Getenv("MONGODB_DATABASE")
+	databaseName := os.Getenv("MONGODB_DATABASE")
 
 	//TODO Cambiar tipo de error a ConnectionException
-	repository,errRepo:= infrastructure.NewRepositoryMongoDB(mongoURL,databaseName)
+	repository, errRepo := repository.NewRepositoryMongoDB(mongoURL, databaseName)
 	if errRepo != nil {
 		log.Fatal(errRepo.Message)
 	}
