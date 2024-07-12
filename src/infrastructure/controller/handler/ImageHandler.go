@@ -2,6 +2,7 @@ package handler
 
 import (
 	"api-upload-photos/src/commons/exception"
+	"api-upload-photos/src/infrastructure/dto"
 	"encoding/base64"
 	"io"
 	"mime/multipart"
@@ -11,15 +12,7 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
-// TODO Pensar si esta solución es correcta (dominio) 
-type ProcessedImage struct {
-	FileName              string
-	FileExtension         string
-	FileSizeHumanReadable string
-	EncodedData           string
-}
-
-func ProcessImageFile(fileInput *multipart.FileHeader) (*ProcessedImage, *exception.ApiException) {
+func ProcessImageFile(fileInput *multipart.FileHeader) (*dto.ProcessedImage, *exception.ApiException) {
 
 	fileExtension := filepath.Ext(fileInput.Filename)
 	fileName := strings.TrimSuffix(fileInput.Filename, fileExtension)
@@ -35,7 +28,7 @@ func ProcessImageFile(fileInput *multipart.FileHeader) (*ProcessedImage, *except
 
 	fileSizeHumanReadable := humanize.Bytes(uint64(fileInput.Size))
 
-	processedFile := &ProcessedImage{
+	processedFile := &dto.ProcessedImage{
 		FileName:              fileName,
 		FileExtension:         fileExtension,
 		FileSizeHumanReadable: fileSizeHumanReadable,

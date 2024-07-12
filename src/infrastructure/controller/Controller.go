@@ -2,7 +2,7 @@ package controller
 
 import (
 	"api-upload-photos/src/commons/exception"
-	handler "api-upload-photos/src/infrastructure"
+	"api-upload-photos/src/infrastructure/controller/handler"
 	"api-upload-photos/src/service"
 
 	"github.com/gofiber/fiber/v2"
@@ -73,5 +73,5 @@ func (c *Controller) deleteImage() {
 }
 
 func (c *Controller) login() {
-
+	
 }

@@ -2,9 +2,8 @@ package repository
 
 import (
 	"api-upload-photos/src/commons/exception"
-	"api-upload-photos/src/domain/dto"
 	entity "api-upload-photos/src/domain/entities"
-	handler "api-upload-photos/src/infrastructure"
+	"api-upload-photos/src/infrastructure/dto"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -45,7 +44,7 @@ func (r *RepositoryImageMemory) Find(id string) (*dto.DTOImage, *exception.ApiEx
 	return nil, exception.NewApiException(404, "Imagen no encontrada")
 }
 
-func (r *RepositoryImageMemory) Insert(processedImage *handler.ProcessedImage) (*dto.DTOImage, *exception.ApiException) {
+func (r *RepositoryImageMemory) Insert(processedImage *dto.ProcessedImage) (*dto.DTOImage, *exception.ApiException) {
 
 	image := entity.NewImage(processedImage.FileName, processedImage.FileExtension, processedImage.EncodedData, "SANTI", processedImage.FileSizeHumanReadable)
 

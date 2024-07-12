@@ -2,8 +2,7 @@ package service
 
 import (
 	"api-upload-photos/src/commons/exception"
-	"api-upload-photos/src/domain/dto"
-	handler "api-upload-photos/src/infrastructure"
+	"api-upload-photos/src/infrastructure/dto"
 	repository "api-upload-photos/src/infrastructure/repository/image"
 )
 
@@ -21,7 +20,7 @@ func (s *Service) Find(id string) (*dto.DTOImage, *exception.ApiException) {
 	return s.repository.Find(id)
 }
 
-func (s *Service) Insert(processedImage *handler.ProcessedImage) (*dto.DTOImage, *exception.ApiException) {
+func (s *Service) Insert(processedImage *dto.ProcessedImage) (*dto.DTOImage, *exception.ApiException) {
 	return s.repository.Insert(processedImage)
 }
 
