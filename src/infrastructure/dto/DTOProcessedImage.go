@@ -1,6 +1,6 @@
 package dto
 
-type ProcessedImage struct {
+type DTOProcessedImage struct {
 	FileName              string
 	FileExtension         string
 	FileSizeHumanReadable string

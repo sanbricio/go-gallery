@@ -12,7 +12,7 @@ import (
 	"github.com/dustin/go-humanize"
 )
 
-func ProcessImageFile(fileInput *multipart.FileHeader) (*dto.ProcessedImage, *exception.ApiException) {
+func ProcessImageFile(fileInput *multipart.FileHeader) (*dto.DTOProcessedImage, *exception.ApiException) {
 
 	fileExtension := filepath.Ext(fileInput.Filename)
 	fileName := strings.TrimSuffix(fileInput.Filename, fileExtension)
@@ -28,7 +28,7 @@ func ProcessImageFile(fileInput *multipart.FileHeader) (*dto.ProcessedImage, *ex
 
 	fileSizeHumanReadable := humanize.Bytes(uint64(fileInput.Size))
 
-	processedFile := &dto.ProcessedImage{
+	processedFile := &dto.DTOProcessedImage{
 		FileName:              fileName,
 		FileExtension:         fileExtension,
 		FileSizeHumanReadable: fileSizeHumanReadable,

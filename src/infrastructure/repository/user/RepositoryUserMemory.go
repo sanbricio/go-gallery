@@ -9,7 +9,7 @@ import (
 type RepositoryUserMemory struct {
 }
 
-func Find(email, password string) (*entity.User, *exception.ApiException) {
+func (r *RepositoryUserMemory) Find(username, password string) (*entity.User, *exception.ApiException) {
 
 	files, err := os.ReadDir("data")
 	if err != nil {
@@ -18,7 +18,7 @@ func Find(email, password string) (*entity.User, *exception.ApiException) {
 
 	for _, file := range files {
 		if file.Name() == "prueba.json" {
-			if email == "test@mail.com" && password == "test12345" {
+			if username == "test" && password == "test12345" {
 				return entity.NewUser("test", "test12345", "test@mail.com", "Prueba", "Prueba2"), nil
 			}
 		}

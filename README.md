@@ -15,6 +15,8 @@ DOCKER_ME_CONFIG_MONGODB_URL=
 
 LOCAL_MONGODB_URL=
 MONGODB_DATABASE=
+
+SECRET_KEY=
 ```
 
 * `DOCKER_MONGO_INITDB_ROOT_USERNAME` y `DOCKER_MONGO_INITDB_ROOT_PASSWORD`: Credentials for the MongoDB root user.
@@ -22,3 +24,4 @@ MONGODB_DATABASE=
 * `DOCKER_ME_CONFIG_MONGODB_URL`:  Connection URL to the MongoDB instance by docker
 * `LOCAL_MONGODB_URL`:  Connection URL to the MongoDB local instance
 * `MONGODB_DATABASE`:  Database name we are going to use
+* `SECRET_KEY`: This key is used for JWT Authentification

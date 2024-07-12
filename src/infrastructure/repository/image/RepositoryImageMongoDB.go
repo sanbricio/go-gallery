@@ -67,7 +67,7 @@ func (r *RepositoryImageMongoDB) Find(id string) (*dto.DTOImage, *exception.ApiE
 }
 
 // TODO Probar cuando este terminado desarrollo front
-func (r *RepositoryImageMongoDB) Insert(processedImage *dto.ProcessedImage) (*dto.DTOImage, *exception.ApiException) {
+func (r *RepositoryImageMongoDB) Insert(processedImage *dto.DTOProcessedImage) (*dto.DTOImage, *exception.ApiException) {
 	collection := r.client.Collection(ImagesCollection)
 
 	image := entity.NewImage(processedImage.FileName, processedImage.FileExtension, processedImage.EncodedData, "SANTI", processedImage.FileSizeHumanReadable)
