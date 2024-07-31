@@ -11,7 +11,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	jtoken "github.com/golang-jwt/jwt/v5"
-	
 )
 
 type Controller struct {
@@ -41,7 +40,7 @@ func (c *Controller) getImage() {
 	c.app.Get("/getImage/:id", c.jwt, func(ctx *fiber.Ctx) error {
 		user := ctx.Locals("user").(*jtoken.Token)
 		claims := user.Claims.(jtoken.MapClaims)
-		//TODO mirar usuario y validar 
+		//TODO mirar usuario y validar
 		username := claims["username"].(string)
 		var _ = username
 
@@ -100,7 +99,7 @@ func (c *Controller) login() {
 		}
 
 		// Find the user by credentials
-		user, errFind := c.serviceUser.Find(loginRequest.Username, loginRequest.Password)
+		dtoUser, errFind := c.serviceUser.Find(loginRequest.Username, loginRequest.Password)
 		if errFind != nil {
 			return ctx.Status(fiber.StatusUnauthorized).JSON(errFind)
 		}
@@ -109,9 +108,9 @@ func (c *Controller) login() {
 
 		// Create the JWT claims, which includes the user ID and expiry time
 		claims := jtoken.MapClaims{
-			"username": user.GetUsername(),
-			"email":    user.GetEmail(),
-			"name":     user.GetFirstname(),
+			"username": dtoUser.Username,
+			"email":    dtoUser.Email,
+			"name":     dtoUser.Firstname,
 			"exp":      time.Now().Add(day * 1).Unix(),
 		}
 

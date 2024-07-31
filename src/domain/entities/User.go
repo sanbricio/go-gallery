@@ -8,7 +8,17 @@ type User struct {
 	firstname string
 }
 
-func NewUser(username string, password string, email string, lastname string, firstname string) *User {
+func NewUser(username, password, email, lastname, firstname string) *User {
+	return &User{
+		username:  username,
+		password:  password,
+		email:     email,
+		lastname:  lastname,
+		firstname: firstname,
+	}
+}
+
+func NewUserFromDTO(username, password, email, lastname, firstname string) *User {
 	return &User{
 		username:  username,
 		password:  password,
@@ -30,10 +40,10 @@ func (u *User) GetEmail() string {
 	return u.email
 }
 
-func (u* User) GetLastname() string{
+func (u *User) GetLastname() string {
 	return u.lastname
 }
 
-func (u* User) GetFirstname() string {
+func (u *User) GetFirstname() string {
 	return u.firstname
 }

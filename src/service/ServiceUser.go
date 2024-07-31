@@ -2,7 +2,7 @@ package service
 
 import (
 	"api-upload-photos/src/commons/exception"
-	entity "api-upload-photos/src/domain/entities"
+	"api-upload-photos/src/infrastructure/dto"
 	repository "api-upload-photos/src/infrastructure/repository/user"
 )
 
@@ -16,6 +16,6 @@ func NewServiceUser(repository repository.IRepositoryUser) *ServiceUser {
 	}
 }
 
-func (s *ServiceUser) Find(username string, password string) (*entity.User, *exception.ApiException) {
+func (s *ServiceUser) Find(username string, password string) (*dto.DTOUser, *exception.ApiException) {
 	return s.repository.Find(username, password)
 }
