@@ -22,7 +22,7 @@ type RepositoryImageMongoDB struct {
 	client *mongo.Database
 }
 
-func NewRepositoryMongoDB(urlConnection string, databaseName string) (*RepositoryImageMongoDB, *exception.ApiException) {
+func NewRepositoryImageMongoDB(urlConnection string, databaseName string) (*RepositoryImageMongoDB, *exception.ConnectionException) {
 	db, err := connect(urlConnection, databaseName)
 	if err != nil {
 		return nil, err
@@ -34,16 +34,15 @@ func NewRepositoryMongoDB(urlConnection string, databaseName string) (*Repositor
 	return repo, nil
 }
 
-// TODO Tratar un nuevo tipo de excepcion ej: ConnectionException
-func connect(urlConnection string, databaseName string) (*mongo.Database, *exception.ApiException) {
+func connect(urlConnection string, databaseName string) (*mongo.Database, *exception.ConnectionException) {
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(urlConnection))
 	if err != nil {
-		return nil, exception.NewApiException(500, fmt.Sprintf("No se ha podido conectar a MongoDB: %s", err.Error()))
+		return nil, exception.NewConnectionException(fmt.Sprintf("No se ha podido conectar a MongoDB: %s", err.Error()), err)
 	}
 
 	err = client.Ping(context.Background(), readpref.Primary())
 	if err != nil {
-		return nil, exception.NewApiException(500, fmt.Sprintf("No se ha podido hacer ping a MongoDB: %s", err.Error()))
+		return nil, exception.NewConnectionException(fmt.Sprintf("No se ha podido hacer ping a MongoDB: %s", err.Error()), err)
 	}
 
 	database := client.Database(databaseName)
@@ -66,7 +65,6 @@ func (r *RepositoryImageMongoDB) Find(id string) (*dto.DTOImage, *exception.ApiE
 	return &result, nil
 }
 
-// TODO Probar cuando este terminado desarrollo front
 func (r *RepositoryImageMongoDB) Insert(processedImage *dto.DTOProcessedImage) (*dto.DTOImage, *exception.ApiException) {
 	collection := r.client.Collection(ImagesCollection)
 

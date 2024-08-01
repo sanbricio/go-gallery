@@ -22,17 +22,19 @@ func main() {
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
+		AllowCredentials: true,
+		AllowOriginsFunc: func(origin string) bool {
+			return true
+		},
 	}))
 
 	config.Secret = os.Getenv("SECRET_KEY")
 	mongoURL := os.Getenv("LOCAL_MONGODB_URL")
 	databaseName := os.Getenv("MONGODB_DATABASE")
 
-	//TODO Cambiar tipo de error a ConnectionException
-	repositoryImage, errRepo := repositoryImage.NewRepositoryMongoDB(mongoURL, databaseName)
+	repositoryImage, errRepo := repositoryImage.NewRepositoryImageMongoDB(mongoURL, databaseName)
 	if errRepo != nil {
-		log.Fatal(errRepo.Message)
+		log.Fatalf("[ERROR] %s\n StackTrace:\n%s", errRepo.Message, errRepo.StackTrace)
 	}
 
 	serviceImage := service.NewServiceImage(repositoryImage)

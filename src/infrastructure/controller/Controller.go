@@ -38,11 +38,14 @@ func (c *Controller) SetupRoutes() {
 
 func (c *Controller) getImage() {
 	c.app.Get("/getImage/:id", c.jwt, func(ctx *fiber.Ctx) error {
+
 		user := ctx.Locals("user").(*jtoken.Token)
+
 		claims := user.Claims.(jtoken.MapClaims)
 		//TODO mirar usuario y validar
 		username := claims["username"].(string)
 		var _ = username
+		
 
 		id := ctx.Params("id")
 		image, err := c.serviceImage.Find(id)
@@ -55,7 +58,7 @@ func (c *Controller) getImage() {
 }
 
 func (c *Controller) uploadImage() {
-	c.app.Post("/uploadImage", func(ctx *fiber.Ctx) error {
+	c.app.Post("/uploadImage", c.jwt,func(ctx *fiber.Ctx) error {
 		fileInput, err := ctx.FormFile("file")
 		if err != nil {
 			return ctx.Status(404).JSON(exception.NewApiException(404, "Error al obtener la imagen del formulario"))
