@@ -32,13 +32,18 @@ func main() {
 	mongoURL := os.Getenv("LOCAL_MONGODB_URL")
 	databaseName := os.Getenv("MONGODB_DATABASE")
 
-	repositoryImage, errRepo := repositoryImage.NewRepositoryImageMongoDB(mongoURL, databaseName)
-	if errRepo != nil {
-		log.Fatalf("[ERROR] %s\n StackTrace:\n%s", errRepo.Message, errRepo.StackTrace)
+	repositoryImage, errRepoImage := repositoryImage.NewRepositoryImageMongoDB(mongoURL, databaseName)
+	if errRepoImage != nil {
+		log.Fatalf("[ERROR] %s\n StackTrace:\n%s", errRepoImage.Message, errRepoImage.StackTrace)
+	}
+
+	repositoryUser, errRepoUser := repositoryUser.NewRepositoryMongoDB(mongoURL, databaseName)
+	if errRepoUser != nil {
+		log.Fatalf("[ERROR] %s\n StackTrace:\n%s", errRepoUser.Message, errRepoUser.StackTrace)
 	}
 
 	serviceImage := service.NewServiceImage(repositoryImage)
-	serviceUser := service.NewServiceUser(&repositoryUser.RepositoryUserMemory{})
+	serviceUser := service.NewServiceUser(repositoryUser)
 	controller := controller.NewController(app, serviceImage, serviceUser)
 	controller.SetupRoutes()
 

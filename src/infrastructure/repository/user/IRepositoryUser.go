@@ -6,8 +6,8 @@ import (
 )
 
 type IRepositoryUser interface {
-	Find(email, password string) (*dto.DTOUser, *exception.ApiException)
-	Insert() (*dto.DTOUser, *exception.ApiException)
+	Find(dtoLoginRequest *dto.DTOLoginRequest) (*dto.DTOUser, *exception.ApiException)
+	Insert(dtoRegister *dto.DTORegisterRequest) (*dto.DTOUser, *exception.ApiException)
 	Update() (*dto.DTOUser, *exception.ApiException)
 	Delete() (*dto.DTOUser, *exception.ApiException)
 }

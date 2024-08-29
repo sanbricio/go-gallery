@@ -73,7 +73,7 @@ func (r *RepositoryImageMongoDB) Insert(processedImage *dto.DTOProcessedImage) (
 	dto := dto.FromImage(image)
 	_, err := collection.InsertOne(context.Background(), dto)
 	if err != nil {
-		return nil, exception.NewApiException(500, "Error al insertal el documento")
+		return nil, exception.NewApiException(500, "Error al insertar el documento")
 	}
 
 	return dto, nil

@@ -33,7 +33,8 @@ func (c *Controller) SetupRoutes() {
 	c.getImage()
 	c.uploadImage()
 	c.deleteImage()
-	c.login()
+	c.loginUser()
+	c.registerUser()
 }
 
 func (c *Controller) getImage() {
@@ -45,7 +46,6 @@ func (c *Controller) getImage() {
 		//TODO mirar usuario y validar
 		username := claims["username"].(string)
 		var _ = username
-		
 
 		id := ctx.Params("id")
 		image, err := c.serviceImage.Find(id)
@@ -53,28 +53,28 @@ func (c *Controller) getImage() {
 			return ctx.Status(err.Status).JSON(err)
 		}
 
-		return ctx.Status(200).JSON(image)
+		return ctx.Status(fiber.StatusOK).JSON(image)
 	})
 }
 
 func (c *Controller) uploadImage() {
-	c.app.Post("/uploadImage", c.jwt,func(ctx *fiber.Ctx) error {
+	c.app.Post("/uploadImage", c.jwt, func(ctx *fiber.Ctx) error {
 		fileInput, err := ctx.FormFile("file")
 		if err != nil {
-			return ctx.Status(404).JSON(exception.NewApiException(404, "Error al obtener la imagen del formulario"))
+			return ctx.Status(fiber.StatusNotFound).JSON(exception.NewApiException(fiber.StatusNotFound, "Error al obtener la imagen del formulario"))
 		}
 
 		processedImage, errFile := handler.ProcessImageFile(fileInput)
 		if errFile != nil {
-			return ctx.Status(errFile.Status).JSON(err)
+			return ctx.Status(errFile.Status).JSON(errFile)
 		}
 
 		dto, errInsert := c.serviceImage.Insert(processedImage)
 		if errInsert != nil {
-			return ctx.Status(errInsert.Status).JSON(err)
+			return ctx.Status(errInsert.Status).JSON(errInsert)
 		}
 
-		return ctx.Status(200).JSON(dto)
+		return ctx.Status(fiber.StatusOK).JSON(dto)
 	})
 }
 
@@ -86,23 +86,20 @@ func (c *Controller) deleteImage() {
 			return ctx.Status(err.Status).JSON(err)
 		}
 
-		return ctx.Status(200).JSON(image)
+		return ctx.Status(fiber.StatusOK).JSON(image)
 	})
 }
 
-func (c *Controller) login() {
+func (c *Controller) loginUser() {
 
-	loginRequest := new(dto.DTOLoginRequest)
 	c.app.Post("/login", func(ctx *fiber.Ctx) error {
-
-		if err := ctx.BodyParser(loginRequest); err != nil {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": err.Error(),
-			})
+		dtoLoginRequest := new(dto.DTOLoginRequest)
+		err := ctx.BodyParser(dtoLoginRequest)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erroneo"))
 		}
 
-		// Find the user by credentials
-		dtoUser, errFind := c.serviceUser.Find(loginRequest.Username, loginRequest.Password)
+		dtoUser, errFind := c.serviceUser.Find(dtoLoginRequest)
 		if errFind != nil {
 			return ctx.Status(fiber.StatusUnauthorized).JSON(errFind)
 		}
@@ -123,14 +120,38 @@ func (c *Controller) login() {
 		// Generate encoded token and send it as response.
 		t, err := token.SignedString([]byte(config.Secret))
 		if err != nil {
-			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
+			ctx.Status(fiber.StatusInternalServerError).JSON(exception.NewApiException(fiber.StatusInternalServerError, "Error al generar el token"))
 		}
-
 		// Return the token
-		return ctx.JSON(dto.DTOLoginResponse{
+		return ctx.Status(fiber.StatusOK).JSON(dto.DTOLoginResponse{
 			Token: t,
 		})
+	})
+}
+
+func (c *Controller) registerUser() {
+	c.app.Post("/register", func(ctx *fiber.Ctx) error {
+		dtoRegisterRequest := new(dto.DTORegisterRequest)
+		err := ctx.BodyParser(dtoRegisterRequest)
+		if err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erroneo"))
+		}
+
+		errHandler := handler.ProcessUser(dtoRegisterRequest)
+		if errHandler != nil {
+			return ctx.Status(errHandler.Status).JSON(errHandler)
+		}
+
+		dtoUser, errInsert := c.serviceUser.Insert(dtoRegisterRequest)
+		if errInsert != nil {
+			return ctx.Status(errInsert.Status).JSON(errInsert)
+		}
+
+		dto := dto.DTORegisterResponse{
+			Username:  dtoUser.Username,
+			Firstname: dtoUser.Firstname,
+			Message:   "Se ha creado el usuario correctamente",
+		}
+		return ctx.Status(fiber.StatusCreated).JSON(dto)
 	})
 }

@@ -16,6 +16,10 @@ func NewServiceUser(repository repository.IRepositoryUser) *ServiceUser {
 	}
 }
 
-func (s *ServiceUser) Find(username string, password string) (*dto.DTOUser, *exception.ApiException) {
-	return s.repository.Find(username, password)
+func (s *ServiceUser) Find(dtoLoginRequest *dto.DTOLoginRequest) (*dto.DTOUser, *exception.ApiException) {
+	return s.repository.Find(dtoLoginRequest)
+}
+
+func (s *ServiceUser) Insert(dtoRegisterRequest *dto.DTORegisterRequest) (*dto.DTOUser, *exception.ApiException) {
+	return s.repository.Insert(dtoRegisterRequest)
 }

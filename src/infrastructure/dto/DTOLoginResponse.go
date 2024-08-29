@@ -1,5 +1,5 @@
 package dto
 
 type DTOLoginResponse struct {
-	Token string
+	Token string `json:"token"`
 }
