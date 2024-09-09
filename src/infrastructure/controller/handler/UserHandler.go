@@ -7,20 +7,15 @@ import (
 )
 
 func ProcessUser(dto *dto.DTORegisterRequest) *exception.ApiException {
-	if dto.Username == "" {
-		return exception.NewApiException(404, "El usuario no puede estar vacio")
+	err := validatePassword(dto.Password)
+	if err != nil {
+		return err
 	}
 
-	errPassword := validatePassword(dto.Password)
-	if errPassword != nil {
-		return errPassword
+	err = validateEmail(dto.Email)
+	if err != nil {
+		return err
 	}
-
-	errEmail := validateEmail(dto.Email)
-	if errEmail != nil {
-		return errPassword
-	}
-
 	return nil
 }
 

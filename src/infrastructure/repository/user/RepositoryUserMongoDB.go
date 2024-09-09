@@ -3,6 +3,7 @@ package repository
 import (
 	"api-upload-photos/src/commons/exception"
 	entity "api-upload-photos/src/domain/entities"
+	"api-upload-photos/src/domain/entities/builder"
 	"api-upload-photos/src/infrastructure/dto"
 	"context"
 	"fmt"
@@ -14,9 +15,9 @@ import (
 )
 
 const (
-	UserCollection = "User"
-	KUsername      = "username"
-	KEmail         = "email"
+	USER_COLLECTION = "User"
+	USERNAME        = "username"
+	EMAIL           = "email"
 )
 
 type RepositoryUserMongoDB struct {
@@ -51,13 +52,13 @@ func connect(urlConnection, databaseName string) (*mongo.Database, *exception.Co
 }
 
 func (r *RepositoryUserMongoDB) Find(dtoLoginRequest *dto.DTOLoginRequest) (*dto.DTOUser, *exception.ApiException) {
-	filter := bson.M{KUsername: dtoLoginRequest.Username}
+	filter := bson.M{USERNAME: dtoLoginRequest.Username}
 	user, err := r.find(filter)
 	if err != nil {
 		return nil, err
 	}
-	
-	user, errPasword := user.CheckPassword(dtoLoginRequest.Password)
+
+	errPasword := user.CheckPasswordIntegrity(dtoLoginRequest.Password)
 	if errPasword != nil {
 		return nil, exception.NewApiException(404, "Contraseña incorrecta")
 	}
@@ -68,7 +69,7 @@ func (r *RepositoryUserMongoDB) Find(dtoLoginRequest *dto.DTOLoginRequest) (*dto
 }
 
 func (r *RepositoryUserMongoDB) find(filter bson.M) (*entity.User, *exception.ApiException) {
-	collection := r.client.Collection(UserCollection)
+	collection := r.client.Collection(USER_COLLECTION)
 
 	var dto *dto.DTOUser
 	err := collection.FindOne(context.Background(), filter).Decode(&dto)
@@ -79,20 +80,27 @@ func (r *RepositoryUserMongoDB) find(filter bson.M) (*entity.User, *exception.Ap
 		return nil, exception.NewApiException(500, fmt.Sprintf("Error al buscar el usuario: %s", err.Error()))
 	}
 
-	user := dto.AsUserEntity()
+	user, err := builder.NewUserBuilder().
+		FromDTO(dto).
+		Build()
 
 	return user, nil
 }
 
 func (r *RepositoryUserMongoDB) Insert(dtoRegister *dto.DTORegisterRequest) (*dto.DTOUser, *exception.ApiException) {
-	collection := r.client.Collection(UserCollection)
+	collection := r.client.Collection(USER_COLLECTION)
 
 	err := r.checkUserIsCreated(dtoRegister)
 	if err != nil {
 		return nil, err
 	}
 
-	user := entity.NewUser(dtoRegister.Username, dtoRegister.Password, dtoRegister.Email, dtoRegister.Lastname, dtoRegister.Firstname)
+	user, errBuilder := builder.NewUserBuilder().
+		FromDTORegister(dtoRegister).
+		Build()
+	if errBuilder != nil {
+		return nil, nil
+	}
 
 	dto := dto.FromUser(user)
 
@@ -105,8 +113,9 @@ func (r *RepositoryUserMongoDB) Insert(dtoRegister *dto.DTORegisterRequest) (*dt
 }
 
 func (r *RepositoryUserMongoDB) checkUserIsCreated(dtoRegister *dto.DTORegisterRequest) *exception.ApiException {
-
-	existingEmail, err := r.find(bson.M{KEmail: dtoRegister.Email})
+	//TODO Creo que se puede quitar un find, reestructurar el r.find para que devuevla un findAll
+	// Cuando tenga el array de documents validar si el email es igual al del registro o el usuario
+	existingEmail, err := r.find(bson.M{EMAIL: dtoRegister.Email})
 	if err != nil && err.Status != 404 {
 		return err
 	}
@@ -115,7 +124,7 @@ func (r *RepositoryUserMongoDB) checkUserIsCreated(dtoRegister *dto.DTORegisterR
 		return exception.NewApiException(400, "El correo electrónico ya está registrado")
 	}
 
-	existingUser, err := r.find(bson.M{KUsername: dtoRegister.Username})
+	existingUser, err := r.find(bson.M{USERNAME: dtoRegister.Username})
 	if err != nil && err.Status != 404 {
 		return err
 	}

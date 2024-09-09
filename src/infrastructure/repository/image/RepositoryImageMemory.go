@@ -2,7 +2,7 @@ package repository
 
 import (
 	"api-upload-photos/src/commons/exception"
-	entity "api-upload-photos/src/domain/entities"
+	"api-upload-photos/src/domain/entities/builder"
 	"api-upload-photos/src/infrastructure/dto"
 	"encoding/json"
 	"fmt"
@@ -46,7 +46,14 @@ func (r *RepositoryImageMemory) Find(id string) (*dto.DTOImage, *exception.ApiEx
 
 func (r *RepositoryImageMemory) Insert(processedImage *dto.DTOProcessedImage) (*dto.DTOImage, *exception.ApiException) {
 
-	image := entity.NewImage(processedImage.FileName, processedImage.FileExtension, processedImage.EncodedData, "SANTI", processedImage.FileSizeHumanReadable)
+	image, errBuilder := builder.NewImageBuilder().
+		From(processedImage.FileName, processedImage.FileExtension, processedImage.EncodedData, "SANTI", processedImage.FileSizeHumanReadable).
+		Build()
+
+	if errBuilder != nil {
+		errorMessage := fmt.Sprintf("Error al construir la imagen: %s", errBuilder.Error())
+		return nil, exception.NewApiException(404, errorMessage)
+	}
 
 	dto := dto.FromImage(image)
 

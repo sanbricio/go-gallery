@@ -19,7 +19,3 @@ func FromUser(user *entity.User) *DTOUser {
 		Firstname: user.GetFirstname(),
 	}
 }
-
-func (dto *DTOUser) AsUserEntity() *entity.User {
-	return entity.NewUserFromDTO(dto.Username, dto.Password, dto.Email, dto.Firstname, dto.Lastname)
-}

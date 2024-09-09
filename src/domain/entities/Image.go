@@ -1,7 +1,5 @@
 package entity
 
-import "github.com/google/uuid"
-
 type Image struct {
 	idImage     string
 	name        string
@@ -11,18 +9,8 @@ type Image struct {
 	size        string
 }
 
-func NewImage(name string, extension string, contentFile string, owner string, size string) *Image {
-	return &Image{
-		idImage:     uuid.New().String(),
-		name:        name,
-		extension:   extension,
-		contentFile: contentFile,
-		owner:       owner,
-		size:        size,
-	}
-}
-
-func NewImageFromDTO(idImage string, name string, extension string, contentFile string, owner string, size string) *Image {
+// Me gustaria dejarlo privado para que solo pueda pasar por el Builder
+func NewImage(idImage, name, extension, contentFile, owner, size string) *Image {
 	return &Image{
 		idImage:     idImage,
 		name:        name,
@@ -55,20 +43,4 @@ func (img *Image) GetOwner() string {
 
 func (img *Image) GetSize() string {
 	return img.size
-}
-
-func (img *Image) SetName(name string) {
-	img.name = name
-}
-
-func (img *Image) SetExtension(extension string) {
-	img.extension = extension
-}
-
-func (img *Image) SetContentFile(contentFile string) {
-	img.contentFile = contentFile
-}
-
-func (img *Image) SetOwner(owner string) {
-	img.owner = owner
 }

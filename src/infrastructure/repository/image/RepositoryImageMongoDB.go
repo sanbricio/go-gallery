@@ -2,7 +2,7 @@ package repository
 
 import (
 	"api-upload-photos/src/commons/exception"
-	entity "api-upload-photos/src/domain/entities"
+	"api-upload-photos/src/domain/entities/builder"
 	"api-upload-photos/src/infrastructure/dto"
 	"context"
 	"fmt"
@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	ImagesCollection = "Images"
-	KIdImage         = "id_image"
+	IMAGE_COLLECTION = "Images"
+	ID_IMAGE         = "id_image"
 )
 
 type RepositoryImageMongoDB struct {
@@ -50,9 +50,9 @@ func connect(urlConnection string, databaseName string) (*mongo.Database, *excep
 }
 
 func (r *RepositoryImageMongoDB) Find(id string) (*dto.DTOImage, *exception.ApiException) {
-	collection := r.client.Collection(ImagesCollection)
+	collection := r.client.Collection(IMAGE_COLLECTION)
 	var result dto.DTOImage
-	filter := bson.M{KIdImage: id}
+	filter := bson.M{ID_IMAGE: id}
 
 	err := collection.FindOne(context.Background(), filter).Decode(&result)
 	if err != nil {
@@ -66,9 +66,16 @@ func (r *RepositoryImageMongoDB) Find(id string) (*dto.DTOImage, *exception.ApiE
 }
 
 func (r *RepositoryImageMongoDB) Insert(processedImage *dto.DTOProcessedImage) (*dto.DTOImage, *exception.ApiException) {
-	collection := r.client.Collection(ImagesCollection)
+	collection := r.client.Collection(IMAGE_COLLECTION)
 
-	image := entity.NewImage(processedImage.FileName, processedImage.FileExtension, processedImage.EncodedData, "SANTI", processedImage.FileSizeHumanReadable)
+	image, errBuilder := builder.NewImageBuilder().
+		From(processedImage.FileName, processedImage.FileExtension, processedImage.EncodedData, "SANTI", processedImage.FileSizeHumanReadable).
+		Build()
+
+	if errBuilder != nil {
+		errorMessage := fmt.Sprintf("Error al construir la imagen: %s", errBuilder.Error())
+		return nil, exception.NewApiException(404, errorMessage)
+	}
 
 	dto := dto.FromImage(image)
 	_, err := collection.InsertOne(context.Background(), dto)
@@ -80,9 +87,9 @@ func (r *RepositoryImageMongoDB) Insert(processedImage *dto.DTOProcessedImage) (
 }
 
 func (r *RepositoryImageMongoDB) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
-	collection := r.client.Collection(ImagesCollection)
+	collection := r.client.Collection(IMAGE_COLLECTION)
 	var result dto.DTOImage
-	filter := bson.M{KIdImage: id}
+	filter := bson.M{ID_IMAGE: id}
 
 	err := collection.FindOneAndDelete(context.Background(), filter)
 	if err != nil {
