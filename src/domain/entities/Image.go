@@ -9,7 +9,7 @@ type Image struct {
 	size        string
 }
 
-// Me gustaria dejarlo privado para que solo pueda pasar por el Builder
+//TODO Me gustaria dejarlo privado para que solo pueda pasar por el Builder
 func NewImage(idImage, name, extension, contentFile, owner, size string) *Image {
 	return &Image{
 		idImage:     idImage,

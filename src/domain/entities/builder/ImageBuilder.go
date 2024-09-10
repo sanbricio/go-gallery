@@ -32,8 +32,6 @@ func (b *ImageBuilder) From(name, extension, contentFile, owner, size string) *I
 	return b
 }
 
-
-
 func (b *ImageBuilder) FromDTO(dto *dto.DTOImage) *ImageBuilder {
 	b.idImage = dto.IdImage
 	b.name = dto.Name
@@ -54,12 +52,20 @@ func (b *ImageBuilder) Build() (*entity.Image, *exception.BuilderException) {
 		return nil, exception.NewBuilderException("name", "El campo 'name' no debe estar vacio")
 	}
 
+	if b.extension == "" {
+		return nil, exception.NewBuilderException("extension", "El campo 'extension' no debe de estar vacio")
+	}
+
+	if b.contentFile == "" {
+		return nil, exception.NewBuilderException("contentFile", "El campo 'contentFile' no debe de estar vacio")
+	}
+
 	if b.owner == "" {
 		return nil, exception.NewBuilderException("owner", "El campo 'owner' no debe estar vacio")
 	}
 
-	if b.contentFile == "" {
-		return nil, exception.NewBuilderException("contentFile", "El campo 'contentFile' no debe de estar")
+	if b.size == "" {
+		return nil, exception.NewBuilderException("size", "El campo 'size' no debe estar vacio")
 	}
 
 	return entity.NewImage(b.idImage, b.name, b.extension, b.contentFile, b.owner, b.size), nil
