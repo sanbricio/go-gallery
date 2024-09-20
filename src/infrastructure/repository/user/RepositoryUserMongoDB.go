@@ -51,55 +51,49 @@ func connect(urlConnection, databaseName string) (*mongo.Database, *exception.Co
 	return database, nil
 }
 
-func (r *RepositoryUserMongoDB) Find(dtoLoginRequest *dto.DTOLoginRequest) (*dto.DTOUser, *exception.ApiException) {
-	filter := bson.M{USERNAME: dtoLoginRequest.Username}
+func (r *RepositoryUserMongoDB) Find(dtoUserFind *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+	filter := bson.M{USERNAME: dtoUserFind.Username}
 	user, err := r.find(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	errPasword := user.CheckPasswordIntegrity(dtoLoginRequest.Password)
+	errPasword := user[0].CheckPasswordIntegrity(dtoUserFind.Password)
 	if errPasword != nil {
 		return nil, exception.NewApiException(404, "Contraseña incorrecta")
 	}
 
-	dto := dto.FromUser(user)
+	dto := dto.FromUser(user[0])
 
 	return dto, nil
 }
 
-func (r *RepositoryUserMongoDB) find(filter bson.M) (*entity.User, *exception.ApiException) {
-	collection := r.client.Collection(USER_COLLECTION)
-
-	var dto *dto.DTOUser
-	err := collection.FindOne(context.Background(), filter).Decode(&dto)
+func (r *RepositoryUserMongoDB) FindJWT(dtoUserFind *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+	filter := bson.M{USERNAME: dtoUserFind.Username}
+	user, err := r.find(filter)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, exception.NewApiException(404, "No se ha encontrado el usuario")
-		}
-		return nil, exception.NewApiException(500, fmt.Sprintf("Error al buscar el usuario: %s", err.Error()))
+		return nil, err
 	}
+	//TODO Verificar todos los claims del JWT 
 
-	user, err := builder.NewUserBuilder().
-		FromDTO(dto).
-		Build()
+	dto := dto.FromUser(user[0])
 
-	return user, nil
+	return dto, nil
 }
 
-func (r *RepositoryUserMongoDB) Insert(dtoRegister *dto.DTORegisterRequest) (*dto.DTOUser, *exception.ApiException) {
+func (r *RepositoryUserMongoDB) Insert(dtoInsertUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
 	collection := r.client.Collection(USER_COLLECTION)
 
-	err := r.checkUserIsCreated(dtoRegister)
+	err := r.checkUserIsCreated(dtoInsertUser)
 	if err != nil {
 		return nil, err
 	}
 
 	user, errBuilder := builder.NewUserBuilder().
-		FromDTORegister(dtoRegister).
+		FromDTO(dtoInsertUser).
 		Build()
 	if errBuilder != nil {
-		return nil, nil
+		return nil, exception.NewApiException(500, errBuilder.Error())
 	}
 
 	dto := dto.FromUser(user)
@@ -112,36 +106,113 @@ func (r *RepositoryUserMongoDB) Insert(dtoRegister *dto.DTORegisterRequest) (*dt
 	return dto, nil
 }
 
-func (r *RepositoryUserMongoDB) checkUserIsCreated(dtoRegister *dto.DTORegisterRequest) *exception.ApiException {
-	//TODO Creo que se puede quitar un find, reestructurar el r.find para que devuevla un findAll
-	// Cuando tenga el array de documents validar si el email es igual al del registro o el usuario
-	existingEmail, err := r.find(bson.M{EMAIL: dtoRegister.Email})
+func (r *RepositoryUserMongoDB) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+	collection := r.client.Collection(USER_COLLECTION)
+	filter := bson.M{USERNAME: dtoUpdateUser.Username}
+	_, err := r.find(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	user, errBuilder := builder.NewUserBuilder().
+		FromDTO(dtoUpdateUser).
+		Build()
+	if errBuilder != nil {
+		return nil, exception.NewApiException(500, errBuilder.Error())
+	}
+
+	update := bson.M{
+		"$set": bson.M{
+			"email":     user.GetEmail(),
+			"firstname": user.GetFirstname(),
+			"lastname":  user.GetLastname(),
+			"password":  user.GetPassword(),
+		},
+	}
+
+	_, errUpdate := collection.UpdateOne(context.Background(), filter, update)
+	if errUpdate != nil {
+		return nil, exception.NewApiException(500, "Error al actualizar el usuario en la base de datos")
+	}
+
+	updatedDTO := dto.FromUser(user)
+	return updatedDTO, nil
+}
+
+func (r *RepositoryUserMongoDB) Delete(dtoDeleteUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+	collection := r.client.Collection(USER_COLLECTION)
+	filter := bson.M{USERNAME: dtoDeleteUser.Username}
+	user, err := r.find(filter)
+	if err != nil {
+		return nil, err
+	}
+
+	errPassword := user[0].CheckPasswordIntegrity(dtoDeleteUser.Password)
+	if errPassword != nil {
+		return nil, exception.NewApiException(404, "Contraseña incorrecta")
+	}
+
+	_, errDelete := collection.DeleteOne(context.Background(), filter)
+	if errDelete != nil {
+		return nil, exception.NewApiException(500, "Error al eliminar el usuario")
+	}
+
+	deletedUserDTO := dto.FromUser(user[0])
+	return deletedUserDTO, nil
+}
+
+func (r *RepositoryUserMongoDB) checkUserIsCreated(dtoInsertUser *dto.DTOUser) *exception.ApiException {
+	filter := bson.M{
+		"$or": []bson.M{
+			{EMAIL: dtoInsertUser.Email},
+			{USERNAME: dtoInsertUser.Username},
+		},
+	}
+
+	users, err := r.find(filter)
 	if err != nil && err.Status != 404 {
 		return err
 	}
 
-	if existingEmail != nil {
-		return exception.NewApiException(400, "El correo electrónico ya está registrado")
-	}
-
-	existingUser, err := r.find(bson.M{USERNAME: dtoRegister.Username})
-	if err != nil && err.Status != 404 {
-		return err
-	}
-
-	if existingUser != nil {
-		return exception.NewApiException(400, "El usuario ya esta registrado")
+	for _, user := range users {
+		if user.GetEmail() == dtoInsertUser.Email {
+			return exception.NewApiException(400, "El correo electrónico ya está registrado")
+		}
+		if user.GetUsername() == dtoInsertUser.Username {
+			return exception.NewApiException(400, "El usuario ya está registrado")
+		}
 	}
 
 	return nil
 }
 
-// Delete implements IRepositoryUser.
-func (r *RepositoryUserMongoDB) Delete() (*dto.DTOUser, *exception.ApiException) {
-	panic("unimplemented")
-}
+func (r *RepositoryUserMongoDB) find(filter bson.M) ([]*entity.User, *exception.ApiException) {
+	collection := r.client.Collection(USER_COLLECTION)
+	cursor, err := collection.Find(context.Background(), filter)
+	if err != nil {
+		return nil, exception.NewApiException(500, "Error al buscar usuarios")
+	}
+	defer cursor.Close(context.Background())
 
-// Update implements IRepositoryUser.
-func (r *RepositoryUserMongoDB) Update() (*dto.DTOUser, *exception.ApiException) {
-	panic("unimplemented")
+	var users []*dto.DTOUser
+	if err := cursor.All(context.Background(), &users); err != nil {
+		return nil, exception.NewApiException(500, "Error al decodificar usuarios")
+	}
+
+	if len(users) == 0 {
+		return nil, exception.NewApiException(404, "Usuario no encontrado")
+	}
+
+	var userEntities []*entity.User
+	for _, userDTO := range users {
+		user, errBuilder := builder.NewUserBuilder().
+			FromDTO(userDTO).
+			Build()
+		if errBuilder != nil {
+			return nil, exception.NewApiException(500, errBuilder.Error())
+		}
+		userEntities = append(userEntities, user)
+	}
+
+	return userEntities, nil
 }

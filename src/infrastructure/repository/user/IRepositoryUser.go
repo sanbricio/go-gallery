@@ -6,8 +6,9 @@ import (
 )
 
 type IRepositoryUser interface {
-	Find(dtoLoginRequest *dto.DTOLoginRequest) (*dto.DTOUser, *exception.ApiException)
-	Insert(dtoRegister *dto.DTORegisterRequest) (*dto.DTOUser, *exception.ApiException)
-	Update() (*dto.DTOUser, *exception.ApiException)
-	Delete() (*dto.DTOUser, *exception.ApiException)
+	Find(dtoLoginRequest *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)
+	FindJWT(dtoLoginRequest *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)
+	Insert(dtoRegisterRequest *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)
+	Update(dtoUserUpdate *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)
+	Delete(dtoUserDelete *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)
 }

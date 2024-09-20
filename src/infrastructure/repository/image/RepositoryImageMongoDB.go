@@ -16,6 +16,7 @@ import (
 const (
 	IMAGE_COLLECTION = "Images"
 	ID_IMAGE         = "id_image"
+	OWNER            = "owner"
 )
 
 type RepositoryImageMongoDB struct {
@@ -49,15 +50,19 @@ func connect(urlConnection string, databaseName string) (*mongo.Database, *excep
 	return database, nil
 }
 
-func (r *RepositoryImageMongoDB) Find(id string) (*dto.DTOImage, *exception.ApiException) {
+func (r *RepositoryImageMongoDB) Find(dtoFind *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
 	collection := r.client.Collection(IMAGE_COLLECTION)
 	var result dto.DTOImage
-	filter := bson.M{ID_IMAGE: id}
+
+	filter := bson.M{
+		ID_IMAGE: dtoFind.IdImage,
+		OWNER:    dtoFind.Owner,
+	}
 
 	err := collection.FindOne(context.Background(), filter).Decode(&result)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, exception.NewApiException(404, "No se encontró el documento en base de datos")
+			return nil, exception.NewApiException(404, "No se ha podido encontrar la imagen")
 		}
 		return nil, exception.NewApiException(500, "Error al buscar el documento")
 	}
@@ -65,11 +70,11 @@ func (r *RepositoryImageMongoDB) Find(id string) (*dto.DTOImage, *exception.ApiE
 	return &result, nil
 }
 
-func (r *RepositoryImageMongoDB) Insert(processedImage *dto.DTOProcessedImage) (*dto.DTOImage, *exception.ApiException) {
+func (r *RepositoryImageMongoDB) Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
 	collection := r.client.Collection(IMAGE_COLLECTION)
 
 	image, errBuilder := builder.NewImageBuilder().
-		From(processedImage.FileName, processedImage.FileExtension, processedImage.EncodedData, "SANTI", processedImage.FileSizeHumanReadable).
+		FromDTO(dtoInsertImage).
 		Build()
 
 	if errBuilder != nil {
@@ -94,7 +99,7 @@ func (r *RepositoryImageMongoDB) Delete(id string) (*dto.DTOImage, *exception.Ap
 	err := collection.FindOneAndDelete(context.Background(), filter)
 	if err != nil {
 		if err.Err() == mongo.ErrNoDocuments {
-			return nil, exception.NewApiException(404, "No se encontró el documento en base de datos")
+			return nil, exception.NewApiException(404, "No se ha podido encontrar la imagen.")
 		}
 
 		return nil, exception.NewApiException(500, "Error al eliminar el documento")

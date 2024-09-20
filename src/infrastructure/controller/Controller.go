@@ -39,16 +39,20 @@ func (c *Controller) SetupRoutes() {
 
 func (c *Controller) getImage() {
 	c.app.Get("/getImage/:id", c.jwt, func(ctx *fiber.Ctx) error {
+		token := ctx.Locals("user").(*jtoken.Token)
+		dtoUserJWT := middlewares.GetJWTClaims(token)
 
-		user := ctx.Locals("user").(*jtoken.Token)
+		_, errUser := c.serviceUser.FindJWT(dtoUserJWT)
+		if errUser != nil {
+			return ctx.Status(errUser.Status).JSON(errUser)
+		}
 
-		claims := user.Claims.(jtoken.MapClaims)
-		//TODO mirar usuario y validar
-		username := claims["username"].(string)
-		var _ = username
+		dtoFindImage := &dto.DTOImage{
+			IdImage: ctx.Params("id"),
+			Owner:   dtoUserJWT.Username,
+		}
 
-		id := ctx.Params("id")
-		image, err := c.serviceImage.Find(id)
+		image, err := c.serviceImage.Find(dtoFindImage)
 		if err != nil {
 			return ctx.Status(err.Status).JSON(err)
 		}
@@ -59,17 +63,25 @@ func (c *Controller) getImage() {
 
 func (c *Controller) uploadImage() {
 	c.app.Post("/uploadImage", c.jwt, func(ctx *fiber.Ctx) error {
+		token := ctx.Locals("user").(*jtoken.Token)
+		dtoUserJWT := middlewares.GetJWTClaims(token)
+
+		_, errUser := c.serviceUser.Find(dtoUserJWT)
+		if errUser != nil {
+			return ctx.Status(errUser.Status).JSON(errUser)
+		}
+
 		fileInput, err := ctx.FormFile("file")
 		if err != nil {
 			return ctx.Status(fiber.StatusNotFound).JSON(exception.NewApiException(fiber.StatusNotFound, "Error al obtener la imagen del formulario"))
 		}
 
-		processedImage, errFile := handler.ProcessImageFile(fileInput)
+		dtoInsertImage, errFile := handler.ProcessImageFile(fileInput, dtoUserJWT.Username)
 		if errFile != nil {
 			return ctx.Status(errFile.Status).JSON(errFile)
 		}
 
-		dto, errInsert := c.serviceImage.Insert(processedImage)
+		dto, errInsert := c.serviceImage.Insert(dtoInsertImage)
 		if errInsert != nil {
 			return ctx.Status(errInsert.Status).JSON(errInsert)
 		}
@@ -79,7 +91,8 @@ func (c *Controller) uploadImage() {
 }
 
 func (c *Controller) deleteImage() {
-	c.app.Delete("/deleteImage/:id", func(ctx *fiber.Ctx) error {
+	c.app.Delete("/deleteImage/:id", c.jwt, func(ctx *fiber.Ctx) error {
+		//TODO Implementar lógica de JWT
 		id := ctx.Params("id")
 		image, err := c.serviceImage.Delete(id)
 		if err != nil {
@@ -90,10 +103,10 @@ func (c *Controller) deleteImage() {
 	})
 }
 
+// TODO Refactorizar
 func (c *Controller) loginUser() {
-
 	c.app.Post("/login", func(ctx *fiber.Ctx) error {
-		dtoLoginRequest := new(dto.DTOLoginRequest)
+		dtoLoginRequest := new(dto.DTOUser)
 		err := ctx.BodyParser(dtoLoginRequest)
 		if err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erroneo"))
@@ -131,7 +144,7 @@ func (c *Controller) loginUser() {
 
 func (c *Controller) registerUser() {
 	c.app.Post("/register", func(ctx *fiber.Ctx) error {
-		dtoRegisterRequest := new(dto.DTORegisterRequest)
+		dtoRegisterRequest := new(dto.DTOUser)
 		err := ctx.BodyParser(dtoRegisterRequest)
 		if err != nil {
 			return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erroneo"))

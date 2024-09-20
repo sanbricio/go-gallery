@@ -6,7 +6,7 @@ import (
 )
 
 type IRepositoryImage interface {
-	Insert(fileInput *dto.DTOProcessedImage) (*dto.DTOImage, *exception.ApiException)
-	Find(id string) (*dto.DTOImage, *exception.ApiException)
+	Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException)
+	Find(dtoFind *dto.DTOImage) (*dto.DTOImage, *exception.ApiException)
 	Delete(id string) (*dto.DTOImage, *exception.ApiException)
 }

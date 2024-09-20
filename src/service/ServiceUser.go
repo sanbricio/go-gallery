@@ -16,10 +16,22 @@ func NewServiceUser(repository repository.IRepositoryUser) *ServiceUser {
 	}
 }
 
-func (s *ServiceUser) Find(dtoLoginRequest *dto.DTOLoginRequest) (*dto.DTOUser, *exception.ApiException) {
-	return s.repository.Find(dtoLoginRequest)
+func (s *ServiceUser) Insert(dtoInsertUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+	return s.repository.Insert(dtoInsertUser)
 }
 
-func (s *ServiceUser) Insert(dtoRegisterRequest *dto.DTORegisterRequest) (*dto.DTOUser, *exception.ApiException) {
-	return s.repository.Insert(dtoRegisterRequest)
+func (s *ServiceUser) Find(dtoFindUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+	return s.repository.Find(dtoFindUser)
+}
+
+func (s *ServiceUser) FindJWT(dtoFindUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+	return s.repository.FindJWT(dtoFindUser)
+}
+
+func (s *ServiceUser) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+	return s.repository.Update(dtoUpdateUser)
+}
+
+func (s *ServiceUser) Delete(dtoDeleteUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+	return s.repository.Delete(dtoDeleteUser)
 }

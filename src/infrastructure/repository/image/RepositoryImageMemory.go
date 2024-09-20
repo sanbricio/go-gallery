@@ -44,10 +44,10 @@ func (r *RepositoryImageMemory) Find(id string) (*dto.DTOImage, *exception.ApiEx
 	return nil, exception.NewApiException(404, "Imagen no encontrada")
 }
 
-func (r *RepositoryImageMemory) Insert(processedImage *dto.DTOProcessedImage) (*dto.DTOImage, *exception.ApiException) {
+func (r *RepositoryImageMemory) Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
 
 	image, errBuilder := builder.NewImageBuilder().
-		From(processedImage.FileName, processedImage.FileExtension, processedImage.EncodedData, "SANTI", processedImage.FileSizeHumanReadable).
+		FromDTO(dtoInsertImage).
 		Build()
 
 	if errBuilder != nil {

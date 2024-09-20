@@ -21,19 +21,11 @@ func NewImageBuilder() *ImageBuilder {
 	return &ImageBuilder{}
 }
 
-func (b *ImageBuilder) From(name, extension, contentFile, owner, size string) *ImageBuilder {
-	b.idImage = uuid.New().String()
-	b.name = name
-	b.extension = extension
-	b.contentFile = contentFile
-	b.owner = owner
-	b.size = size
-
-	return b
-}
-
 func (b *ImageBuilder) FromDTO(dto *dto.DTOImage) *ImageBuilder {
 	b.idImage = dto.IdImage
+	if b.idImage == "" {
+		b.idImage = uuid.New().String()
+	}
 	b.name = dto.Name
 	b.extension = dto.Extension
 	b.contentFile = dto.ContentFile

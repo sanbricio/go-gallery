@@ -16,11 +16,11 @@ func NewServiceImage(repository repository.IRepositoryImage) *ServiceImage {
 	}
 }
 
-func (s *ServiceImage) Find(id string) (*dto.DTOImage, *exception.ApiException) {
-	return s.repository.Find(id)
+func (s *ServiceImage) Find(dtoFindImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
+	return s.repository.Find(dtoFindImage)
 }
 
-func (s *ServiceImage) Insert(processedImage *dto.DTOProcessedImage) (*dto.DTOImage, *exception.ApiException) {
+func (s *ServiceImage) Insert(processedImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
 	return s.repository.Insert(processedImage)
 }
 

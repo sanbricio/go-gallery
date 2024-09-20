@@ -6,7 +6,7 @@ import (
 	"regexp"
 )
 
-func ProcessUser(dto *dto.DTORegisterRequest) *exception.ApiException {
+func ProcessUser(dto *dto.DTOUser) *exception.ApiException {
 	err := validatePassword(dto.Password)
 	if err != nil {
 		return err

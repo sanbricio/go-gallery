@@ -19,16 +19,6 @@ func NewUserBuilder() *UserBuilder {
 	return &UserBuilder{}
 }
 
-func (b *UserBuilder) FromDTORegister(dto *dto.DTORegisterRequest) *UserBuilder {
-	b.username = dto.Username
-	b.password = dto.Password
-	b.email = dto.Email
-	b.lastname = dto.Lastname
-	b.firstname = dto.Firstname
-
-	return b
-}
-
 func (b *UserBuilder) FromDTO(dto *dto.DTOUser) *UserBuilder {
 	b.username = dto.Username
 	b.password = dto.Password
@@ -52,7 +42,6 @@ func (b *UserBuilder) Build() (*entity.User, *exception.BuilderException) {
 		}
 		b.password = hashedPassword
 	}
-
 
 	return entity.NewUser(b.username, b.password, b.email, b.lastname, b.firstname), nil
 }
