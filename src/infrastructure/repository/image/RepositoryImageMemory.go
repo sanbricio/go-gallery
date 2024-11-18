@@ -1,10 +1,9 @@
-package infrastructure
+package repository
 
 import (
 	"api-upload-photos/src/commons/exception"
-	"api-upload-photos/src/domain/dto"
-	entity "api-upload-photos/src/domain/entities"
-	handler "api-upload-photos/src/infrastructure"
+	"api-upload-photos/src/domain/entities/builder"
+	"api-upload-photos/src/infrastructure/dto"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -12,10 +11,10 @@ import (
 	"strings"
 )
 
-type RepositoryMemory struct {
+type RepositoryImageMemory struct {
 }
 
-func (r *RepositoryMemory) Find(id string) (*dto.DTOImage, *exception.ApiException) {
+func (r *RepositoryImageMemory) Find(id string) (*dto.DTOImage, *exception.ApiException) {
 	files, err := os.ReadDir("data")
 	if err != nil {
 		return nil, exception.NewApiException(500, "Error al leer el directorio")
@@ -45,9 +44,16 @@ func (r *RepositoryMemory) Find(id string) (*dto.DTOImage, *exception.ApiExcepti
 	return nil, exception.NewApiException(404, "Imagen no encontrada")
 }
 
-func (r *RepositoryMemory) Insert(processedImage *handler.ProcessedImage) (*dto.DTOImage, *exception.ApiException) {
+func (r *RepositoryImageMemory) Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
 
-	image := entity.NewImage(processedImage.FileName, processedImage.FileExtension, processedImage.EncodedData, "SANTI", processedImage.FileSizeHumanReadable)
+	image, errBuilder := builder.NewImageBuilder().
+		FromDTO(dtoInsertImage).
+		Build()
+
+	if errBuilder != nil {
+		errorMessage := fmt.Sprintf("Error al construir la imagen: %s", errBuilder.Error())
+		return nil, exception.NewApiException(404, errorMessage)
+	}
 
 	dto := dto.FromImage(image)
 
@@ -81,7 +87,7 @@ func persist(image *dto.DTOImage) *exception.ApiException {
 	return nil
 }
 
-func (r *RepositoryMemory) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
+func (r *RepositoryImageMemory) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
 	image, err := r.Find(id)
 	if err != nil {
 		return nil, err

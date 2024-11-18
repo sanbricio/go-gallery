@@ -21,7 +21,3 @@ func FromImage(image *entity.Image) *DTOImage {
 		Size:        image.GetSize(),
 	}
 }
-
-func (img *DTOImage) AsImageEntity() *entity.Image {
-	return entity.NewImageFromDTO(img.IdImage, img.Name, img.Extension, img.ContentFile, img.Owner, img.Size)
-}
