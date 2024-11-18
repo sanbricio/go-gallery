@@ -1,53 +1,75 @@
 package builder_test
 
 import (
-	"api-upload-photos/src/commons/exception"
 	"api-upload-photos/src/domain/entities/builder"
+	"api-upload-photos/src/infrastructure/dto"
 	"testing"
 )
 
-func TestImageBuilderEmptyFields(t *testing.T) {
-	//Caso 'idImage' vacio
-	_, err := builder.NewImageBuilder().
-		From("", "", "", "", "").
-		SetId("").
-		Build()
-	assertBuilderException(t, err, "idImage")
-	//Caso 'name' vacio
-	_, err = builder.NewImageBuilder().
-		From("", "extension", "contentFile", "owner", "size").
-		Build()
-	assertBuilderException(t, err, "name")
-	//Caso 'extension' vacio
-	_, err = builder.NewImageBuilder().
-		From("name", "", "contentFile", "owner", "size").
-		Build()
-	assertBuilderException(t, err, "extension")
-	//Caso 'contentFile' vacio
-	_, err = builder.NewImageBuilder().
-		From("name", "extension", "", "owner", "size").
-		Build()
-	assertBuilderException(t, err, "contentFile")
-	//Caso 'owner' vacio
-	_, err = builder.NewImageBuilder().
-		From("name", "extension", "contentFile", "", "size").
-		Build()
-	assertBuilderException(t, err, "owner")
-	//Caso 'size' vacio
-	_, err = builder.NewImageBuilder().
-		From("name", "extension", "contentFile", "owner", "").
-		Build()
-	assertBuilderException(t, err, "size")
+var baseDTO *dto.DTOImage
+
+// Inicializamos el mock dto
+func init() {
+	baseDTO = &dto.DTOImage{
+		IdImage:     "valid-id",
+		Name:        "valid-name",
+		Extension:   "jpg",
+		ContentFile: "base64content",
+		Owner:       "valid-owner",
+		Size:        "1024",
+	}
 }
 
-func assertBuilderException(t *testing.T, err *exception.BuilderException, field string) {
+func TestImageBuilderEmptyFields(t *testing.T) {
+	// Caso: 'name' vacío
+	dto := copyDTO()
+	dto.Name = ""
+	assertBuilderException(t, dto, "name")
+
+	// Caso: 'extension' vacío
+	dto = copyDTO()
+	dto.Extension = ""
+	assertBuilderException(t, dto, "extension")
+
+	// Caso: 'contentFile' vacío
+	dto = copyDTO()
+	dto.ContentFile = ""
+	assertBuilderException(t, dto, "contentFile")
+
+	// Caso: 'owner' vacío
+	dto = copyDTO()
+	dto.Owner = ""
+	assertBuilderException(t, dto, "owner")
+
+	// Caso: 'size' vacío
+	dto = copyDTO()
+	dto.Size = ""
+	assertBuilderException(t, dto, "size")
+}
+
+func assertBuilderException(t *testing.T, dto *dto.DTOImage, field string) {
+	_, err := builder.NewImageBuilder().
+		FromDTO(dto).
+		Build()
 	if err == nil {
-		t.Errorf("TestImageBuilderEmptyFrom: se esperaba un error al intentar crear una Image con el campo '%v' vacio", field)
+		t.Errorf("Se esperaba un error al intentar crear una Image con el campo '%v' vacío", field)
 		t.FailNow()
 	}
 
 	if err.Field != field {
-		t.Errorf("TestImageBuilderEmptyFrom: se esperaba un error del campo %v", field)
+		t.Errorf("Se esperaba un error del campo '%v', pero se obtuvo: %v", field, err)
 		t.FailNow()
+	}
+}
+
+// Función para copiar el DTO base para cada caso de prueba
+func copyDTO() *dto.DTOImage {
+	return &dto.DTOImage{
+		IdImage:     baseDTO.IdImage,
+		Name:        baseDTO.Name,
+		Extension:   baseDTO.Extension,
+		ContentFile: baseDTO.ContentFile,
+		Owner:       baseDTO.Owner,
+		Size:        baseDTO.Size,
 	}
 }

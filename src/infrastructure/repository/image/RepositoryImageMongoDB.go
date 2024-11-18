@@ -20,7 +20,7 @@ const (
 )
 
 type RepositoryImageMongoDB struct {
-	client *mongo.Database
+	mongo *mongo.Collection
 }
 
 func NewRepositoryImageMongoDB(urlConnection string, databaseName string) (*RepositoryImageMongoDB, *exception.ConnectionException) {
@@ -30,49 +30,63 @@ func NewRepositoryImageMongoDB(urlConnection string, databaseName string) (*Repo
 	}
 
 	repo := &RepositoryImageMongoDB{
-		client: db,
+		mongo: db.Collection(IMAGE_COLLECTION),
 	}
 	return repo, nil
 }
 
 func connect(urlConnection string, databaseName string) (*mongo.Database, *exception.ConnectionException) {
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(urlConnection))
+	database, err := mongo.Connect(context.Background(), options.Client().ApplyURI(urlConnection))
 	if err != nil {
 		return nil, exception.NewConnectionException(fmt.Sprintf("No se ha podido conectar a MongoDB: %s", err.Error()), err)
 	}
 
-	err = client.Ping(context.Background(), readpref.Primary())
+	err = database.Ping(context.Background(), readpref.Primary())
 	if err != nil {
 		return nil, exception.NewConnectionException(fmt.Sprintf("No se ha podido hacer ping a MongoDB: %s", err.Error()), err)
 	}
 
-	database := client.Database(databaseName)
-	return database, nil
+	mongo := database.Database(databaseName)
+	return mongo, nil
 }
 
 func (r *RepositoryImageMongoDB) Find(dtoFind *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
-	collection := r.client.Collection(IMAGE_COLLECTION)
-	var result dto.DTOImage
-
 	filter := bson.M{
 		ID_IMAGE: dtoFind.IdImage,
 		OWNER:    dtoFind.Owner,
 	}
 
-	err := collection.FindOne(context.Background(), filter).Decode(&result)
+	result, err := r.find(filter)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, exception.NewApiException(404, "No se ha podido encontrar la imagen")
+		return nil, err
+	}
+	return &result[0], nil
+}
+
+func (r *RepositoryImageMongoDB) find(filter bson.M) ([]dto.DTOImage, *exception.ApiException) {
+	cursor, err := r.mongo.Find(context.Background(), filter)
+	if err != nil {
+		return nil, exception.NewApiException(500, "Error al buscar las imagenes")
+	}
+	defer cursor.Close(context.Background())
+
+	var results []dto.DTOImage
+	for cursor.Next(context.Background()) {
+		var image dto.DTOImage
+		if err := cursor.Decode(&image); err != nil {
+			return nil, exception.NewApiException(500, "Error al decodificar el las imagenes")
 		}
-		return nil, exception.NewApiException(500, "Error al buscar el documento")
+		results = append(results, image)
 	}
 
-	return &result, nil
+	if len(results) == 0 {
+		return nil, exception.NewApiException(404, "Imagen no encontrada")
+	}
+
+	return results, nil
 }
 
 func (r *RepositoryImageMongoDB) Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
-	collection := r.client.Collection(IMAGE_COLLECTION)
-
 	image, errBuilder := builder.NewImageBuilder().
 		FromDTO(dtoInsertImage).
 		Build()
@@ -83,7 +97,7 @@ func (r *RepositoryImageMongoDB) Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOI
 	}
 
 	dto := dto.FromImage(image)
-	_, err := collection.InsertOne(context.Background(), dto)
+	_, err := r.mongo.InsertOne(context.Background(), dto)
 	if err != nil {
 		return nil, exception.NewApiException(500, "Error al insertar el documento")
 	}
@@ -92,18 +106,16 @@ func (r *RepositoryImageMongoDB) Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOI
 }
 
 func (r *RepositoryImageMongoDB) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
-	collection := r.client.Collection(IMAGE_COLLECTION)
-	var result dto.DTOImage
 	filter := bson.M{ID_IMAGE: id}
-
-	err := collection.FindOneAndDelete(context.Background(), filter)
+	foundImages, err := r.find(filter)
 	if err != nil {
-		if err.Err() == mongo.ErrNoDocuments {
-			return nil, exception.NewApiException(404, "No se ha podido encontrar la imagen.")
-		}
-
-		return nil, exception.NewApiException(500, "Error al eliminar el documento")
+		return nil, err
 	}
 
-	return &result, nil
+	_, errDelete := r.mongo.DeleteOne(context.Background(), filter)
+	if errDelete != nil {
+		return nil, exception.NewApiException(500, "Error al eliminar la imagen")
+	}
+
+	return &foundImages[0], nil
 }

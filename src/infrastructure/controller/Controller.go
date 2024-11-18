@@ -42,7 +42,7 @@ func (c *Controller) getImage() {
 		token := ctx.Locals("user").(*jtoken.Token)
 		dtoUserJWT := middlewares.GetJWTClaims(token)
 
-		_, errUser := c.serviceUser.FindJWT(dtoUserJWT)
+		_, errUser := c.serviceUser.FindAndCheckJWT(dtoUserJWT)
 		if errUser != nil {
 			return ctx.Status(errUser.Status).JSON(errUser)
 		}
@@ -66,7 +66,7 @@ func (c *Controller) uploadImage() {
 		token := ctx.Locals("user").(*jtoken.Token)
 		dtoUserJWT := middlewares.GetJWTClaims(token)
 
-		_, errUser := c.serviceUser.Find(dtoUserJWT)
+		_, errUser := c.serviceUser.FindAndCheckJWT(dtoUserJWT)
 		if errUser != nil {
 			return ctx.Status(errUser.Status).JSON(errUser)
 		}
@@ -92,7 +92,14 @@ func (c *Controller) uploadImage() {
 
 func (c *Controller) deleteImage() {
 	c.app.Delete("/deleteImage/:id", c.jwt, func(ctx *fiber.Ctx) error {
-		//TODO Implementar lógica de JWT
+		token := ctx.Locals("user").(*jtoken.Token)
+		dtoUserJWT := middlewares.GetJWTClaims(token)
+
+		_, errUser := c.serviceUser.FindAndCheckJWT(dtoUserJWT)
+		if errUser != nil {
+			return ctx.Status(errUser.Status).JSON(errUser)
+		}
+
 		id := ctx.Params("id")
 		image, err := c.serviceImage.Delete(id)
 		if err != nil {
@@ -103,7 +110,6 @@ func (c *Controller) deleteImage() {
 	})
 }
 
-// TODO Refactorizar
 func (c *Controller) loginUser() {
 	c.app.Post("/login", func(ctx *fiber.Ctx) error {
 		dtoLoginRequest := new(dto.DTOUser)

@@ -21,7 +21,7 @@ const (
 )
 
 type RepositoryUserMongoDB struct {
-	client *mongo.Database
+	mongo *mongo.Collection
 }
 
 func NewRepositoryMongoDB(urlConnection, databaseName string) (*RepositoryUserMongoDB, *exception.ConnectionException) {
@@ -31,7 +31,7 @@ func NewRepositoryMongoDB(urlConnection, databaseName string) (*RepositoryUserMo
 	}
 
 	repo := &RepositoryUserMongoDB{
-		client: db,
+		mongo: db.Collection(USER_COLLECTION),
 	}
 	return repo, nil
 }
@@ -68,13 +68,18 @@ func (r *RepositoryUserMongoDB) Find(dtoUserFind *dto.DTOUser) (*dto.DTOUser, *e
 	return dto, nil
 }
 
-func (r *RepositoryUserMongoDB) FindJWT(dtoUserFind *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (r *RepositoryUserMongoDB) FindAndCheckJWT(dtoUserFind *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
 	filter := bson.M{USERNAME: dtoUserFind.Username}
 	user, err := r.find(filter)
 	if err != nil {
 		return nil, err
 	}
-	//TODO Verificar todos los claims del JWT 
+
+	if user[0].GetEmail() != dtoUserFind.Email ||
+		user[0].GetFirstname() != dtoUserFind.Firstname ||
+		user[0].GetUsername() != dtoUserFind.Username {
+		return nil, exception.NewApiException(403, "Los datos proporcionados no coinciden con el usuario autenticado")
+	}
 
 	dto := dto.FromUser(user[0])
 
@@ -82,8 +87,6 @@ func (r *RepositoryUserMongoDB) FindJWT(dtoUserFind *dto.DTOUser) (*dto.DTOUser,
 }
 
 func (r *RepositoryUserMongoDB) Insert(dtoInsertUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
-	collection := r.client.Collection(USER_COLLECTION)
-
 	err := r.checkUserIsCreated(dtoInsertUser)
 	if err != nil {
 		return nil, err
@@ -98,7 +101,7 @@ func (r *RepositoryUserMongoDB) Insert(dtoInsertUser *dto.DTOUser) (*dto.DTOUser
 
 	dto := dto.FromUser(user)
 
-	_, errInsert := collection.InsertOne(context.Background(), dto)
+	_, errInsert := r.mongo.InsertOne(context.Background(), dto)
 	if errInsert != nil {
 		return nil, exception.NewApiException(500, "Error al insertar el documento")
 	}
@@ -107,7 +110,6 @@ func (r *RepositoryUserMongoDB) Insert(dtoInsertUser *dto.DTOUser) (*dto.DTOUser
 }
 
 func (r *RepositoryUserMongoDB) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
-	collection := r.client.Collection(USER_COLLECTION)
 	filter := bson.M{USERNAME: dtoUpdateUser.Username}
 	_, err := r.find(filter)
 	if err != nil {
@@ -130,7 +132,7 @@ func (r *RepositoryUserMongoDB) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser
 		},
 	}
 
-	_, errUpdate := collection.UpdateOne(context.Background(), filter, update)
+	_, errUpdate := r.mongo.UpdateOne(context.Background(), filter, update)
 	if errUpdate != nil {
 		return nil, exception.NewApiException(500, "Error al actualizar el usuario en la base de datos")
 	}
@@ -140,7 +142,6 @@ func (r *RepositoryUserMongoDB) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser
 }
 
 func (r *RepositoryUserMongoDB) Delete(dtoDeleteUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
-	collection := r.client.Collection(USER_COLLECTION)
 	filter := bson.M{USERNAME: dtoDeleteUser.Username}
 	user, err := r.find(filter)
 	if err != nil {
@@ -152,7 +153,7 @@ func (r *RepositoryUserMongoDB) Delete(dtoDeleteUser *dto.DTOUser) (*dto.DTOUser
 		return nil, exception.NewApiException(404, "Contraseña incorrecta")
 	}
 
-	_, errDelete := collection.DeleteOne(context.Background(), filter)
+	_, errDelete := r.mongo.DeleteOne(context.Background(), filter)
 	if errDelete != nil {
 		return nil, exception.NewApiException(500, "Error al eliminar el usuario")
 	}
@@ -187,8 +188,7 @@ func (r *RepositoryUserMongoDB) checkUserIsCreated(dtoInsertUser *dto.DTOUser) *
 }
 
 func (r *RepositoryUserMongoDB) find(filter bson.M) ([]*entity.User, *exception.ApiException) {
-	collection := r.client.Collection(USER_COLLECTION)
-	cursor, err := collection.Find(context.Background(), filter)
+	cursor, err := r.mongo.Find(context.Background(), filter)
 	if err != nil {
 		return nil, exception.NewApiException(500, "Error al buscar usuarios")
 	}
