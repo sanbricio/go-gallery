@@ -7,10 +7,10 @@ import (
 )
 
 type ServiceImage struct {
-	repository repository.IRepositoryImage
+	repository repository.ImageRepository
 }
 
-func NewServiceImage(repository repository.IRepositoryImage) *ServiceImage {
+func NewServiceImage(repository repository.ImageRepository) *ServiceImage {
 	return &ServiceImage{
 		repository: repository,
 	}

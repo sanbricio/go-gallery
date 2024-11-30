@@ -7,10 +7,10 @@ import (
 )
 
 type ServiceUser struct {
-	repository repository.IRepositoryUser
+	repository repository.UserRepository
 }
 
-func NewServiceUser(repository repository.IRepositoryUser) *ServiceUser {
+func NewServiceUser(repository repository.UserRepository) *ServiceUser {
 	return &ServiceUser{
 		repository: repository,
 	}

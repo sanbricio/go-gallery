@@ -1,4 +1,4 @@
-package repository
+package image_repository
 
 import (
 	"api-upload-photos/src/commons/exception"
@@ -11,10 +11,47 @@ import (
 	"strings"
 )
 
-type RepositoryImageMemory struct {
+const ImageMemoryRepositoryKey = "ImageMemoryRepository"
+
+type ImageMemoryRepository struct {
 }
 
-func (r *RepositoryImageMemory) Find(id string) (*dto.DTOImage, *exception.ApiException) {
+func NewImageMemoryRepository() ImageRepository {
+	return new(ImageMemoryRepository)
+}
+
+func (r *ImageMemoryRepository) Find(dtoFind *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
+	files, err := os.ReadDir("data")
+	if err != nil {
+		return nil, exception.NewApiException(500, "Error al leer el directorio")
+	}
+
+	var dtoImage *dto.DTOImage
+	for _, file := range files {
+		if strings.HasSuffix(file.Name(), ".json") {
+			idFilename := strings.TrimSuffix(file.Name(), ".json")
+
+			if dtoFind.IdImage == idFilename {
+				data, err := os.ReadFile(filepath.Join("data", file.Name()))
+				if err != nil {
+					return nil, exception.NewApiException(500, "Error al leer el archivo JSON")
+				}
+
+				err = json.Unmarshal(data, &dtoImage)
+				if err != nil {
+					return nil, exception.NewApiException(500, "Error al parsear el archivo JSON")
+				}
+
+				return dtoImage, nil
+
+			}
+		}
+	}
+	return nil, exception.NewApiException(404, "Imagen no encontrada")
+}
+
+// TODO Refactorizar para dejar solo en un método
+func (r *ImageMemoryRepository) find(id string) (*dto.DTOImage, *exception.ApiException) {
 	files, err := os.ReadDir("data")
 	if err != nil {
 		return nil, exception.NewApiException(500, "Error al leer el directorio")
@@ -44,7 +81,7 @@ func (r *RepositoryImageMemory) Find(id string) (*dto.DTOImage, *exception.ApiEx
 	return nil, exception.NewApiException(404, "Imagen no encontrada")
 }
 
-func (r *RepositoryImageMemory) Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
+func (r *ImageMemoryRepository) Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
 
 	image, errBuilder := builder.NewImageBuilder().
 		FromDTO(dtoInsertImage).
@@ -87,8 +124,9 @@ func persist(image *dto.DTOImage) *exception.ApiException {
 	return nil
 }
 
-func (r *RepositoryImageMemory) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
-	image, err := r.Find(id)
+// TODO Rehacer método que concuerde con la firma de la interfaz
+func (r *ImageMemoryRepository) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
+	image, err := r.find(id)
 	if err != nil {
 		return nil, err
 	}

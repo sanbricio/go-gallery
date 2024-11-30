@@ -27,17 +27,17 @@ func main() {
 			return true
 		},
 	}))
-
+	//TODO ¿llevar al configurator?
 	config.Secret = os.Getenv("SECRET_KEY")
 	mongoURL := os.Getenv("LOCAL_MONGODB_URL")
 	databaseName := os.Getenv("MONGODB_DATABASE")
 
-	repositoryImage, errRepoImage := repositoryImage.NewRepositoryImageMongoDB(mongoURL, databaseName)
+	repositoryImage, errRepoImage := repositoryImage.NewImageMongoDBRepository(mongoURL, databaseName)
 	if errRepoImage != nil {
 		log.Fatalf("[ERROR] %s\n StackTrace:\n%s", errRepoImage.Message, errRepoImage.StackTrace)
 	}
 
-	repositoryUser, errRepoUser := repositoryUser.NewRepositoryMongoDB(mongoURL, databaseName)
+	repositoryUser, errRepoUser := repositoryUser.NewUserMongoDBRepository(mongoURL, databaseName)
 	if errRepoUser != nil {
 		log.Fatalf("[ERROR] %s\n StackTrace:\n%s", errRepoUser.Message, errRepoUser.StackTrace)
 	}
