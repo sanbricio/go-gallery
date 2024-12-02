@@ -6,32 +6,32 @@ import (
 	repository "api-upload-photos/src/infrastructure/repository/user"
 )
 
-type ServiceUser struct {
+type UserService struct {
 	repository repository.UserRepository
 }
 
-func NewServiceUser(repository repository.UserRepository) *ServiceUser {
-	return &ServiceUser{
+func NewUserService(repository repository.UserRepository) *UserService {
+	return &UserService{
 		repository: repository,
 	}
 }
 
-func (s *ServiceUser) Insert(dtoInsertUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (s *UserService) Insert(dtoInsertUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
 	return s.repository.Insert(dtoInsertUser)
 }
 
-func (s *ServiceUser) Find(dtoFindUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (s *UserService) Find(dtoFindUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
 	return s.repository.Find(dtoFindUser)
 }
 
-func (s *ServiceUser) FindAndCheckJWT(dtoFindUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (s *UserService) FindAndCheckJWT(dtoFindUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
 	return s.repository.FindAndCheckJWT(dtoFindUser)
 }
 
-func (s *ServiceUser) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (s *UserService) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
 	return s.repository.Update(dtoUpdateUser)
 }
 
-func (s *ServiceUser) Delete(dtoDeleteUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (s *UserService) Delete(dtoDeleteUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
 	return s.repository.Delete(dtoDeleteUser)
 }

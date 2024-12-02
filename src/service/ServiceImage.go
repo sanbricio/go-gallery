@@ -6,24 +6,24 @@ import (
 	repository "api-upload-photos/src/infrastructure/repository/image"
 )
 
-type ServiceImage struct {
+type ImageService struct {
 	repository repository.ImageRepository
 }
 
-func NewServiceImage(repository repository.ImageRepository) *ServiceImage {
-	return &ServiceImage{
+func NewImageService(repository repository.ImageRepository) *ImageService {
+	return &ImageService{
 		repository: repository,
 	}
 }
 
-func (s *ServiceImage) Find(dtoFindImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
+func (s *ImageService) Find(dtoFindImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
 	return s.repository.Find(dtoFindImage)
 }
 
-func (s *ServiceImage) Insert(processedImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
+func (s *ImageService) Insert(processedImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
 	return s.repository.Insert(processedImage)
 }
 
-func (s *ServiceImage) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
+func (s *ImageService) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
 	return s.repository.Delete(id)
 }

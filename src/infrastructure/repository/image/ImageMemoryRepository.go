@@ -50,7 +50,6 @@ func (r *ImageMemoryRepository) Find(dtoFind *dto.DTOImage) (*dto.DTOImage, *exc
 	return nil, exception.NewApiException(404, "Imagen no encontrada")
 }
 
-// TODO Refactorizar para dejar solo en un método
 func (r *ImageMemoryRepository) find(id string) (*dto.DTOImage, *exception.ApiException) {
 	files, err := os.ReadDir("data")
 	if err != nil {
@@ -124,7 +123,6 @@ func persist(image *dto.DTOImage) *exception.ApiException {
 	return nil
 }
 
-// TODO Rehacer método que concuerde con la firma de la interfaz
 func (r *ImageMemoryRepository) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
 	image, err := r.find(id)
 	if err != nil {
