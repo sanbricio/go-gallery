@@ -1,4 +1,4 @@
-package repository
+package user_repository
 
 import (
 	"api-upload-photos/src/commons/exception"
@@ -14,44 +14,45 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+const UserMongoDBRepositoryKey = "UserMongoDBRepository"
+
 const (
 	USER_COLLECTION = "User"
 	USERNAME        = "username"
 	EMAIL           = "email"
 )
 
-type RepositoryUserMongoDB struct {
+type UserMongoDBRepository struct {
 	mongo *mongo.Collection
 }
 
-func NewRepositoryMongoDB(urlConnection, databaseName string) (*RepositoryUserMongoDB, *exception.ConnectionException) {
-	db, err := connect(urlConnection, databaseName)
-	if err != nil {
-		return nil, err
-	}
+func NewUserMongoDBRepository(args map[string]string) UserRepository {
+	urlConnection := args["MONGODB_URL_CONNECTION"]
+	databaseName := args["MONGODB_DATABASE"]
 
-	repo := &RepositoryUserMongoDB{
+	db := connect(urlConnection, databaseName)
+
+	repo := &UserMongoDBRepository{
 		mongo: db.Collection(USER_COLLECTION),
 	}
-	return repo, nil
+	return repo
 }
 
-func connect(urlConnection, databaseName string) (*mongo.Database, *exception.ConnectionException) {
+func connect(urlConnection, databaseName string) *mongo.Database {
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(urlConnection))
 	if err != nil {
-		return nil, exception.NewConnectionException(fmt.Sprintf("No se ha podido conectar a MongoDB: %s", err.Error()), err)
+		panic(fmt.Sprintf("No se ha podido conectar a MongoDB: %s", err.Error()))
 	}
 
 	err = client.Ping(context.Background(), readpref.Primary())
 	if err != nil {
-		return nil, exception.NewConnectionException(fmt.Sprintf("No se ha podido hacer ping a MongoDB: %s", err.Error()), err)
+		panic(fmt.Sprintf("No se ha podido hacer ping a MongoDB: %s", err.Error()))
 	}
 
-	database := client.Database(databaseName)
-	return database, nil
+	return client.Database(databaseName)
 }
 
-func (r *RepositoryUserMongoDB) Find(dtoUserFind *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (r *UserMongoDBRepository) Find(dtoUserFind *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
 	filter := bson.M{USERNAME: dtoUserFind.Username}
 	user, err := r.find(filter)
 	if err != nil {
@@ -68,7 +69,7 @@ func (r *RepositoryUserMongoDB) Find(dtoUserFind *dto.DTOUser) (*dto.DTOUser, *e
 	return dto, nil
 }
 
-func (r *RepositoryUserMongoDB) FindAndCheckJWT(dtoUserFind *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (r *UserMongoDBRepository) FindAndCheckJWT(dtoUserFind *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
 	filter := bson.M{USERNAME: dtoUserFind.Username}
 	user, err := r.find(filter)
 	if err != nil {
@@ -86,7 +87,7 @@ func (r *RepositoryUserMongoDB) FindAndCheckJWT(dtoUserFind *dto.DTOUser) (*dto.
 	return dto, nil
 }
 
-func (r *RepositoryUserMongoDB) Insert(dtoInsertUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (r *UserMongoDBRepository) Insert(dtoInsertUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
 	err := r.checkUserIsCreated(dtoInsertUser)
 	if err != nil {
 		return nil, err
@@ -109,7 +110,7 @@ func (r *RepositoryUserMongoDB) Insert(dtoInsertUser *dto.DTOUser) (*dto.DTOUser
 	return dto, nil
 }
 
-func (r *RepositoryUserMongoDB) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (r *UserMongoDBRepository) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
 	filter := bson.M{USERNAME: dtoUpdateUser.Username}
 	_, err := r.find(filter)
 	if err != nil {
@@ -141,7 +142,7 @@ func (r *RepositoryUserMongoDB) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser
 	return updatedDTO, nil
 }
 
-func (r *RepositoryUserMongoDB) Delete(dtoDeleteUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (r *UserMongoDBRepository) Delete(dtoDeleteUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
 	filter := bson.M{USERNAME: dtoDeleteUser.Username}
 	user, err := r.find(filter)
 	if err != nil {
@@ -162,7 +163,7 @@ func (r *RepositoryUserMongoDB) Delete(dtoDeleteUser *dto.DTOUser) (*dto.DTOUser
 	return deletedUserDTO, nil
 }
 
-func (r *RepositoryUserMongoDB) checkUserIsCreated(dtoInsertUser *dto.DTOUser) *exception.ApiException {
+func (r *UserMongoDBRepository) checkUserIsCreated(dtoInsertUser *dto.DTOUser) *exception.ApiException {
 	filter := bson.M{
 		"$or": []bson.M{
 			{EMAIL: dtoInsertUser.Email},
@@ -187,7 +188,7 @@ func (r *RepositoryUserMongoDB) checkUserIsCreated(dtoInsertUser *dto.DTOUser) *
 	return nil
 }
 
-func (r *RepositoryUserMongoDB) find(filter bson.M) ([]*entity.User, *exception.ApiException) {
+func (r *UserMongoDBRepository) find(filter bson.M) ([]*entity.User, *exception.ApiException) {
 	cursor, err := r.mongo.Find(context.Background(), filter)
 	if err != nil {
 		return nil, exception.NewApiException(500, "Error al buscar usuarios")

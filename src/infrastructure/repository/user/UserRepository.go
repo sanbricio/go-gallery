@@ -1,11 +1,11 @@
-package repository
+package user_repository
 
 import (
 	"api-upload-photos/src/commons/exception"
 	"api-upload-photos/src/infrastructure/dto"
 )
 
-type IRepositoryUser interface {
+type UserRepository interface {
 	Find(dtoLoginRequest *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)
 	FindAndCheckJWT(dtoLoginRequest *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)
 	Insert(dtoRegisterRequest *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)

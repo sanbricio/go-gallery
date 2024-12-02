@@ -1,15 +1,12 @@
 module api-upload-photos
 
-go 1.23
-
-toolchain go1.23.0
+go 1.23.3
 
 require github.com/gofiber/fiber/v2 v2.52.5 // direct
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
-	github.com/joho/godotenv v1.5.1
 )
 
 require (
@@ -29,6 +26,7 @@ require (
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1
 	github.com/gofiber/jwt/v4 v4.0.0
+	github.com/joho/godotenv v1.5.1
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

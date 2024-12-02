@@ -1,4 +1,4 @@
-package repository
+package image_repository
 
 import (
 	"api-upload-photos/src/commons/exception"
@@ -13,44 +13,46 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
+const ImageMongoDBRepositoryKey = "ImageMongoDBRepository"
+
 const (
 	IMAGE_COLLECTION = "Images"
 	ID_IMAGE         = "id_image"
 	OWNER            = "owner"
 )
 
-type RepositoryImageMongoDB struct {
+type ImageMongoDBRepository struct {
 	mongo *mongo.Collection
 }
 
-func NewRepositoryImageMongoDB(urlConnection string, databaseName string) (*RepositoryImageMongoDB, *exception.ConnectionException) {
-	db, err := connect(urlConnection, databaseName)
-	if err != nil {
-		return nil, err
-	}
+func NewImageMongoDBRepository(args map[string]string) ImageRepository {
+	urlConnection := args["MONGODB_URL_CONNECTION"]
+	databaseName := args["MONGODB_DATABASE"]
 
-	repo := &RepositoryImageMongoDB{
+	db := connect(urlConnection, databaseName)
+
+	repo := &ImageMongoDBRepository{
 		mongo: db.Collection(IMAGE_COLLECTION),
 	}
-	return repo, nil
+
+	return repo
 }
 
-func connect(urlConnection string, databaseName string) (*mongo.Database, *exception.ConnectionException) {
+func connect(urlConnection string, databaseName string) *mongo.Database {
 	database, err := mongo.Connect(context.Background(), options.Client().ApplyURI(urlConnection))
 	if err != nil {
-		return nil, exception.NewConnectionException(fmt.Sprintf("No se ha podido conectar a MongoDB: %s", err.Error()), err)
+		panic(fmt.Sprintf("No se ha podido conectar a MongoDB: %s", err.Error()))
 	}
 
 	err = database.Ping(context.Background(), readpref.Primary())
 	if err != nil {
-		return nil, exception.NewConnectionException(fmt.Sprintf("No se ha podido hacer ping a MongoDB: %s", err.Error()), err)
+		panic(fmt.Sprintf("No se ha podido hacer ping a MongoDB: %s", err.Error()))
 	}
 
-	mongo := database.Database(databaseName)
-	return mongo, nil
+	return database.Database(databaseName)
 }
 
-func (r *RepositoryImageMongoDB) Find(dtoFind *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
+func (r *ImageMongoDBRepository) Find(dtoFind *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
 	filter := bson.M{
 		ID_IMAGE: dtoFind.IdImage,
 		OWNER:    dtoFind.Owner,
@@ -63,7 +65,7 @@ func (r *RepositoryImageMongoDB) Find(dtoFind *dto.DTOImage) (*dto.DTOImage, *ex
 	return &result[0], nil
 }
 
-func (r *RepositoryImageMongoDB) find(filter bson.M) ([]dto.DTOImage, *exception.ApiException) {
+func (r *ImageMongoDBRepository) find(filter bson.M) ([]dto.DTOImage, *exception.ApiException) {
 	cursor, err := r.mongo.Find(context.Background(), filter)
 	if err != nil {
 		return nil, exception.NewApiException(500, "Error al buscar las imagenes")
@@ -86,7 +88,7 @@ func (r *RepositoryImageMongoDB) find(filter bson.M) ([]dto.DTOImage, *exception
 	return results, nil
 }
 
-func (r *RepositoryImageMongoDB) Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
+func (r *ImageMongoDBRepository) Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
 	image, errBuilder := builder.NewImageBuilder().
 		FromDTO(dtoInsertImage).
 		Build()
@@ -105,7 +107,7 @@ func (r *RepositoryImageMongoDB) Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOI
 	return dto, nil
 }
 
-func (r *RepositoryImageMongoDB) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
+func (r *ImageMongoDBRepository) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
 	filter := bson.M{ID_IMAGE: id}
 	foundImages, err := r.find(filter)
 	if err != nil {

@@ -2,7 +2,6 @@ package controller
 
 import (
 	"api-upload-photos/src/commons/exception"
-	"api-upload-photos/src/config"
 	"api-upload-photos/src/infrastructure/controller/handler"
 	"api-upload-photos/src/infrastructure/controller/middlewares"
 	"api-upload-photos/src/infrastructure/dto"
@@ -15,17 +14,17 @@ import (
 
 type Controller struct {
 	app          *fiber.App
-	serviceImage *service.ServiceImage
-	serviceUser  *service.ServiceUser
-	jwt          func(*fiber.Ctx) error
+	serviceImage *service.ImageService
+	serviceUser  *service.UserService
+	jwt          *middlewares.AuthMiddleware
 }
 
-func NewController(app *fiber.App, serviceImage *service.ServiceImage, serviceUser *service.ServiceUser) *Controller {
+func NewController(app *fiber.App, serviceImage *service.ImageService, serviceUser *service.UserService, jwtSecret string) *Controller {
 	return &Controller{
 		app:          app,
 		serviceImage: serviceImage,
 		serviceUser:  serviceUser,
-		jwt:          middlewares.NewAuthMiddleware(config.Secret),
+		jwt:          middlewares.NewAuthMiddleware(jwtSecret),
 	}
 }
 
@@ -38,9 +37,12 @@ func (c *Controller) SetupRoutes() {
 }
 
 func (c *Controller) getImage() {
-	c.app.Get("/getImage/:id", c.jwt, func(ctx *fiber.Ctx) error {
+	c.app.Get("/getImage/:id", c.jwt.Handler(), func(ctx *fiber.Ctx) error {
 		token := ctx.Locals("user").(*jtoken.Token)
-		dtoUserJWT := middlewares.GetJWTClaims(token)
+		dtoUserJWT, errJWT := middlewares.GetJWTClaims(token)
+		if errJWT != nil {
+			return ctx.Status(errJWT.Status).JSON("Error al validar el usuario")
+		}
 
 		_, errUser := c.serviceUser.FindAndCheckJWT(dtoUserJWT)
 		if errUser != nil {
@@ -62,9 +64,12 @@ func (c *Controller) getImage() {
 }
 
 func (c *Controller) uploadImage() {
-	c.app.Post("/uploadImage", c.jwt, func(ctx *fiber.Ctx) error {
+	c.app.Post("/uploadImage", c.jwt.Handler(), func(ctx *fiber.Ctx) error {
 		token := ctx.Locals("user").(*jtoken.Token)
-		dtoUserJWT := middlewares.GetJWTClaims(token)
+		dtoUserJWT, errJWT := middlewares.GetJWTClaims(token)
+		if errJWT != nil {
+			return ctx.Status(errJWT.Status).JSON("Error al validar el usuario")
+		}
 
 		_, errUser := c.serviceUser.FindAndCheckJWT(dtoUserJWT)
 		if errUser != nil {
@@ -91,9 +96,12 @@ func (c *Controller) uploadImage() {
 }
 
 func (c *Controller) deleteImage() {
-	c.app.Delete("/deleteImage/:id", c.jwt, func(ctx *fiber.Ctx) error {
+	c.app.Delete("/deleteImage/:id", c.jwt.Handler(), func(ctx *fiber.Ctx) error {
 		token := ctx.Locals("user").(*jtoken.Token)
-		dtoUserJWT := middlewares.GetJWTClaims(token)
+		dtoUserJWT, errJWT := middlewares.GetJWTClaims(token)
+		if errJWT != nil {
+			return ctx.Status(errJWT.Status).JSON("Error al validar el usuario")
+		}
 
 		_, errUser := c.serviceUser.FindAndCheckJWT(dtoUserJWT)
 		if errUser != nil {
@@ -137,7 +145,7 @@ func (c *Controller) loginUser() {
 		token := jtoken.NewWithClaims(jtoken.SigningMethodHS256, claims)
 
 		// Generate encoded token and send it as response.
-		t, err := token.SignedString([]byte(config.Secret))
+		t, err := token.SignedString([]byte(c.jwt.GetSecret()))
 		if err != nil {
 			ctx.Status(fiber.StatusInternalServerError).JSON(exception.NewApiException(fiber.StatusInternalServerError, "Error al generar el token"))
 		}
