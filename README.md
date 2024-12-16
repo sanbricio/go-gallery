@@ -1,4 +1,4 @@
-# API-Upload-Photos
+# Upload-Photos-API
 
 This repository contains an API that allows uploading, retrieving, and deleting photos with persistence using either in-memory storage or MongoDB.
 
