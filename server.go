@@ -32,23 +32,15 @@ func main() {
 	// Inicializamos el middleware de autenticación JWT
 	authMiddleware := middlewares.NewAuthMiddleware(configuration.GetJWTSecret())
 
-	// Middleware para validar el token JWT en todas las rutas excepto en /auth/login y /auth/register
-	app.Use(func(ctx *fiber.Ctx) error {
-		// Excluimos las rutas de login y register de la validación JWT
-		if ctx.Path() == "/auth/login" || ctx.Path() == "/auth/register" {
-			return ctx.Next()
-		}
-		return authMiddleware.Handler()(ctx)
-	})
-
-	// Configuración de rutas de autenticación
+	// Configuración de rutas de autenticación de usuario
 	authController := controller.NewAuthController(userService, configuration.GetJWTSecret())
 	authGroup := app.Group("/auth")
 	authController.SetUpRoutes(authGroup)
 
-	// Configuración de rutas de imágenes
+	// Configuración de rutas de imágenes con autenticación JWT
 	imageController := controller.NewImageController(imageService, userService)
 	imageGroup := app.Group("/image")
+	imageGroup.Use(authMiddleware.Handler()) 
 	imageController.SetUpRoutes(imageGroup)
 
 	// Iniciamos el servidor escuchando en el puerto configurado
