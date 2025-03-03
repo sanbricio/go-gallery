@@ -36,7 +36,7 @@ func (r *UserMemoryRepository) Find(dtoLoginRequest *dto.DTOUser) (*dto.DTOUser,
 	return nil, exception.NewApiException(404, "user not found")
 }
 
-func (r *UserMemoryRepository) FindAndCheckJWT(dtoLoginRequest *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (r *UserMemoryRepository) FindAndCheckJWT(claims *dto.DTOClaimsJwt) (*dto.DTOUser, *exception.ApiException) {
 	return nil, nil
 }
 

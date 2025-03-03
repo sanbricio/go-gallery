@@ -24,8 +24,8 @@ func (s *UserService) Find(dtoFindUser *dto.DTOUser) (*dto.DTOUser, *exception.A
 	return s.repository.Find(dtoFindUser)
 }
 
-func (s *UserService) FindAndCheckJWT(dtoFindUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
-	return s.repository.FindAndCheckJWT(dtoFindUser)
+func (s *UserService) FindAndCheckJWT(claims *dto.DTOClaimsJwt) (*dto.DTOUser, *exception.ApiException) {
+	return s.repository.FindAndCheckJWT(claims)
 }
 
 func (s *UserService) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {

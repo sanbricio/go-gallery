@@ -6,7 +6,7 @@ import (
 )
 
 type ImageRepository interface {
-	Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOImage, *exception.ApiException)
-	Find(dtoFind *dto.DTOImage) (*dto.DTOImage, *exception.ApiException)
-	Delete(id string) (*dto.DTOImage, *exception.ApiException)
+	Insert(dto *dto.DTOImage) (*dto.DTOImage, *exception.ApiException)
+	Find(dto *dto.DTOImage) (*dto.DTOImage, *exception.ApiException)
+	Delete(dto *dto.DTOImage) (*dto.DTOImage, *exception.ApiException)
 }

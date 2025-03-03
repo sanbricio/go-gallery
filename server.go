@@ -33,7 +33,7 @@ func main() {
 	authMiddleware := middlewares.NewAuthMiddleware(configuration.GetJWTSecret())
 
 	// Configuración de rutas de autenticación de usuario
-	authController := controller.NewAuthController(userService, configuration.GetJWTSecret())
+	authController := controller.NewAuthController(userService, authMiddleware)
 	authGroup := app.Group("/auth")
 	authController.SetUpRoutes(authGroup)
 

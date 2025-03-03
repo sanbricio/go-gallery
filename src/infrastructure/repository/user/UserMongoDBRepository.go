@@ -69,16 +69,16 @@ func (r *UserMongoDBRepository) Find(dtoUserFind *dto.DTOUser) (*dto.DTOUser, *e
 	return dto, nil
 }
 
-func (r *UserMongoDBRepository) FindAndCheckJWT(dtoUserFind *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
-	filter := bson.M{USERNAME: dtoUserFind.Username}
+func (r *UserMongoDBRepository) FindAndCheckJWT(claims *dto.DTOClaimsJwt) (*dto.DTOUser, *exception.ApiException) {
+	filter := bson.M{USERNAME: claims.Username}
 	user, err := r.find(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	if user[0].GetEmail() != dtoUserFind.Email ||
-		user[0].GetFirstname() != dtoUserFind.Firstname ||
-		user[0].GetUsername() != dtoUserFind.Username {
+	if user[0].GetEmail() != claims.Email ||
+		user[0].GetFirstname() != claims.Firstname ||
+		user[0].GetUsername() != claims.Username {
 		return nil, exception.NewApiException(403, "Los datos proporcionados no coinciden con el usuario autenticado")
 	}
 

@@ -123,13 +123,13 @@ func persist(image *dto.DTOImage) *exception.ApiException {
 	return nil
 }
 
-func (r *ImageMemoryRepository) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
-	image, err := r.find(id)
+func (r *ImageMemoryRepository) Delete(dto *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
+	image, err := r.find(dto.IdImage)
 	if err != nil {
 		return nil, err
 	}
 
-	filename := filepath.Join("data", fmt.Sprintf("%s.json", id))
+	filename := filepath.Join("data", fmt.Sprintf("%s.json", dto.IdImage))
 
 	errRemove := os.Remove(filename)
 	if errRemove != nil {

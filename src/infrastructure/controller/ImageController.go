@@ -3,12 +3,10 @@ package controller
 import (
 	"api-upload-photos/src/commons/exception"
 	"api-upload-photos/src/infrastructure/controller/handler"
-	"api-upload-photos/src/infrastructure/controller/middlewares"
 	"api-upload-photos/src/infrastructure/dto"
 	"api-upload-photos/src/service"
 
 	"github.com/gofiber/fiber/v2"
-	jtoken "github.com/golang-jwt/jwt/v5"
 )
 
 type ImageController struct {
@@ -30,20 +28,19 @@ func (c *ImageController) SetUpRoutes(router fiber.Router) {
 }
 
 func (c *ImageController) getImage(ctx *fiber.Ctx) error {
-	token := ctx.Locals("user").(*jtoken.Token)
-	dtoUserJWT, errJWT := middlewares.GetJWTClaims(token)
-	if errJWT != nil {
-		return ctx.Status(errJWT.Status).JSON("Error al validar el usuario")
+	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
+	if !ok {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
 	}
 
-	_, errUser := c.serviceUser.FindAndCheckJWT(dtoUserJWT)
+	_, errUser := c.serviceUser.FindAndCheckJWT(claims)
 	if errUser != nil {
 		return ctx.Status(errUser.Status).JSON(errUser)
 	}
 
 	dtoFindImage := &dto.DTOImage{
 		IdImage: ctx.Params("id"),
-		Owner:   dtoUserJWT.Username,
+		Owner:   claims.Username,
 	}
 
 	image, err := c.serviceImage.Find(dtoFindImage)
@@ -55,10 +52,9 @@ func (c *ImageController) getImage(ctx *fiber.Ctx) error {
 }
 
 func (c *ImageController) uploadImage(ctx *fiber.Ctx) error {
-	token := ctx.Locals("user").(*jtoken.Token)
-	dtoUserJWT, errJWT := middlewares.GetJWTClaims(token)
-	if errJWT != nil {
-		return ctx.Status(errJWT.Status).JSON("Error al validar el usuario")
+	dtoUserJWT, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
+	if !ok {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
 	}
 
 	_, errUser := c.serviceUser.FindAndCheckJWT(dtoUserJWT)
@@ -85,19 +81,21 @@ func (c *ImageController) uploadImage(ctx *fiber.Ctx) error {
 }
 
 func (c *ImageController) deleteImage(ctx *fiber.Ctx) error {
-	token := ctx.Locals("user").(*jtoken.Token)
-	dtoUserJWT, errJWT := middlewares.GetJWTClaims(token)
-	if errJWT != nil {
-		return ctx.Status(errJWT.Status).JSON("Error al validar el usuario")
+	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
+	if !ok {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
 	}
 
-	_, errUser := c.serviceUser.FindAndCheckJWT(dtoUserJWT)
+	_, errUser := c.serviceUser.FindAndCheckJWT(claims)
 	if errUser != nil {
 		return ctx.Status(errUser.Status).JSON(errUser)
 	}
 
-	id := ctx.Params("id")
-	image, err := c.serviceImage.Delete(id)
+	dtoFindImage := &dto.DTOImage{
+		IdImage: ctx.Params("id"),
+		Owner:   claims.Username,
+	}
+	image, err := c.serviceImage.Delete(dtoFindImage)
 	if err != nil {
 		return ctx.Status(err.Status).JSON(err)
 	}

@@ -3,33 +3,34 @@ package controller
 import (
 	"api-upload-photos/src/commons/exception"
 	"api-upload-photos/src/infrastructure/controller/handler"
+	"api-upload-photos/src/infrastructure/controller/middlewares"
 	"api-upload-photos/src/infrastructure/dto"
 	"api-upload-photos/src/service"
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-
-	jtoken "github.com/golang-jwt/jwt/v5"
 )
 
 type AuthController struct {
-	userService *service.UserService
-	jwtSecret   string
+	userService    *service.UserService
+	authMiddleware *middlewares.AuthMiddleware
 }
 
-func NewAuthController(userService *service.UserService, jwtSecret string) *AuthController {
+func NewAuthController(userService *service.UserService, authMiddleware *middlewares.AuthMiddleware) *AuthController {
 	return &AuthController{
-		userService: userService,
-		jwtSecret:   jwtSecret,
+		userService:    userService,
+		authMiddleware: authMiddleware,
 	}
 }
 
 func (c *AuthController) SetUpRoutes(router fiber.Router) {
-	router.Post("/login", c.loginUser)
-	router.Post("/register", c.registerUser)
+	router.Post("/login", c.login)
+	router.Post("/register", c.register)
+	router.Post("/logout", c.logout)
 }
 
-func (c *AuthController) loginUser(ctx *fiber.Ctx) error {
+func (c *AuthController) login(ctx *fiber.Ctx) error {
 	dtoLoginRequest := new(dto.DTOUser)
 	err := ctx.BodyParser(dtoLoginRequest)
 	if err != nil {
@@ -41,32 +42,32 @@ func (c *AuthController) loginUser(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(errFind)
 	}
 
-	day := time.Hour * 24
-
-	// Crear las reclamaciones del JWT, incluyendo el usuario y la expiración
-	claims := jtoken.MapClaims{
-		"username": dtoUser.Username,
-		"email":    dtoUser.Email,
-		"name":     dtoUser.Firstname,
-		"exp":      time.Now().Add(day * 1).Unix(),
+	token, errJWT := c.authMiddleware.CreateJwtToken(dtoUser.Username, dtoUser.Email, dtoUser.Firstname)
+	if errJWT != nil {
+		return ctx.Status(errJWT.Status).JSON(errJWT)
 	}
 
-	// Crear el token
-	token := jtoken.NewWithClaims(jtoken.SigningMethodHS256, claims)
-
-	// Firmar el token y devolverlo como respuesta
-	t, err := token.SignedString([]byte(c.jwtSecret))
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(exception.NewApiException(fiber.StatusInternalServerError, "Error al generar el token"))
-	}
-
-	// Devolver el token
-	return ctx.Status(fiber.StatusOK).JSON(dto.DTOLoginResponse{
-		Token: t,
+	// Configuramos la cookie con el JWT
+	ctx.Cookie(&fiber.Cookie{
+		Name:     "auth_token",
+		Value:    token,
+		Expires:  time.Now().Add(2 * time.Hour),
+		HTTPOnly: true,
+		Secure:   false,
+		SameSite: "Lax",
 	})
+
+	response := dto.DTOLoginResponse{
+		Message:  "Se ha iniciado sesión correctamente",
+		Username: dtoUser.Username,
+		Email:    dtoUser.Email,
+		Name:     dtoUser.Firstname,
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
-func (c *AuthController) registerUser(ctx *fiber.Ctx) error {
+func (c *AuthController) register(ctx *fiber.Ctx) error {
 	dtoRegisterRequest := new(dto.DTOUser)
 	err := ctx.BodyParser(dtoRegisterRequest)
 	if err != nil {
@@ -89,4 +90,25 @@ func (c *AuthController) registerUser(ctx *fiber.Ctx) error {
 		Message:   "Se ha creado el usuario correctamente",
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(dto)
+}
+
+func (c *AuthController) logout(ctx *fiber.Ctx) error {
+	cookie := ctx.Cookies("auth_token")
+	if cookie == "" {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "No se ha encontrado una sesión activa"))
+	}
+
+	// Obtener claims del token
+	dto, err := c.authMiddleware.GetJWTClaimsFromCookie(cookie)
+	if err != nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Token inválido"))
+	}
+ 
+	// Eliminamos la cookie
+	c.authMiddleware.DeleteAuthCookie(ctx)
+
+	// Respuesta con el nombre del usuario
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": fmt.Sprintf("Se ha cerrado sesión correctamente, %s", dto.Username),
+	})
 }

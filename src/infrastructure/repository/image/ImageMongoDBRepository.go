@@ -107,8 +107,11 @@ func (r *ImageMongoDBRepository) Insert(dtoInsertImage *dto.DTOImage) (*dto.DTOI
 	return dto, nil
 }
 
-func (r *ImageMongoDBRepository) Delete(id string) (*dto.DTOImage, *exception.ApiException) {
-	filter := bson.M{ID_IMAGE: id}
+func (r *ImageMongoDBRepository) Delete(dto *dto.DTOImage) (*dto.DTOImage, *exception.ApiException) {
+	filter := bson.M{
+		ID_IMAGE: dto.IdImage,
+		OWNER:    dto.Owner,
+	}
 	foundImages, err := r.find(filter)
 	if err != nil {
 		return nil, err
