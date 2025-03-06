@@ -45,11 +45,11 @@ func buildDependencyContainer(conf *configuration.Configuration) *dependency_con
 	args := conf.GetArgs()
 	dependencyContainer := dependency_container.GetIntance()
 
-	userRepositoryKey := conf.GetArg("UPLOAD_PHOTOS_API_USER_REPOSITORY")
+	userRepositoryKey := conf.GetArg("USER_REPOSITORY")
 	userRepositoryDependency := dependency_dictionary.FindUserDependency(userRepositoryKey, args)
 	dependencyContainer.SetUserRepository(userRepositoryDependency)
 
-	imageRepositoryKey := conf.GetArg("UPLOAD_PHOTOS_API_IMAGE_REPOSITORY")
+	imageRepositoryKey := conf.GetArg("IMAGE_REPOSITORY")
 	imageRepositoryDependency := dependency_dictionary.FindImageDependency(imageRepositoryKey, args)
 	dependencyContainer.SetImageRepository(imageRepositoryDependency)
 

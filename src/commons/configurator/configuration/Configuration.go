@@ -28,7 +28,7 @@ func Instance(args map[string]string) *Configuration {
 			sesionId:    serviceName + "-" + strconv.FormatInt(miliseconds, 10),
 			timestamp:   timestamp,
 			args:        args,
-			port:        args["UPLOAD_PHOTOS_API_PORT"],
+			port:        args["GO_GALLERY_API_PORT"],
 			jwtSecret:   args["JWT_SECRET"],
 		}
 	}
