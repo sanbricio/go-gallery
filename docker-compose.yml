@@ -21,6 +21,22 @@ services:
     environment:
       ME_CONFIG_BASICAUTH_USERNAME: ${DOCKER_ME_CONFIG_BASICAUTH_USERNAME}
       ME_CONFIG_BASICAUTH_PASSWORD: ${DOCKER_ME_CONFIG_BASICAUTH_PASSWORD}
-      ME_CONFIG_MONGODB_URL: ${DOCKER_ME_CONFIG_MONGODB_URL}
+      ME_CONFIG_MONGODB_URL: ${MONGODB_URL_CONNECTION}
     depends_on:
       - mongodb
+
+  postgres:
+    container_name: postgres
+    image: postgres:16
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRESQL_USER: ${POSTGRESQL_USER}
+      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRESQL_DB: ${POSTGRESQL_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

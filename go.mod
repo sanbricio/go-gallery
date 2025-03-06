@@ -9,6 +9,8 @@ require (
 	github.com/google/uuid v1.6.0
 )
 
+require github.com/lib/pq v1.10.9
+
 require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect

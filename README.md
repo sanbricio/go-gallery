@@ -1,6 +1,7 @@
+
 # GoGallery Backend
 
-This repository contains an API that enables users to upload, retrieve, and delete photos. Additionally, it includes authentication functionality to ensure secure access
+This repository contains an API that enables users to upload, retrieve, and delete photos. Additionally, it includes authentication functionality to ensure secure access.
 
 ## Environment Variables Configuration
 
@@ -11,23 +12,42 @@ DOCKER_MONGO_INITDB_ROOT_USERNAME=
 DOCKER_MONGO_INITDB_ROOT_PASSWORD=
 DOCKER_ME_CONFIG_BASICAUTH_USERNAME=
 DOCKER_ME_CONFIG_BASICAUTH_PASSWORD=
-DOCKER_ME_CONFIG_MONGODB_URL=
 
-MONGODB_URL_CONNECTION=
-MONGODB_DATABASE=
+POSTGRESQL_USER=
+POSTGRESQL_PASSWORD=
+POSTGRESQL_DB=go-gallery
+POSTGRESQL_HOST=
+POSTGRESQL_PORT=
+
+MONGODB_URL_CONNECTION=mongodb://root:example@localhost:27017/
+MONGODB_DATABASE=api-upload-images
 
 JWT_SECRET=
-
-UPLOAD_PHOTOS_API_USER_REPOSITORY=UserMongoDBRepository
-UPLOAD_PHOTOS_API_IMAGE_REPOSITORY=ImageMongoDBRepository
+GO_GALLERY_API_PORT=3000
+USER_REPOSITORY=UserPostgreSQLRepository
+IMAGE_REPOSITORY=ImageMongoDBRepository
 ```
 
-* `DOCKER_MONGO_INITDB_ROOT_USERNAME` y `DOCKER_MONGO_INITDB_ROOT_PASSWORD`: Credentials for the MongoDB root user.
-* `DOCKER_ME_CONFIG_BASICAUTH_USERNAME` y `DOCKER_ME_CONFIG_BASICAUTH_PASSWORD`: Credentials to access the MongoDB Express website.
-* `DOCKER_ME_CONFIG_MONGODB_URL`:  Connection URL to the MongoDB instance by docker
-* `MONGODB_URL_CONNECTION`:  Connection URL to the MongoDB local instance
-* `MONGODB_DATABASE`:  Database name we are going to use
-* `JWT_SECRET`: This key is used for JWT Authentification
-* `GO_GALLERY_API_PORT`: This key is used for select a specified port for the application
-* `USER_REPOSITORY`: This key is used for choose a implementation of user repository
-* `IMAGE_REPOSITORY`: This key is used for choose a implementation of image repository
+### Description of Environment Variables
+
+- **MongoDB Configuration:**  
+  - `DOCKER_MONGO_INITDB_ROOT_USERNAME` & `DOCKER_MONGO_INITDB_ROOT_PASSWORD`: Credentials for the MongoDB root user.  
+  - `DOCKER_ME_CONFIG_BASICAUTH_USERNAME` & `DOCKER_ME_CONFIG_BASICAUTH_PASSWORD`: Credentials to access the MongoDB Express web interface.  
+  - `MONGODB_URL_CONNECTION`: Connection URL for the local MongoDB instance.  
+  - `MONGODB_DATABASE`: Name of the MongoDB database used by the application.  
+
+- **PostgreSQL Configuration:**  
+  - `POSTGRESQL_USER`: PostgreSQL username.  
+  - `POSTGRESQL_PASSWORD`: PostgreSQL password.  
+  - `POSTGRESQL_DB`: PostgreSQL database name (`go-gallery`).  
+  - `POSTGRESQL_HOST`: Host for PostgreSQL.  
+  - `POSTGRESQL_PORT`: Port for PostgreSQL.  
+
+- **Security & Authentication:**  
+  - `JWT_SECRET`: Secret key used for JWT authentication.  
+
+- **Application Configuration:**  
+  - `GO_GALLERY_API_PORT`: Port for the application.  
+  - `USER_REPOSITORY`: Specifies the user repository implementation to use.  
+  - `IMAGE_REPOSITORY`: Specifies the image repository implementation to use.  
+

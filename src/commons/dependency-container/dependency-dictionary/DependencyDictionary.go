@@ -18,7 +18,7 @@ func FindUserDependency(code string, args map[string]string) user_repository.Use
 	case user_repository.UserMongoDBRepositoryKey:
 		return user_repository.NewUserMongoDBRepository(args)
 	default:
-		return user_repository.NewUserMemoryRepository()
+		return user_repository.NewUserPostgreSQLRepository(args)
 	}
 
 }
