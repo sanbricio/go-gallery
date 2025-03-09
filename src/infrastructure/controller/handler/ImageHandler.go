@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/dustin/go-humanize"
+	"slices"
 )
 
 func ProcessImageFile(fileInput *multipart.FileHeader, owner string) (*dto.DTOImage, *exception.ApiException) {
@@ -42,12 +43,7 @@ func ProcessImageFile(fileInput *multipart.FileHeader, owner string) (*dto.DTOIm
 func isValidExtension(extension string) bool {
 	validExtensions := []string{".jpg", ".jpeg", ".png", ".webp"}
 
-	for _, validExt := range validExtensions {
-		if extension == validExt {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(validExtensions, extension)
 }
 
 func encodeToBase64(fileInput *multipart.FileHeader) (string, *exception.ApiException) {
