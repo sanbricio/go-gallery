@@ -28,10 +28,10 @@ func (s *UserService) FindAndCheckJWT(claims *dto.DTOClaimsJwt) (*dto.DTOUser, *
 	return s.repository.FindAndCheckJWT(claims)
 }
 
-func (s *UserService) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (s *UserService) Update(dtoUpdateUser *dto.DTOUser) (int64, *exception.ApiException) {
 	return s.repository.Update(dtoUpdateUser)
 }
 
-func (s *UserService) Delete(dtoDeleteUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (s *UserService) Delete(dtoDeleteUser *dto.DTOUser) (int64, *exception.ApiException) {
 	return s.repository.Delete(dtoDeleteUser)
 }

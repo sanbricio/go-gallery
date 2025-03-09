@@ -52,12 +52,12 @@ func (c *ImageController) getImage(ctx *fiber.Ctx) error {
 }
 
 func (c *ImageController) uploadImage(ctx *fiber.Ctx) error {
-	dtoUserJWT, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
+	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
 	if !ok {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
 	}
 
-	_, errUser := c.serviceUser.FindAndCheckJWT(dtoUserJWT)
+	_, errUser := c.serviceUser.FindAndCheckJWT(claims)
 	if errUser != nil {
 		return ctx.Status(errUser.Status).JSON(errUser)
 	}
@@ -67,7 +67,7 @@ func (c *ImageController) uploadImage(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusNotFound).JSON(exception.NewApiException(fiber.StatusNotFound, "Error al obtener la imagen del formulario"))
 	}
 
-	dtoInsertImage, errFile := handler.ProcessImageFile(fileInput, dtoUserJWT.Username)
+	dtoInsertImage, errFile := handler.ProcessImageFile(fileInput, claims.Username)
 	if errFile != nil {
 		return ctx.Status(errFile.Status).JSON(errFile)
 	}

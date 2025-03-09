@@ -7,7 +7,7 @@ import (
 )
 
 func ProcessUser(dto *dto.DTOUser) *exception.ApiException {
-	err := validatePassword(dto.Password)
+	err := ValidatePassword(dto.Password)
 	if err != nil {
 		return err
 	}
@@ -19,7 +19,7 @@ func ProcessUser(dto *dto.DTOUser) *exception.ApiException {
 	return nil
 }
 
-func validatePassword(password string) *exception.ApiException {
+func ValidatePassword(password string) *exception.ApiException {
 	if len(password) < 8 {
 		return exception.NewApiException(404, "La contraseña tiene que tener al menos 8 carácteres")
 	}

@@ -14,11 +14,12 @@ const (
 )
 
 type AuthMiddleware struct {
-	secret string
+	secret     string
+	cookieName string
 }
 
 func NewAuthMiddleware(secret string) *AuthMiddleware {
-	return &AuthMiddleware{secret: secret}
+	return &AuthMiddleware{secret: secret, cookieName: COOKIE_NAME}
 }
 
 // Middleware para validar la cookie JWT
@@ -38,7 +39,7 @@ func (auth *AuthMiddleware) Handler() fiber.Handler {
 
 		// Verificar expiración y renovar si quedan menos de 10 minutos
 		if claims.Expiration-time.Now().Unix() < 600 {
-			newToken, err := auth.CreateJwtToken(claims.Username, claims.Email, claims.Firstname)
+			newToken, err := auth.CreateJwtToken(claims.Username, claims.Email)
 			if err != nil {
 				return ctx.Status(fiber.StatusInternalServerError).JSON(err)
 			}
@@ -52,13 +53,13 @@ func (auth *AuthMiddleware) Handler() fiber.Handler {
 	}
 }
 
-func (auth *AuthMiddleware) CreateJwtToken(username, email, firstname string) (string, *exception.ApiException) {
+func (auth *AuthMiddleware) CreateJwtToken(username, email string) (string, *exception.ApiException) {
 	// Crear las claims del JWT, incluyendo el usuario y la expiración
 	claims := jtoken.MapClaims{
-		"username":  username,
-		"email":     email,
-		"firstname": firstname,
-		"exp":       time.Now().Add(2 * time.Hour).Unix(), // Expiración del token en 2 horas
+		"username": username,
+		"email":    email,
+		"exp":      time.Now().Add(2 * time.Hour).Unix(), // Expiración del token en 2 horas
+		"iat":      time.Now().Unix(),                    // Fecha de emisión del token
 	}
 
 	// Creamos el token JWT
@@ -89,7 +90,7 @@ func (auth *AuthMiddleware) GetJWTClaimsFromCookie(cookie string) (*dto.DTOClaim
 
 	username, ok := claims["username"].(string)
 	email, okEmail := claims["email"].(string)
-	firstname, okFirstname := claims["firstname"].(string)
+	iat, okFirstname := claims["iat"].(float64)
 	exp, okExp := claims["exp"].(float64)
 
 	if !ok || !okEmail || !okFirstname || !okExp {
@@ -99,18 +100,18 @@ func (auth *AuthMiddleware) GetJWTClaimsFromCookie(cookie string) (*dto.DTOClaim
 	return &dto.DTOClaimsJwt{
 		Username:   username,
 		Email:      email,
-		Firstname:  firstname,
+		IssuedAt:   int64(iat),
 		Expiration: int64(exp),
 	}, nil
 }
 
 func (auth *AuthMiddleware) SetAuthCookie(ctx *fiber.Ctx, token string) {
 	ctx.Cookie(&fiber.Cookie{
-		Name:     COOKIE_NAME,
+		Name:     auth.cookieName,
 		Value:    token,
 		Expires:  time.Now().Add(2 * time.Hour),
 		HTTPOnly: true,
-		Secure:   false, // En producción, cambiar a `true` si se usa HTTPS (parametrizar en la configuración)
+		Secure:   false, //TODO Configuracion parametrizable para producción, cambiar a `true` si se usa HTTPS 
 		SameSite: "Lax",
 	})
 }
@@ -118,11 +119,15 @@ func (auth *AuthMiddleware) SetAuthCookie(ctx *fiber.Ctx, token string) {
 func (auth *AuthMiddleware) DeleteAuthCookie(ctx *fiber.Ctx) {
 	// Eliminar la cookie
 	ctx.Cookie(&fiber.Cookie{
-		Name:     COOKIE_NAME,
+		Name:     auth.cookieName,
 		Value:    "",
 		MaxAge:   0, // Expira inmediatamente
 		HTTPOnly: true,
 		Secure:   false,
 		SameSite: "Lax",
 	})
+}
+
+func (auth *AuthMiddleware) GetCookieName() string {
+	return auth.cookieName
 }

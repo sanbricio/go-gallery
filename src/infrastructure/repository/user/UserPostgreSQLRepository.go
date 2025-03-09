@@ -2,6 +2,7 @@ package user_repository
 
 import (
 	"api-upload-photos/src/commons/exception"
+	entity "api-upload-photos/src/domain/entities"
 	"api-upload-photos/src/domain/entities/builder"
 	"api-upload-photos/src/infrastructure/dto"
 	"database/sql"
@@ -35,6 +36,15 @@ func NewUserPostgreSQLRepository(args map[string]string) UserRepository {
 }
 
 func (u *UserPostgreSQLRepository) Find(dtoLoginRequest *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+	user, err := u.find(dtoLoginRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	return dto.FromUser(user), nil
+}
+
+func (u *UserPostgreSQLRepository) find(dtoLoginRequest *dto.DTOUser) (*entity.User, *exception.ApiException) {
 	query := "SELECT username, email, firstname,lastname, password FROM users WHERE username = $1"
 	row := u.db.QueryRow(query, dtoLoginRequest.Username)
 
@@ -58,19 +68,19 @@ func (u *UserPostgreSQLRepository) Find(dtoLoginRequest *dto.DTOUser) (*dto.DTOU
 		return nil, exception.NewApiException(404, "Contraseña incorrecta")
 	}
 
-	return dto.FromUser(user), nil
+	return user, nil
 }
 
 func (u *UserPostgreSQLRepository) FindAndCheckJWT(claims *dto.DTOClaimsJwt) (*dto.DTOUser, *exception.ApiException) {
-	query := "SELECT username, email, firstname FROM users WHERE username = $1"
+	query := "SELECT username, email FROM users WHERE username = $1"
 	row := u.db.QueryRow(query, claims.Username)
 
 	userDTO := new(dto.DTOUser)
-	if err := row.Scan(&userDTO.Username, &userDTO.Email, &userDTO.Firstname); err != nil {
+	if err := row.Scan(&userDTO.Username, &userDTO.Email); err != nil {
 		return nil, exception.NewApiException(404, "Usuario no encontrado")
 	}
 
-	if userDTO.Username != claims.Username || userDTO.Email != claims.Email || userDTO.Firstname != claims.Firstname {
+	if userDTO.Username != claims.Username || userDTO.Email != claims.Email {
 		return nil, exception.NewApiException(403, "Los datos proporcionados no coinciden con el usuario autenticado")
 	}
 
@@ -99,24 +109,81 @@ func (u *UserPostgreSQLRepository) Insert(dtoRegisterRequest *dto.DTOUser) (*dto
 	return dto.FromUser(user), nil
 }
 
-func (r *UserPostgreSQLRepository) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
-	query := "UPDATE users SET email = $1, firstname = $2, lastname = $3  password = $4 WHERE username = $5"
-	_, err := r.db.Exec(query, dtoUpdateUser.Email, dtoUpdateUser.Firstname, dtoUpdateUser.Lastname, dtoUpdateUser.Password, dtoUpdateUser.Username)
-	if err != nil {
-		return nil, exception.NewApiException(500, "Error al actualizar el usuario")
+func (u *UserPostgreSQLRepository) Update(dtoUpdateUser *dto.DTOUser) (int64, *exception.ApiException) {
+	query := "UPDATE users SET "
+	args := []any{}
+	count := 1
+	// Construimos la query y los argumentos para la actualización de manera dinámica
+	if dtoUpdateUser.Email != "" {
+		query += "email = $" + fmt.Sprint(count) + ", "
+		args = append(args, dtoUpdateUser.Email)
+		count++
+	}
+	if dtoUpdateUser.Firstname != "" {
+		query += "firstname = $" + fmt.Sprint(count) + ", "
+		args = append(args, dtoUpdateUser.Firstname)
+		count++
+	}
+	if dtoUpdateUser.Lastname != "" {
+		query += "lastname = $" + fmt.Sprint(count) + ", "
+		args = append(args, dtoUpdateUser.Lastname)
+		count++
+	}
+	if dtoUpdateUser.Password != "" {
+		query += "password = $" + fmt.Sprint(count) + ", "
+		args = append(args, dtoUpdateUser.Password)
+		count++
 	}
 
-	return dtoUpdateUser, nil
+	// Eliminar la última coma y agregar condición WHERE
+	if len(args) == 0 {
+		return 0, exception.NewApiException(400, "No hay datos para actualizar")
+	}
+
+	// Con el query[:len(query)-2] eliminamos la última coma y espacio, despues de eso añadimos la condición WHERE
+	query = query[:len(query)-2] + " WHERE username = $" + fmt.Sprint(count)
+	args = append(args, dtoUpdateUser.Username)
+
+	result, err := u.db.Exec(query, args...)
+	if err != nil {
+		return 0, exception.NewApiException(500, "Error al intentar actualizar el usuario")
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, exception.NewApiException(500, "Error al intentar obtener el número de filas afectadas")
+	}
+
+	if rowsAffected == 0 {
+		return 0, exception.NewApiException(404, "No se ha encontrado usuario para actualizar")
+	}
+
+	return rowsAffected, nil
 }
 
-func (r *UserPostgreSQLRepository) Delete(dtoDeleteUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
-	query := "DELETE FROM users WHERE username = $1"
-	_, err := r.db.Exec(query, dtoDeleteUser.Username)
-	if err != nil {
-		return nil, exception.NewApiException(500, "Error al eliminar el usuario")
+func (u *UserPostgreSQLRepository) Delete(dtoDeleteUser *dto.DTOUser) (int64, *exception.ApiException) {
+	// Comprobamos que el usuario exista y que la contraseña sea correcta para eliminar el usuario
+	_, errFind := u.find(dtoDeleteUser)
+	if errFind != nil {
+		return 0, errFind
 	}
 
-	return dtoDeleteUser, nil
+	query := "DELETE FROM users WHERE username = $1"
+	result, err := u.db.Exec(query, dtoDeleteUser.Username)
+	if err != nil {
+		return 0, exception.NewApiException(500, "Error al eliminar el usuario")
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return 0, exception.NewApiException(500, "Error al intentar obtener el número de filas afectadas")
+	}
+
+	if rowsAffected == 0 {
+		return 0, exception.NewApiException(404, "No se ha encontrado usuario para eliminar")
+	}
+
+	return rowsAffected, nil
 }
 
 func (r *UserPostgreSQLRepository) checkUserIsCreated(dto *dto.DTOUser) *exception.ApiException {

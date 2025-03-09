@@ -28,6 +28,8 @@ func (c *AuthController) SetUpRoutes(router fiber.Router) {
 	router.Post("/login", c.login)
 	router.Post("/register", c.register)
 	router.Post("/logout", c.logout)
+	router.Put("/update", c.update)
+	router.Delete("/delete", c.delete)
 }
 
 func (c *AuthController) login(ctx *fiber.Ctx) error {
@@ -42,7 +44,7 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(errFind)
 	}
 
-	token, errJWT := c.authMiddleware.CreateJwtToken(dtoUser.Username, dtoUser.Email, dtoUser.Firstname)
+	token, errJWT := c.authMiddleware.CreateJwtToken(dtoUser.Username, dtoUser.Email)
 	if errJWT != nil {
 		return ctx.Status(errJWT.Status).JSON(errJWT)
 	}
@@ -93,22 +95,107 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 }
 
 func (c *AuthController) logout(ctx *fiber.Ctx) error {
-	cookie := ctx.Cookies("auth_token")
+	cookie := ctx.Cookies(c.authMiddleware.GetCookieName())
 	if cookie == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "No se ha encontrado una sesión activa"))
 	}
 
 	// Obtener claims del token
-	dto, err := c.authMiddleware.GetJWTClaimsFromCookie(cookie)
+	claims, err := c.authMiddleware.GetJWTClaimsFromCookie(cookie)
 	if err != nil {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Token inválido"))
 	}
- 
+
 	// Eliminamos la cookie
 	c.authMiddleware.DeleteAuthCookie(ctx)
 
 	// Respuesta con el nombre del usuario
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": fmt.Sprintf("Se ha cerrado sesión correctamente, %s", dto.Username),
+		"message": fmt.Sprintf("Se ha cerrado sesión correctamente, %s", claims.Username),
+	})
+}
+
+func (c *AuthController) update(ctx *fiber.Ctx) error {
+	cookie := ctx.Cookies(c.authMiddleware.GetCookieName())
+	if cookie == "" {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "No se ha encontrado una sesión activa"))
+	}
+
+	// Obtener claims del token
+	claims, errJWT := c.authMiddleware.GetJWTClaimsFromCookie(cookie)
+	if errJWT != nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(errJWT)
+	}
+
+	// Comprobamos que el usuario existe
+	_, errUser := c.userService.FindAndCheckJWT(claims)
+	if errUser != nil {
+		return ctx.Status(errUser.Status).JSON(errUser)
+	}
+
+	// Obtenemos los datos que quiere cambiar el usuario
+	dtoUserUpdate := new(dto.DTOUser)
+	err := ctx.BodyParser(dtoUserUpdate)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erróneo"))
+	}
+
+	// Si el usuario quiere cambiar la contraseña comprobamos que esta no este vacia y la validamos
+	if dtoUserUpdate.Password != "" {
+		errHandler := handler.ValidatePassword(dtoUserUpdate.Password)
+		if errHandler != nil {
+			return ctx.Status(errHandler.Status).JSON(errHandler)
+		}
+	}
+
+	// Actualizamos el usuario
+	_, errUpdate := c.userService.Update(dtoUserUpdate)
+	if errUpdate != nil {
+		return ctx.Status(errUpdate.Status).JSON(errUpdate)
+	}
+
+	// Respuesta con el nombre del usuario
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": fmt.Sprintf("Se han actualizado los datos del usuario %s correctamente.", dtoUserUpdate.Username),
+	})
+}
+
+func (c *AuthController) delete(ctx *fiber.Ctx) error {
+	cookie := ctx.Cookies(c.authMiddleware.GetCookieName())
+	if cookie == "" {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "No se ha encontrado una sesión activa"))
+	}
+
+	// Obtener claims del token
+	claims, errJWT := c.authMiddleware.GetJWTClaimsFromCookie(cookie)
+	if errJWT != nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(errJWT)
+	}
+
+	// Comprobamos que el usuario existe
+	_, errUser := c.userService.FindAndCheckJWT(claims)
+	if errUser != nil {
+		return ctx.Status(errUser.Status).JSON(errUser)
+	}
+
+	// Obtenemos los datos de el usuario
+	dtoUser := new(dto.DTOUser)
+	err := ctx.BodyParser(dtoUser)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erróneo"))
+	}
+
+	// Eliminamos el usuario
+	_, errDelete := c.userService.Delete(dtoUser)
+	if errDelete != nil {
+		return ctx.Status(errDelete.Status).JSON(errDelete)
+	}
+
+	// Eliminamos la cookie de autenticación
+	c.authMiddleware.DeleteAuthCookie(ctx)
+
+	// Respuesta con el nombre del usuario
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": fmt.Sprintf("Se han eliminado los datos del usuario %s correctamente.", dtoUser.Username),
 	})
 }

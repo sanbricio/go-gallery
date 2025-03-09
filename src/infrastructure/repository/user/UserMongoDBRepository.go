@@ -77,7 +77,6 @@ func (r *UserMongoDBRepository) FindAndCheckJWT(claims *dto.DTOClaimsJwt) (*dto.
 	}
 
 	if user[0].GetEmail() != claims.Email ||
-		user[0].GetFirstname() != claims.Firstname ||
 		user[0].GetUsername() != claims.Username {
 		return nil, exception.NewApiException(403, "Los datos proporcionados no coinciden con el usuario autenticado")
 	}
@@ -110,57 +109,71 @@ func (r *UserMongoDBRepository) Insert(dtoInsertUser *dto.DTOUser) (*dto.DTOUser
 	return dto, nil
 }
 
-func (r *UserMongoDBRepository) Update(dtoUpdateUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
-	filter := bson.M{USERNAME: dtoUpdateUser.Username}
+func (r *UserMongoDBRepository) Update(dtoUpdateUser *dto.DTOUser) (int64, *exception.ApiException) {
+	filter := bson.M{"username": dtoUpdateUser.Username}
 	_, err := r.find(filter)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
-	user, errBuilder := builder.NewUserBuilder().
-		FromDTO(dtoUpdateUser).
-		Build()
-	if errBuilder != nil {
-		return nil, exception.NewApiException(500, errBuilder.Error())
+	// Construir solo los campos que deben actualizarse
+	updateFields := bson.M{}
+
+	if dtoUpdateUser.Email != "" {
+		updateFields["email"] = dtoUpdateUser.Email
+	}
+	if dtoUpdateUser.Firstname != "" {
+		updateFields["firstname"] = dtoUpdateUser.Firstname
+	}
+	if dtoUpdateUser.Lastname != "" {
+		updateFields["lastname"] = dtoUpdateUser.Lastname
+	}
+	if dtoUpdateUser.Password != "" {
+		updateFields["password"] = dtoUpdateUser.Password
 	}
 
-	update := bson.M{
-		"$set": bson.M{
-			"email":     user.GetEmail(),
-			"firstname": user.GetFirstname(),
-			"lastname":  user.GetLastname(),
-			"password":  user.GetPassword(),
-		},
+	if len(updateFields) == 0 {
+		return 0, exception.NewApiException(400, "No hay datos para actualizar")
 	}
 
-	_, errUpdate := r.mongo.UpdateOne(context.Background(), filter, update)
+	update := bson.M{"$set": updateFields}
+	// Actualizamos el usuario
+	result, errUpdate := r.mongo.UpdateOne(context.Background(), filter, update)
 	if errUpdate != nil {
-		return nil, exception.NewApiException(500, "Error al actualizar el usuario en la base de datos")
+		return 0, exception.NewApiException(500, "Error al actualizar el usuario en la base de datos")
 	}
 
-	updatedDTO := dto.FromUser(user)
-	return updatedDTO, nil
+	if result.ModifiedCount == 0 {
+		return 0, exception.NewApiException(404, "No se ha actualizado ningún usuario")
+	}
+
+	return result.ModifiedCount, nil
 }
 
-func (r *UserMongoDBRepository) Delete(dtoDeleteUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (r *UserMongoDBRepository) Delete(dtoDeleteUser *dto.DTOUser) (int64, *exception.ApiException) {
 	filter := bson.M{USERNAME: dtoDeleteUser.Username}
 	user, err := r.find(filter)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
 
 	errPassword := user[0].CheckPasswordIntegrity(dtoDeleteUser.Password)
 	if errPassword != nil {
-		return nil, exception.NewApiException(404, "Contraseña incorrecta")
+		return 0, exception.NewApiException(404, "Contraseña incorrecta")
 	}
 
-	_, errDelete := r.mongo.DeleteOne(context.Background(), filter)
+	result, errDelete := r.mongo.DeleteOne(context.Background(), filter)
 	if errDelete != nil {
-		return nil, exception.NewApiException(500, "Error al eliminar el usuario")
+		return 0, exception.NewApiException(500, "Error al eliminar el usuario")
 	}
 
-	deletedUserDTO := dto.FromUser(user[0])
-	return deletedUserDTO, nil
+	deleteCount := result.DeletedCount
+
+	if deleteCount == 0 {
+		return 0, exception.NewApiException(404, "No se ha eliminado ningún usuario")
+	}
+
+	return deleteCount, nil
 }
 
 func (r *UserMongoDBRepository) checkUserIsCreated(dtoInsertUser *dto.DTOUser) *exception.ApiException {

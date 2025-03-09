@@ -9,6 +9,6 @@ type UserRepository interface {
 	Find(dtoLoginRequest *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)
 	FindAndCheckJWT(claims *dto.DTOClaimsJwt) (*dto.DTOUser, *exception.ApiException)
 	Insert(dtoRegisterRequest *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)
-	Update(dtoUserUpdate *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)
-	Delete(dtoUserDelete *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)
+	Update(dtoUserUpdate *dto.DTOUser) (int64, *exception.ApiException)
+	Delete(dtoUserDelete *dto.DTOUser) (int64, *exception.ApiException)
 }
