@@ -13,14 +13,16 @@ import (
 )
 
 type AuthController struct {
-	userService    *service.UserService
-	authMiddleware *middlewares.AuthMiddleware
+	userService        *service.UserService
+	emailSenderService *service.EmailSenderService
+	authMiddleware     *middlewares.AuthMiddleware
 }
 
-func NewAuthController(userService *service.UserService, authMiddleware *middlewares.AuthMiddleware) *AuthController {
+func NewAuthController(userService *service.UserService, emailSenderService *service.EmailSenderService, authMiddleware *middlewares.AuthMiddleware) *AuthController {
 	return &AuthController{
-		userService:    userService,
-		authMiddleware: authMiddleware,
+		userService:        userService,
+		emailSenderService: emailSenderService,
+		authMiddleware:     authMiddleware,
 	}
 }
 
@@ -29,7 +31,8 @@ func (c *AuthController) SetUpRoutes(router fiber.Router) {
 	router.Post("/register", c.register)
 	router.Post("/logout", c.logout)
 	router.Put("/update", c.update)
-	router.Delete("/delete", c.delete)
+	router.Post("/request-delete", c.requestDelete)
+	router.Delete("/delete", c.confirmDelete)
 }
 
 func (c *AuthController) login(ctx *fiber.Ctx) error {
@@ -160,7 +163,42 @@ func (c *AuthController) update(ctx *fiber.Ctx) error {
 	})
 }
 
-func (c *AuthController) delete(ctx *fiber.Ctx) error {
+func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
+	cookie := ctx.Cookies(c.authMiddleware.GetCookieName())
+	if cookie == "" {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "No se ha encontrado una sesión activa"))
+	}
+
+	// Obtenemos claims del token
+	claims, errJWT := c.authMiddleware.GetJWTClaimsFromCookie(cookie)
+	if errJWT != nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(errJWT)
+	}
+
+	// Comprobamos que el usuario existe
+	_, errUser := c.userService.FindAndCheckJWT(claims)
+	if errUser != nil {
+		return ctx.Status(errUser.Status).JSON(errUser)
+	}
+
+	// Generamos el código único temporal
+	code := handler.GenerateCode(claims.Email)
+
+	// Enviamos al usuario un correo electrónico con el código
+	errEmail := c.emailSenderService.SendEmail(code, claims.Email)
+	if errEmail != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "No se ha podido enviar un código de confirmación al correo electrónico debido a un fallo interno del sistema.",
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": fmt.Sprintf("Se ha enviado un código de confirmación al correo electrónico %s .", claims.Email),
+	})
+}
+
+func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
+	// TODO Aqui faltaria comprobar el código de confirmacion para la eliminacion de la cuenta
 	cookie := ctx.Cookies(c.authMiddleware.GetCookieName())
 	if cookie == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "No se ha encontrado una sesión activa"))
