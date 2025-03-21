@@ -23,9 +23,16 @@ MONGODB_URL_CONNECTION=mongodb://root:example@localhost:27017/
 MONGODB_DATABASE=api-upload-images
 
 JWT_SECRET=
+
 GO_GALLERY_API_PORT=3000
 USER_REPOSITORY=UserPostgreSQLRepository
 IMAGE_REPOSITORY=ImageMongoDBRepository
+EMAIL_SENDER_REPOSITORY=EmailSenderGoMailRepository
+
+EMAIL_SENDER_HOST=smtp.gmail.com
+EMAIL_SENDER_PORT=587
+EMAIL_SENDER_USERNAME=
+EMAIL_SENDER_PASSWORD=
 ```
 
 ### Description of Environment Variables
@@ -43,6 +50,12 @@ IMAGE_REPOSITORY=ImageMongoDBRepository
   - `POSTGRESQL_HOST`: Host for PostgreSQL.  
   - `POSTGRESQL_PORT`: Port for PostgreSQL.  
 
+- **Email Sender Configuration:**  
+  - `EMAIL_SENDER_HOST`: Host for the email service (e.g., SMTP server).
+  - `EMAIL_SENDER_PORT`: Port for sending emails. 
+  - `EMAIL_SENDER_USERNAME`: Email address used to send emails..  
+  - `EMAIL_SENDER_PASSWORD`: Password for the email account used to send emails.  
+
 - **Security & Authentication:**  
   - `JWT_SECRET`: Secret key used for JWT authentication.  
 
@@ -50,4 +63,5 @@ IMAGE_REPOSITORY=ImageMongoDBRepository
   - `GO_GALLERY_API_PORT`: Port for the application.  
   - `USER_REPOSITORY`: Specifies the user repository implementation to use.  
   - `IMAGE_REPOSITORY`: Specifies the image repository implementation to use.  
+  - `EMAIL_SENDER_REPOSITORY`: Specifies the email sender repository implementation to use.  
 

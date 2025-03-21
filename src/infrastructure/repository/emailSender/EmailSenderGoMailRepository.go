@@ -23,7 +23,7 @@ func NewEmailSenderGoMailRepository(args map[string]string) *EmailSenderGoMailRe
 	emailSender.Port = port
 	emailSender.Username = args["EMAIL_SENDER_USERNAME"]
 	emailSender.Password = args["EMAIL_SENDER_PASSWORD"]
-	emailSender.From = args["EMAIL_SENDER_FROM"]
+	emailSender.From = emailSender.Username
 
 	return &EmailSenderGoMailRepository{
 		emailSender: emailSender,

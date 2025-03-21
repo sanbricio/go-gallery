@@ -198,7 +198,6 @@ func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
 }
 
 func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
-	// TODO Aqui faltaria comprobar el código de confirmacion para la eliminacion de la cuenta
 	cookie := ctx.Cookies(c.authMiddleware.GetCookieName())
 	if cookie == "" {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "No se ha encontrado una sesión activa"))
@@ -217,17 +216,32 @@ func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
 	}
 
 	// Obtenemos los datos de el usuario
-	dtoUser := new(dto.DTOUser)
-	err := ctx.BodyParser(dtoUser)
+	dtoDeleteUser := new(dto.DTODeleteUser)
+	err := ctx.BodyParser(dtoDeleteUser)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erróneo"))
 	}
+
+	// Comprobamos que el código sea correcto
+	ok := handler.VerifyCode(dtoDeleteUser.Email, dtoDeleteUser.Code)
+	if !ok {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "El código de verificación es incorrecto"))
+	}
+
+	// Creamos la entidad para proceder a la eliminacion del usuario
+	dtoUser := new(dto.DTOUser)
+	dtoUser.Username = dtoDeleteUser.Username
+	dtoUser.Email = dtoDeleteUser.Email
+	dtoUser.Password = dtoDeleteUser.Password
 
 	// Eliminamos el usuario
 	_, errDelete := c.userService.Delete(dtoUser)
 	if errDelete != nil {
 		return ctx.Status(errDelete.Status).JSON(errDelete)
 	}
+
+	// Eliminamos el codigo unico del usuario del mapa
+	handler.RemoveCode(dtoDeleteUser.Email)
 
 	// Eliminamos la cookie de autenticación
 	c.authMiddleware.DeleteAuthCookie(ctx)

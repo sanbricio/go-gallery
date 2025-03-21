@@ -31,17 +31,25 @@ func GenerateCode(email string) string {
 }
 
 func VerifyCode(email, code string) bool {
+	if code == "" || email == "" {
+		return false
+	}
+
 	mutex.RLock()
 	entry, exists := codes[email]
 	mutex.RUnlock()
 
-	if !exists || time.Now().After(entry.Expiration) {
+	if !exists {
+		return false
+	}
+	// Si ha expirado el codigo lo eliminamos y devolvemos false
+	if time.Now().After(entry.Expiration) {
+		RemoveCode(email)
 		return false
 	}
 
 	return entry.Code == code
 }
-
 
 func RemoveCode(email string) {
 	mutex.Lock()
