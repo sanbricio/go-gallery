@@ -3,9 +3,10 @@ package emailsender_repository
 import (
 	"api-upload-photos/src/domain"
 	"fmt"
+	"log"
+	"net/smtp"
 	"strconv"
-
-	"gopkg.in/gomail.v2"
+	"strings"
 )
 
 type EmailSenderGoMailRepository struct {
@@ -33,10 +34,29 @@ func NewEmailSenderGoMailRepository(args map[string]string) *EmailSenderGoMailRe
 const EmailSenderGoMailRepositoryKey = "EmailSenderGoMailRepository"
 
 func (r *EmailSenderGoMailRepository) SendEmail(code, email string) error {
-	m := gomail.NewMessage()
-	m.SetHeader("From", r.emailSender.From)
-	m.SetHeader("To", email)
-	m.SetHeader("Subject", "⚠️ Código de verificación para eliminar tu cuenta de GoGallery")
+
+	// Mensaje del email
+	message := r.buildMessage(code, email)
+
+	// Configuración de autenticación SMTP
+	auth := smtp.PlainAuth("", r.emailSender.Username, r.emailSender.Password, r.emailSender.Host)
+
+	// Dirección del servidor SMTP de envío
+	serverAddress := fmt.Sprintf("%s:%d", r.emailSender.Host, r.emailSender.Port)
+
+	// Enviar el correo
+	err := smtp.SendMail(serverAddress, auth, r.emailSender.From, []string{email}, []byte(message))
+	if err != nil {
+		log.Printf("ERROR: ❌ No se ha podido enviar el email a %s para la eliminación del usuario", email)
+		return fmt.Errorf("error enviando el email: %w", err)
+	}
+
+	log.Printf("INFO: ✅ Email enviado correctamente a %s para la eliminación del usuario", email)
+	return nil
+}
+
+func (r *EmailSenderGoMailRepository) buildMessage(code, email string) string {
+	subject := "⚠️ Código de verificación para eliminar tu cuenta de GoGallery"
 
 	// Cuerpo para el email
 	htmlBody := fmt.Sprintf(`
@@ -86,13 +106,15 @@ func (r *EmailSenderGoMailRepository) SendEmail(code, email string) error {
 		</body>
 		</html>`, code)
 
-	m.SetBody("text/html", htmlBody)
-
-	d := gomail.NewDialer(r.emailSender.Host, r.emailSender.Port, r.emailSender.Username, r.emailSender.Password)
-
-	if err := d.DialAndSend(m); err != nil {
-		return fmt.Errorf("error enviando el email: %w", err)
+	headers := []string{
+		"From: " + r.emailSender.From,
+		"To: " + email,
+		"Subject: " + subject,
+		"MIME-Version: 1.0",
+		"Content-Type: text/html; charset=\"UTF-8\"",
 	}
 
-	return nil
+	// Unimos cabecera y cuerpo
+	return strings.Join(headers, "\r\n") + "\r\n\r\n" + htmlBody
+
 }
