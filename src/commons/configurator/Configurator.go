@@ -45,6 +45,10 @@ func buildDependencyContainer(conf *configuration.Configuration) *dependency_con
 	args := conf.GetArgs()
 	dependencyContainer := dependency_container.GetIntance()
 
+	emailSenderRepositoryKey := conf.GetArg("EMAIL_SENDER_REPOSITORY")
+	emailSenderRepositoryDependency := dependency_dictionary.FindEmailSenderDependency(emailSenderRepositoryKey, args)
+	dependencyContainer.SetEmailSenderRepository(emailSenderRepositoryDependency)
+
 	userRepositoryKey := conf.GetArg("USER_REPOSITORY")
 	userRepositoryDependency := dependency_dictionary.FindUserDependency(userRepositoryKey, args)
 	dependencyContainer.SetUserRepository(userRepositoryDependency)

@@ -17,9 +17,10 @@ func main() {
 	// Cargamos la configuración y el contenedor de dependencias
 	configuration, dependencyContainer := configurator.LoadConfiguration()
 
-	// Inicializamos los servicios de imagen y usuario
-	imageService := service.NewImageService(dependencyContainer.GetImageRepository())
+	// Inicializamos los servicios de emailSender, usuario e imagen
+	emailSenderService := service.NewEmailSenderService(dependencyContainer.GetEmailSenderRepository())
 	userService := service.NewUserService(dependencyContainer.GetUserRepository())
+	imageService := service.NewImageService(dependencyContainer.GetImageRepository())
 
 	// Middleware para permitir CORS
 	app.Use(cors.New(cors.Config{
@@ -33,14 +34,14 @@ func main() {
 	authMiddleware := middlewares.NewAuthMiddleware(configuration.GetJWTSecret())
 
 	// Configuración de rutas de autenticación de usuario
-	authController := controller.NewAuthController(userService, authMiddleware)
+	authController := controller.NewAuthController(userService, emailSenderService, authMiddleware)
 	authGroup := app.Group("/auth")
 	authController.SetUpRoutes(authGroup)
 
 	// Configuración de rutas de imágenes con autenticación JWT
 	imageController := controller.NewImageController(imageService, userService)
 	imageGroup := app.Group("/image")
-	imageGroup.Use(authMiddleware.Handler()) 
+	imageGroup.Use(authMiddleware.Handler())
 	imageController.SetUpRoutes(imageGroup)
 
 	// Iniciamos el servidor escuchando en el puerto configurado

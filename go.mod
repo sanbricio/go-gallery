@@ -37,4 +37,5 @@ require (
 	github.com/valyala/fasthttp v1.59.0 // indirect
 	go.mongodb.org/mongo-driver v1.17.3
 	golang.org/x/sys v0.31.0 // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
