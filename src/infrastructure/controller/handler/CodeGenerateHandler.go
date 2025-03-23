@@ -14,6 +14,8 @@ var (
 	})
 )
 
+var NowFunc = time.Now
+
 func GenerateCode(email string) string {
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -24,7 +26,7 @@ func GenerateCode(email string) string {
 		Expiration time.Time
 	}{
 		Code:       code,
-		Expiration: time.Now().Add(5 * time.Minute), // Código válido por 5 minutos
+		Expiration: NowFunc().Add(5 * time.Minute), // Código válido por 5 minutos
 	}
 
 	return code
@@ -43,7 +45,7 @@ func VerifyCode(email, code string) bool {
 		return false
 	}
 	// Si ha expirado el codigo lo eliminamos y devolvemos false
-	if time.Now().After(entry.Expiration) {
+	if NowFunc().After(entry.Expiration) {
 		RemoveCode(email)
 		return false
 	}
@@ -59,7 +61,7 @@ func RemoveCode(email string) {
 
 func generateRandomCode(n int) string {
 	// Fuente de números aleatorios
-	source := rand.NewSource(time.Now().UnixNano())
+	source := rand.NewSource(NowFunc().UnixNano())
 	r := rand.New(source)
 
 	const digits = "0123456789"

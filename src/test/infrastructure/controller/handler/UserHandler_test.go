@@ -6,14 +6,14 @@ import (
 	"testing"
 )
 
-type testCase struct {
+type testCaseUserHandler struct {
 	desc    string
 	dto     *dto.DTOUser
 	expects string
 }
 
 func TestProcessUser(t *testing.T) {
-	cases := loadTestCases()
+	cases := loadTestCasesUserHandler()
 
 	for _, testCase := range cases {
 		t.Run(testCase.desc, func(t *testing.T) {
@@ -30,8 +30,8 @@ func TestProcessUser(t *testing.T) {
 
 }
 
-func loadTestCases() []testCase {
-	return []testCase{
+func loadTestCasesUserHandler() []testCaseUserHandler {
+	return []testCaseUserHandler{
 		{
 			desc: "Valid user",
 			dto: &dto.DTOUser{
