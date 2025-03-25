@@ -7,7 +7,6 @@ import (
 	"api-upload-photos/src/infrastructure/dto"
 	"api-upload-photos/src/service"
 	"fmt"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -15,24 +14,24 @@ import (
 type AuthController struct {
 	userService        *service.UserService
 	emailSenderService *service.EmailSenderService
-	authMiddleware     *middlewares.AuthMiddleware
+	jwtMiddleware     *middlewares.JWTMiddleware
 }
 
-func NewAuthController(userService *service.UserService, emailSenderService *service.EmailSenderService, authMiddleware *middlewares.AuthMiddleware) *AuthController {
+func NewAuthController(userService *service.UserService, emailSenderService *service.EmailSenderService, jwtMiddleware *middlewares.JWTMiddleware) *AuthController {
 	return &AuthController{
 		userService:        userService,
 		emailSenderService: emailSenderService,
-		authMiddleware:     authMiddleware,
+		jwtMiddleware:     jwtMiddleware,
 	}
 }
 
 func (c *AuthController) SetUpRoutes(router fiber.Router) {
 	router.Post("/login", c.login)
 	router.Post("/register", c.register)
-	router.Post("/logout", c.logout)
-	router.Put("/update", c.update)
-	router.Post("/request-delete", c.requestDelete)
-	router.Delete("/delete", c.confirmDelete)
+	router.Post("/logout", c.jwtMiddleware.Handler(), c.logout)
+	router.Put("/update", c.jwtMiddleware.Handler(), c.update)
+	router.Post("/request-delete", c.jwtMiddleware.Handler(), c.requestDelete)
+	router.Delete("/delete", c.jwtMiddleware.Handler(), c.confirmDelete)
 }
 
 func (c *AuthController) login(ctx *fiber.Ctx) error {
@@ -47,20 +46,10 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(errFind)
 	}
 
-	token, errJWT := c.authMiddleware.CreateJwtToken(dtoUser.Username, dtoUser.Email)
+	errJWT := c.jwtMiddleware.CreateJWTToken(ctx, dtoUser.Username, dtoUser.Email)
 	if errJWT != nil {
-		return ctx.Status(errJWT.Status).JSON(errJWT)
+		return ctx.Status(errJWT.Status).JSON(errJWT.Status)
 	}
-
-	// Configuramos la cookie con el JWT
-	ctx.Cookie(&fiber.Cookie{
-		Name:     "auth_token",
-		Value:    token,
-		Expires:  time.Now().Add(2 * time.Hour),
-		HTTPOnly: true,
-		Secure:   false,
-		SameSite: "Lax",
-	})
 
 	response := dto.DTOLoginResponse{
 		Message:  "Se ha iniciado sesión correctamente",
@@ -98,19 +87,18 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 }
 
 func (c *AuthController) logout(ctx *fiber.Ctx) error {
-	cookie := ctx.Cookies(c.authMiddleware.GetCookieName())
-	if cookie == "" {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "No se ha encontrado una sesión activa"))
+	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
+	if !ok {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
 	}
-
-	// Obtener claims del token
-	claims, err := c.authMiddleware.GetJWTClaimsFromCookie(cookie)
-	if err != nil {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Token inválido"))
+	// Comprobamos que el usuario existe
+	_, errUser := c.userService.FindAndCheckJWT(claims)
+	if errUser != nil {
+		return ctx.Status(errUser.Status).JSON(errUser)
 	}
 
 	// Eliminamos la cookie
-	c.authMiddleware.DeleteAuthCookie(ctx)
+	c.jwtMiddleware.DeleteAuthCookie(ctx)
 
 	// Respuesta con el nombre del usuario
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -119,15 +107,9 @@ func (c *AuthController) logout(ctx *fiber.Ctx) error {
 }
 
 func (c *AuthController) update(ctx *fiber.Ctx) error {
-	cookie := ctx.Cookies(c.authMiddleware.GetCookieName())
-	if cookie == "" {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "No se ha encontrado una sesión activa"))
-	}
-
-	// Obtener claims del token
-	claims, errJWT := c.authMiddleware.GetJWTClaimsFromCookie(cookie)
-	if errJWT != nil {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(errJWT)
+	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
+	if !ok {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
 	}
 
 	// Comprobamos que el usuario existe
@@ -137,42 +119,54 @@ func (c *AuthController) update(ctx *fiber.Ctx) error {
 	}
 
 	// Obtenemos los datos que quiere cambiar el usuario
-	dtoUserUpdate := new(dto.DTOUser)
+	dtoUserUpdate := new(dto.DTOUpdateUser)
 	err := ctx.BodyParser(dtoUserUpdate)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erróneo"))
 	}
 
-	// Si el usuario quiere cambiar la contraseña comprobamos que esta no este vacia y la validamos
-	if dtoUserUpdate.Password != "" {
-		errHandler := handler.ValidatePassword(dtoUserUpdate.Password)
-		if errHandler != nil {
-			return ctx.Status(errHandler.Status).JSON(errHandler)
-		}
+	// Creamos la entidad para proceder a la actualización del usuario
+	dtoUser := &dto.DTOUser{
+		Username:  claims.Username,
+		Email:     dtoUserUpdate.Email,
+		Password:  dtoUserUpdate.Password,
+		Lastname:  dtoUserUpdate.Lastname,
+		Firstname: dtoUserUpdate.Firstname,
 	}
 
+	// Si el usuario quiere cambiar el email y la contraseña lo validamos
+	errUser = handler.ProcessUser(dtoUser)
+	if errUser != nil {
+		return ctx.Status(errUser.Status).JSON(errUser)
+	}
+
+	// Flag que nos permitira saber si necesitamos crear otro token JWT
+	emailChanged := dtoUserUpdate.Email != "" && dtoUserUpdate.Email != claims.Email
+
 	// Actualizamos el usuario
-	_, errUpdate := c.userService.Update(dtoUserUpdate)
+	_, errUpdate := c.userService.Update(dtoUser)
 	if errUpdate != nil {
 		return ctx.Status(errUpdate.Status).JSON(errUpdate)
 	}
 
+	// Si el email ha cambiado, generamos un nuevo token JWT (debido a que el email es parte de la información del token)
+	if emailChanged {
+		errJWT := c.jwtMiddleware.CreateJWTToken(ctx, dtoUser.Username, dtoUser.Email)
+		if errJWT != nil {
+			return ctx.Status(errJWT.Status).JSON(errJWT.Status)
+		}
+	}
+
 	// Respuesta con el nombre del usuario
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": fmt.Sprintf("Se han actualizado los datos del usuario %s correctamente.", dtoUserUpdate.Username),
+		"message": fmt.Sprintf("Se han actualizado los datos del usuario %s correctamente.", dtoUser.Username),
 	})
 }
 
 func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
-	cookie := ctx.Cookies(c.authMiddleware.GetCookieName())
-	if cookie == "" {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "No se ha encontrado una sesión activa"))
-	}
-
-	// Obtenemos claims del token
-	claims, errJWT := c.authMiddleware.GetJWTClaimsFromCookie(cookie)
-	if errJWT != nil {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(errJWT)
+	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
+	if !ok {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
 	}
 
 	// Comprobamos que el usuario existe
@@ -182,7 +176,7 @@ func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
 	}
 
 	// Generamos el código único temporal
-	code := handler.GenerateCode(claims.Email)
+	code := handler.GenerateCode(claims.Username)
 
 	// Enviamos al usuario un correo electrónico con el código
 	errEmail := c.emailSenderService.SendEmail(code, claims.Email)
@@ -198,15 +192,9 @@ func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
 }
 
 func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
-	cookie := ctx.Cookies(c.authMiddleware.GetCookieName())
-	if cookie == "" {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "No se ha encontrado una sesión activa"))
-	}
-
-	// Obtener claims del token
-	claims, errJWT := c.authMiddleware.GetJWTClaimsFromCookie(cookie)
-	if errJWT != nil {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(errJWT)
+	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
+	if !ok {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
 	}
 
 	// Comprobamos que el usuario existe
@@ -223,16 +211,17 @@ func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
 	}
 
 	// Comprobamos que el código sea correcto
-	ok := handler.VerifyCode(dtoDeleteUser.Email, dtoDeleteUser.Code)
+	ok = handler.VerifyCode(dtoDeleteUser.Username, dtoDeleteUser.Code)
 	if !ok {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "El código de verificación es incorrecto"))
 	}
 
 	// Creamos la entidad para proceder a la eliminacion del usuario
-	dtoUser := new(dto.DTOUser)
-	dtoUser.Username = dtoDeleteUser.Username
-	dtoUser.Email = dtoDeleteUser.Email
-	dtoUser.Password = dtoDeleteUser.Password
+	dtoUser := &dto.DTOUser{
+		Username: dtoDeleteUser.Username,
+		Email:    dtoDeleteUser.Email,
+		Password: dtoDeleteUser.Password,
+	}
 
 	// Eliminamos el usuario
 	_, errDelete := c.userService.Delete(dtoUser)
@@ -241,10 +230,10 @@ func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
 	}
 
 	// Eliminamos el codigo unico del usuario del mapa
-	handler.RemoveCode(dtoDeleteUser.Email)
+	handler.RemoveCode(dtoDeleteUser.Username)
 
 	// Eliminamos la cookie de autenticación
-	c.authMiddleware.DeleteAuthCookie(ctx)
+	c.jwtMiddleware.DeleteAuthCookie(ctx)
 
 	// Respuesta con el nombre del usuario
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{

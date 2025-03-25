@@ -31,17 +31,17 @@ func main() {
 	}))
 
 	// Inicializamos el middleware de autenticación JWT
-	authMiddleware := middlewares.NewAuthMiddleware(configuration.GetJWTSecret())
+	jwtMiddleware := middlewares.NewJWTMiddleware(configuration.GetJWTSecret())
 
 	// Configuración de rutas de autenticación de usuario
-	authController := controller.NewAuthController(userService, emailSenderService, authMiddleware)
+	authController := controller.NewAuthController(userService, emailSenderService, jwtMiddleware)
 	authGroup := app.Group("/auth")
 	authController.SetUpRoutes(authGroup)
 
 	// Configuración de rutas de imágenes con autenticación JWT
 	imageController := controller.NewImageController(imageService, userService)
 	imageGroup := app.Group("/image")
-	imageGroup.Use(authMiddleware.Handler())
+	imageGroup.Use(jwtMiddleware.Handler())
 	imageController.SetUpRoutes(imageGroup)
 
 	// Iniciamos el servidor escuchando en el puerto configurado
