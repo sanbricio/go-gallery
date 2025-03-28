@@ -14,14 +14,14 @@ import (
 type AuthController struct {
 	userService        *service.UserService
 	emailSenderService *service.EmailSenderService
-	jwtMiddleware     *middlewares.JWTMiddleware
+	jwtMiddleware      *middlewares.JWTMiddleware
 }
 
 func NewAuthController(userService *service.UserService, emailSenderService *service.EmailSenderService, jwtMiddleware *middlewares.JWTMiddleware) *AuthController {
 	return &AuthController{
 		userService:        userService,
 		emailSenderService: emailSenderService,
-		jwtMiddleware:     jwtMiddleware,
+		jwtMiddleware:      jwtMiddleware,
 	}
 }
 
@@ -34,6 +34,16 @@ func (c *AuthController) SetUpRoutes(router fiber.Router) {
 	router.Delete("/delete", c.jwtMiddleware.Handler(), c.confirmDelete)
 }
 
+// @Summary      Iniciar sesión
+// @Description  Autentica un usuario y genera un token JWT
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request body dto.DTOUser true "Datos de autenticación"
+// @Success      200 {object} dto.DTOLoginResponse "Respuesta exitosa"
+// @Failure      400 {object} exception.ApiException "Solicitud incorrecta"
+// @Failure      401 {object} exception.ApiException "No autorizado"
+// @Router       /auth/login [post]
 func (c *AuthController) login(ctx *fiber.Ctx) error {
 	dtoLoginRequest := new(dto.DTOUser)
 	err := ctx.BodyParser(dtoLoginRequest)
@@ -61,6 +71,15 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
+// @Summary      Registro de usuario
+// @Description  Registra un nuevo usuario en el sistema
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request body dto.DTOUser true "Datos de registro"
+// @Success      201 {object} dto.DTORegisterResponse "Usuario creado"
+// @Failure      400 {object} exception.ApiException "Solicitud incorrecta"
+// @Router       /auth/register [post]
 func (c *AuthController) register(ctx *fiber.Ctx) error {
 	dtoRegisterRequest := new(dto.DTOUser)
 	err := ctx.BodyParser(dtoRegisterRequest)
@@ -86,6 +105,13 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(dto)
 }
 
+// @Summary      Cerrar sesión
+// @Description  Cierra la sesión del usuario autenticado
+// @Tags         auth
+// @Security     ApiKeyAuth
+// @Success      200 {object} map[string]string "Sesión cerrada"
+// @Failure      401 {object} exception.ApiException "Usuario no autenticado"
+// @Router       /auth/logout [post]
 func (c *AuthController) logout(ctx *fiber.Ctx) error {
 	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
 	if !ok {
@@ -106,6 +132,17 @@ func (c *AuthController) logout(ctx *fiber.Ctx) error {
 	})
 }
 
+// @Summary      Actualizar usuario
+// @Description  Actualiza los datos de un usuario autenticado
+// @Tags         auth
+// @Security     ApiKeyAuth
+// @Accept       json
+// @Produce      json
+// @Param        request body dto.DTOUpdateUser true "Datos de actualización"
+// @Success      200 {object} map[string]string "Usuario actualizado"
+// @Failure      400 {object} exception.ApiException "Solicitud incorrecta"
+// @Failure      401 {object} exception.ApiException "No autorizado"
+// @Router       /auth/update [put]
 func (c *AuthController) update(ctx *fiber.Ctx) error {
 	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
 	if !ok {
@@ -163,6 +200,13 @@ func (c *AuthController) update(ctx *fiber.Ctx) error {
 	})
 }
 
+// @Summary      Solicitar eliminación de cuenta
+// @Description  Envía un código de verificación al correo para eliminar la cuenta
+// @Tags         auth
+// @Security     ApiKeyAuth
+// @Success      200 {object} map[string]string "Código enviado"
+// @Failure      401 {object} exception.ApiException "No autorizado"
+// @Router       /auth/request-delete [post]
 func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
 	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
 	if !ok {
@@ -191,6 +235,17 @@ func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
 	})
 }
 
+// @Summary      Confirmar eliminación de cuenta
+// @Description  Elimina la cuenta de usuario tras verificar el código enviado
+// @Tags         auth
+// @Security     ApiKeyAuth
+// @Accept       json
+// @Produce      json
+// @Param        request body dto.DTODeleteUser true "Datos para confirmar eliminación"
+// @Success      200 {object} map[string]string "Cuenta eliminada"
+// @Failure      400 {object} exception.ApiException "Solicitud incorrecta"
+// @Failure      401 {object} exception.ApiException "No autorizado"
+// @Router       /auth/delete [delete]
 func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
 	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
 	if !ok {

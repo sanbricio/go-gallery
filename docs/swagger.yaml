@@ -1,0 +1,235 @@
+basePath: /api
+definitions:
+  dto.DTODeleteUser:
+    properties:
+      code:
+        type: string
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  dto.DTOLoginResponse:
+    properties:
+      email:
+        type: string
+      message:
+        type: string
+      name:
+        type: string
+      username:
+        type: string
+    type: object
+  dto.DTORegisterResponse:
+    properties:
+      firstname:
+        type: string
+      message:
+        type: string
+      username:
+        type: string
+    type: object
+  dto.DTOUpdateUser:
+    properties:
+      email:
+        type: string
+      firstname:
+        type: string
+      lastname:
+        type: string
+      password:
+        type: string
+    type: object
+  dto.DTOUser:
+    properties:
+      email:
+        type: string
+      firstname:
+        type: string
+      lastname:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  exception.ApiException:
+    properties:
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+info:
+  contact:
+    email: gogalleryteam@gmail.com
+    name: Soporte API GoGallery
+  description: API para la gestión de subida de fotos, con una autentificación
+  title: GoGallery
+  version: 1.0.0
+paths:
+  /auth/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina la cuenta de usuario tras verificar el código enviado
+      parameters:
+      - description: Datos para confirmar eliminación
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DTODeleteUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Cuenta eliminada
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Solicitud incorrecta
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "401":
+          description: No autorizado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      security:
+      - ApiKeyAuth: []
+      summary: Confirmar eliminación de cuenta
+      tags:
+      - auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica un usuario y genera un token JWT
+      parameters:
+      - description: Datos de autenticación
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DTOUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Respuesta exitosa
+          schema:
+            $ref: '#/definitions/dto.DTOLoginResponse'
+        "400":
+          description: Solicitud incorrecta
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "401":
+          description: No autorizado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      summary: Iniciar sesión
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Cierra la sesión del usuario autenticado
+      responses:
+        "200":
+          description: Sesión cerrada
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Usuario no autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      security:
+      - ApiKeyAuth: []
+      summary: Cerrar sesión
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Registra un nuevo usuario en el sistema
+      parameters:
+      - description: Datos de registro
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DTOUser'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Usuario creado
+          schema:
+            $ref: '#/definitions/dto.DTORegisterResponse'
+        "400":
+          description: Solicitud incorrecta
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      summary: Registro de usuario
+      tags:
+      - auth
+  /auth/request-delete:
+    post:
+      description: Envía un código de verificación al correo para eliminar la cuenta
+      responses:
+        "200":
+          description: Código enviado
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      security:
+      - ApiKeyAuth: []
+      summary: Solicitar eliminación de cuenta
+      tags:
+      - auth
+  /auth/update:
+    put:
+      consumes:
+      - application/json
+      description: Actualiza los datos de un usuario autenticado
+      parameters:
+      - description: Datos de actualización
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DTOUpdateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuario actualizado
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Solicitud incorrecta
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "401":
+          description: No autorizado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      security:
+      - ApiKeyAuth: []
+      summary: Actualizar usuario
+      tags:
+      - auth
+swagger: "2.0"
