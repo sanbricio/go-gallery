@@ -17,7 +17,7 @@ func TestProcessUser(t *testing.T) {
 
 	for _, testCase := range cases {
 		t.Run(testCase.desc, func(t *testing.T) {
-			err := handler.ProcessUser(testCase.dto)
+			err := handler.ProcessUser(testCase.dto.Password, testCase.dto.Email)
 			if err != nil {
 				if err.Message != testCase.expects {
 					t.Errorf("%s: expected error %s, got %s", testCase.desc, testCase.expects, err.Message)

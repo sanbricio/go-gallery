@@ -1,71 +1,180 @@
 basePath: /api
 definitions:
   dto.DTODeleteUser:
+    description: Datos necesarios para proceder con la eliminación del usuario
     properties:
       code:
-        type: string
-      email:
+        description: |-
+          Código de verificación para la eliminación
+          example "123456"
+        example: "123456"
         type: string
       password:
+        description: |-
+          Contraseña del usuario para confirmar la eliminación
+          example "MiContraseñaSegura"
+        example: MiContraseñaSegura
+        type: string
+    type: object
+  dto.DTOLoginRequest:
+    description: Datos requeridos para realizar autentificación del usuario
+    properties:
+      password:
+        description: |-
+          Contraseña del usuario
+          example "MiContraseñaSegura."
+        example: MiContraseñaSegura.
         type: string
       username:
+        description: |-
+          Nombre de usuario
+          example "usuario"
+        example: usuario
         type: string
     type: object
   dto.DTOLoginResponse:
+    description: Respuesta al iniciar sesión correctamente
     properties:
       email:
+        description: |-
+          Correo electrónico del usuario
+          example "usuario@example.com"
+        example: usuario@example.com
         type: string
       message:
+        description: |-
+          Mensaje de confirmación
+          example "Se ha iniciado sesión correctamente"
+        example: Se ha iniciado sesión correctamente
         type: string
       name:
+        description: |-
+          Nombre del usuario
+          example "Juan Pérez"
+        example: Juan Pérez
         type: string
       username:
+        description: |-
+          Nombre de usuario autenticado
+          example "usuario123"
+        example: usuario123
+        type: string
+    type: object
+  dto.DTOMessageResponse:
+    description: Respuesta con un mensaje para informar al usuario que ha ocurrido
+    properties:
+      message:
+        description: |-
+          Mensaje de respuesta
+          example "Operación realizada con éxito"
+        example: Ha funcionado correctamente
         type: string
     type: object
   dto.DTORegisterResponse:
+    description: Respuesta generada después de crear un nuevo usuario
     properties:
       firstname:
+        description: |-
+          Nombre
+          example "Juan"
+        example: Juan
         type: string
       message:
+        description: |-
+          Mensaje de confirmación
+          example "Se ha creado el usuario correctamente"
+        example: Se ha creado el usuario correctamente
         type: string
       username:
+        description: |-
+          Nombre de usuario
+          example "usuario123"
+        example: usuario123
         type: string
     type: object
   dto.DTOUpdateUser:
+    description: Datos que pueden ser actualizados del usuario existente
     properties:
       email:
+        description: |-
+          Correo electrónico
+          example "nuevo.email@example.com"
+        example: nuevo.email@example.com
         type: string
       firstname:
+        description: |-
+          Nombre
+          example "Carlos"
+        example: Carlos
         type: string
       lastname:
+        description: |-
+          Apellido
+          example "Gómez"
+        example: Gómez
         type: string
       password:
+        description: |-
+          Contraseña
+          example "NuevaContraseñaSegura."
+        example: NuevaContraseñaSegura.
         type: string
     type: object
   dto.DTOUser:
+    description: Estructura que define los datos del usuario
     properties:
       email:
+        description: |-
+          Correo electrónico
+          example "usuario@example.com"
+        example: usuario@example.com
         type: string
       firstname:
+        description: |-
+          Nombre
+          example "Juan"
+        example: Juan
         type: string
       lastname:
+        description: |-
+          Apellido
+          example "Pérez"
+        example: Pérez
         type: string
       password:
+        description: |-
+          Contraseña
+          example "MiContraseñaSegura."
+        example: MiContraseñaSegura.
         type: string
       username:
+        description: |-
+          Nombre de usuario
+          example "usuario123"
+        example: usuario123
         type: string
     type: object
   exception.ApiException:
+    description: Estructura para manejar excepciones con un código de estado y un
+      mensaje de error
     properties:
       message:
+        description: |-
+          Mensaje de error
+          example "Solicitud incorrecta"
+        example: Solicitud incorrecta
         type: string
       status:
+        description: |-
+          Código de estado HTTP
+          example 400
+        example: 400
         type: integer
     type: object
 info:
   contact:
     email: gogalleryteam@gmail.com
-    name: Soporte API GoGallery
+    name: Support GoGallery
   description: API para la gestión de subida de fotos, con una autentificación
   title: GoGallery
   version: 1.0.0
@@ -86,17 +195,27 @@ paths:
       - application/json
       responses:
         "200":
-          description: Cuenta eliminada
+          description: Se han eliminado los datos del usuario correctamente
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dto.DTOMessageResponse'
         "400":
           description: Solicitud incorrecta
           schema:
             $ref: '#/definitions/exception.ApiException'
         "401":
-          description: No autorizado
+          description: Usuario no autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "403":
+          description: Los datos proporcionados no coinciden con el usuario autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "500":
+          description: Ha ocurrido un error inesperado
           schema:
             $ref: '#/definitions/exception.ApiException'
       security:
@@ -108,27 +227,40 @@ paths:
     post:
       consumes:
       - application/json
-      description: Autentica un usuario y genera un token JWT
+      description: Autentica un usuario y genera un token JWT para guardarlo en una
+        cookie
       parameters:
       - description: Datos de autenticación
         in: body
         name: request
         required: true
         schema:
-          $ref: '#/definitions/dto.DTOUser'
+          $ref: '#/definitions/dto.DTOLoginRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: Respuesta exitosa
+          description: Se ha iniciado sesion correctamente
+          headers:
+            Set-Cookie:
+              description: Authorization=auth_token; HttpOnly; Secure
+              type: string
           schema:
             $ref: '#/definitions/dto.DTOLoginResponse'
         "400":
-          description: Solicitud incorrecta
+          description: Contraseña incorrecta
           schema:
             $ref: '#/definitions/exception.ApiException'
         "401":
           description: No autorizado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "500":
+          description: Ha ocurrido un error inesperado
           schema:
             $ref: '#/definitions/exception.ApiException'
       summary: Iniciar sesión
@@ -136,20 +268,30 @@ paths:
       - auth
   /auth/logout:
     post:
-      description: Cierra la sesión del usuario autenticado
+      description: Cierra la sesión del usuario autenticado, elimina la cookie auth_token
       responses:
         "200":
-          description: Sesión cerrada
+          description: Se ha cerrado sesión correctamente
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dto.DTOMessageResponse'
         "401":
           description: Usuario no autenticado
           schema:
             $ref: '#/definitions/exception.ApiException'
+        "403":
+          description: Los datos proporcionados no coinciden con el usuario autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "500":
+          description: Ha ocurrido un error inesperado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
       security:
-      - ApiKeyAuth: []
+      - CookieAuth: []
       summary: Cerrar sesión
       tags:
       - auth
@@ -176,7 +318,11 @@ paths:
           description: Solicitud incorrecta
           schema:
             $ref: '#/definitions/exception.ApiException'
-      summary: Registro de usuario
+        "500":
+          description: Ha ocurrido un error inesperado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      summary: Registro de un nuevo usuario
       tags:
       - auth
   /auth/request-delete:
@@ -184,17 +330,27 @@ paths:
       description: Envía un código de verificación al correo para eliminar la cuenta
       responses:
         "200":
-          description: Código enviado
+          description: Se ha enviado un código de confirmación al correo electrónico
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dto.DTOMessageResponse'
         "401":
-          description: No autorizado
+          description: Usuario no autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "403":
+          description: Los datos proporcionados no coinciden con el usuario autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "500":
+          description: Ha ocurrido un error inesperado
           schema:
             $ref: '#/definitions/exception.ApiException'
       security:
-      - ApiKeyAuth: []
+      - CookieAuth: []
       summary: Solicitar eliminación de cuenta
       tags:
       - auth
@@ -214,22 +370,37 @@ paths:
       - application/json
       responses:
         "200":
-          description: Usuario actualizado
+          description: Se han actualizado los datos del usuario correctamente.
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/dto.DTOMessageResponse'
         "400":
           description: Solicitud incorrecta
           schema:
             $ref: '#/definitions/exception.ApiException'
         "401":
-          description: No autorizado
+          description: Usuario no autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "403":
+          description: Los datos proporcionados no coinciden con el usuario autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "500":
+          description: Ha ocurrido un error inesperado
           schema:
             $ref: '#/definitions/exception.ApiException'
       security:
-      - ApiKeyAuth: []
+      - CookieAuth: []
       summary: Actualizar usuario
       tags:
       - auth
+securityDefinitions:
+  CookieAuth:
+    in: header
+    name: Cookie
+    type: apiKey
 swagger: "2.0"

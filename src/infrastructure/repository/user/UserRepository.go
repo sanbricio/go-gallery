@@ -6,7 +6,7 @@ import (
 )
 
 type UserRepository interface {
-	Find(dtoLoginRequest *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)
+	Find(dtoLoginRequest *dto.DTOLoginRequest) (*dto.DTOUser, *exception.ApiException)
 	FindAndCheckJWT(claims *dto.DTOClaimsJwt) (*dto.DTOUser, *exception.ApiException)
 	Insert(dtoRegisterRequest *dto.DTOUser) (*dto.DTOUser, *exception.ApiException)
 	Update(dtoUserUpdate *dto.DTOUser) (int64, *exception.ApiException)

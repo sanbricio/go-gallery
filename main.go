@@ -13,9 +13,12 @@ import (
 // @title GoGallery
 // @version 1.0.0
 // @description API para la gestión de subida de fotos, con una autentificación
-// @contact.name Soporte API GoGallery
+// @contact.name Support GoGallery
 // @contact.email gogalleryteam@gmail.com
 // @BasePath /api
+// @securityDefinitions.apiKey CookieAuth
+// @in header
+// @name Cookie
 func main() {
 	// Inicializamos la aplicación Fiber
 	app := fiber.New()

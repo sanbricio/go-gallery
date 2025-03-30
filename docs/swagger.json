@@ -4,7 +4,7 @@
         "description": "API para la gestión de subida de fotos, con una autentificación",
         "title": "GoGallery",
         "contact": {
-            "name": "Soporte API GoGallery",
+            "name": "Support GoGallery",
             "email": "gogalleryteam@gmail.com"
         },
         "version": "1.0.0"
@@ -42,12 +42,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Cuenta eliminada",
+                        "description": "Se han eliminado los datos del usuario correctamente",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dto.DTOMessageResponse"
                         }
                     },
                     "400": {
@@ -57,7 +54,25 @@
                         }
                     },
                     "401": {
-                        "description": "No autorizado",
+                        "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "403": {
+                        "description": "Los datos proporcionados no coinciden con el usuario autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
                         "schema": {
                             "$ref": "#/definitions/exception.ApiException"
                         }
@@ -67,7 +82,7 @@
         },
         "/auth/login": {
             "post": {
-                "description": "Autentica un usuario y genera un token JWT",
+                "description": "Autentica un usuario y genera un token JWT para guardarlo en una cookie",
                 "consumes": [
                     "application/json"
                 ],
@@ -85,25 +100,43 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOUser"
+                            "$ref": "#/definitions/dto.DTOLoginRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Respuesta exitosa",
+                        "description": "Se ha iniciado sesion correctamente",
                         "schema": {
                             "$ref": "#/definitions/dto.DTOLoginResponse"
+                        },
+                        "headers": {
+                            "Set-Cookie": {
+                                "type": "string",
+                                "description": "Authorization=auth_token; HttpOnly; Secure"
+                            }
                         }
                     },
                     "400": {
-                        "description": "Solicitud incorrecta",
+                        "description": "Contraseña incorrecta",
                         "schema": {
                             "$ref": "#/definitions/exception.ApiException"
                         }
                     },
                     "401": {
                         "description": "No autorizado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
                         "schema": {
                             "$ref": "#/definitions/exception.ApiException"
                         }
@@ -115,26 +148,41 @@
             "post": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "CookieAuth": []
                     }
                 ],
-                "description": "Cierra la sesión del usuario autenticado",
+                "description": "Cierra la sesión del usuario autenticado, elimina la cookie auth_token",
                 "tags": [
                     "auth"
                 ],
                 "summary": "Cerrar sesión",
                 "responses": {
                     "200": {
-                        "description": "Sesión cerrada",
+                        "description": "Se ha cerrado sesión correctamente",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dto.DTOMessageResponse"
                         }
                     },
                     "401": {
                         "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "403": {
+                        "description": "Los datos proporcionados no coinciden con el usuario autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
                         "schema": {
                             "$ref": "#/definitions/exception.ApiException"
                         }
@@ -154,7 +202,7 @@
                 "tags": [
                     "auth"
                 ],
-                "summary": "Registro de usuario",
+                "summary": "Registro de un nuevo usuario",
                 "parameters": [
                     {
                         "description": "Datos de registro",
@@ -178,6 +226,12 @@
                         "schema": {
                             "$ref": "#/definitions/exception.ApiException"
                         }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
                     }
                 }
             }
@@ -186,7 +240,7 @@
             "post": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Envía un código de verificación al correo para eliminar la cuenta",
@@ -196,16 +250,31 @@
                 "summary": "Solicitar eliminación de cuenta",
                 "responses": {
                     "200": {
-                        "description": "Código enviado",
+                        "description": "Se ha enviado un código de confirmación al correo electrónico",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dto.DTOMessageResponse"
                         }
                     },
                     "401": {
-                        "description": "No autorizado",
+                        "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "403": {
+                        "description": "Los datos proporcionados no coinciden con el usuario autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
                         "schema": {
                             "$ref": "#/definitions/exception.ApiException"
                         }
@@ -217,7 +286,7 @@
             "put": {
                 "security": [
                     {
-                        "ApiKeyAuth": []
+                        "CookieAuth": []
                     }
                 ],
                 "description": "Actualiza los datos de un usuario autenticado",
@@ -244,12 +313,9 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Usuario actualizado",
+                        "description": "Se han actualizado los datos del usuario correctamente.",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/dto.DTOMessageResponse"
                         }
                     },
                     "400": {
@@ -259,7 +325,25 @@
                         }
                     },
                     "401": {
-                        "description": "No autorizado",
+                        "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "403": {
+                        "description": "Los datos proporcionados no coinciden con el usuario autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
                         "schema": {
                             "$ref": "#/definitions/exception.ApiException"
                         }
@@ -270,100 +354,174 @@
     },
     "definitions": {
         "dto.DTODeleteUser": {
+            "description": "Datos necesarios para proceder con la eliminación del usuario",
             "type": "object",
             "properties": {
                 "code": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
+                    "description": "Código de verificación para la eliminación\nexample \"123456\"",
+                    "type": "string",
+                    "example": "123456"
                 },
                 "password": {
-                    "type": "string"
+                    "description": "Contraseña del usuario para confirmar la eliminación\nexample \"MiContraseñaSegura\"",
+                    "type": "string",
+                    "example": "MiContraseñaSegura"
+                }
+            }
+        },
+        "dto.DTOLoginRequest": {
+            "description": "Datos requeridos para realizar autentificación del usuario",
+            "type": "object",
+            "properties": {
+                "password": {
+                    "description": "Contraseña del usuario\nexample \"MiContraseñaSegura.\"",
+                    "type": "string",
+                    "example": "MiContraseñaSegura."
                 },
                 "username": {
-                    "type": "string"
+                    "description": "Nombre de usuario\nexample \"usuario\"",
+                    "type": "string",
+                    "example": "usuario"
                 }
             }
         },
         "dto.DTOLoginResponse": {
+            "description": "Respuesta al iniciar sesión correctamente",
             "type": "object",
             "properties": {
                 "email": {
-                    "type": "string"
+                    "description": "Correo electrónico del usuario\nexample \"usuario@example.com\"",
+                    "type": "string",
+                    "example": "usuario@example.com"
                 },
                 "message": {
-                    "type": "string"
+                    "description": "Mensaje de confirmación\nexample \"Se ha iniciado sesión correctamente\"",
+                    "type": "string",
+                    "example": "Se ha iniciado sesión correctamente"
                 },
                 "name": {
-                    "type": "string"
+                    "description": "Nombre del usuario\nexample \"Juan Pérez\"",
+                    "type": "string",
+                    "example": "Juan Pérez"
                 },
                 "username": {
-                    "type": "string"
+                    "description": "Nombre de usuario autenticado\nexample \"usuario123\"",
+                    "type": "string",
+                    "example": "usuario123"
+                }
+            }
+        },
+        "dto.DTOMessageResponse": {
+            "description": "Respuesta con un mensaje para informar al usuario que ha ocurrido",
+            "type": "object",
+            "properties": {
+                "message": {
+                    "description": "Mensaje de respuesta\nexample \"Operación realizada con éxito\"",
+                    "type": "string",
+                    "example": "Ha funcionado correctamente"
                 }
             }
         },
         "dto.DTORegisterResponse": {
+            "description": "Respuesta generada después de crear un nuevo usuario",
             "type": "object",
             "properties": {
                 "firstname": {
-                    "type": "string"
+                    "description": "Nombre\nexample \"Juan\"",
+                    "type": "string",
+                    "example": "Juan"
                 },
                 "message": {
-                    "type": "string"
+                    "description": "Mensaje de confirmación\nexample \"Se ha creado el usuario correctamente\"",
+                    "type": "string",
+                    "example": "Se ha creado el usuario correctamente"
                 },
                 "username": {
-                    "type": "string"
+                    "description": "Nombre de usuario\nexample \"usuario123\"",
+                    "type": "string",
+                    "example": "usuario123"
                 }
             }
         },
         "dto.DTOUpdateUser": {
+            "description": "Datos que pueden ser actualizados del usuario existente",
             "type": "object",
             "properties": {
                 "email": {
-                    "type": "string"
+                    "description": "Correo electrónico\nexample \"nuevo.email@example.com\"",
+                    "type": "string",
+                    "example": "nuevo.email@example.com"
                 },
                 "firstname": {
-                    "type": "string"
+                    "description": "Nombre\nexample \"Carlos\"",
+                    "type": "string",
+                    "example": "Carlos"
                 },
                 "lastname": {
-                    "type": "string"
+                    "description": "Apellido\nexample \"Gómez\"",
+                    "type": "string",
+                    "example": "Gómez"
                 },
                 "password": {
-                    "type": "string"
+                    "description": "Contraseña\nexample \"NuevaContraseñaSegura.\"",
+                    "type": "string",
+                    "example": "NuevaContraseñaSegura."
                 }
             }
         },
         "dto.DTOUser": {
+            "description": "Estructura que define los datos del usuario",
             "type": "object",
             "properties": {
                 "email": {
-                    "type": "string"
+                    "description": "Correo electrónico\nexample \"usuario@example.com\"",
+                    "type": "string",
+                    "example": "usuario@example.com"
                 },
                 "firstname": {
-                    "type": "string"
+                    "description": "Nombre\nexample \"Juan\"",
+                    "type": "string",
+                    "example": "Juan"
                 },
                 "lastname": {
-                    "type": "string"
+                    "description": "Apellido\nexample \"Pérez\"",
+                    "type": "string",
+                    "example": "Pérez"
                 },
                 "password": {
-                    "type": "string"
+                    "description": "Contraseña\nexample \"MiContraseñaSegura.\"",
+                    "type": "string",
+                    "example": "MiContraseñaSegura."
                 },
                 "username": {
-                    "type": "string"
+                    "description": "Nombre de usuario\nexample \"usuario123\"",
+                    "type": "string",
+                    "example": "usuario123"
                 }
             }
         },
         "exception.ApiException": {
+            "description": "Estructura para manejar excepciones con un código de estado y un mensaje de error",
             "type": "object",
             "properties": {
                 "message": {
-                    "type": "string"
+                    "description": "Mensaje de error\nexample \"Solicitud incorrecta\"",
+                    "type": "string",
+                    "example": "Solicitud incorrecta"
                 },
                 "status": {
-                    "type": "integer"
+                    "description": "Código de estado HTTP\nexample 400",
+                    "type": "integer",
+                    "example": 400
                 }
             }
+        }
+    },
+    "securityDefinitions": {
+        "CookieAuth": {
+            "type": "apiKey",
+            "name": "Cookie",
+            "in": "header"
         }
     }
 }

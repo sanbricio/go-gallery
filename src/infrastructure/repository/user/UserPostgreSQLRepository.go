@@ -35,8 +35,8 @@ func NewUserPostgreSQLRepository(args map[string]string) UserRepository {
 	return &UserPostgreSQLRepository{db: db}
 }
 
-func (u *UserPostgreSQLRepository) Find(dtoLoginRequest *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
-	user, err := u.find(dtoLoginRequest)
+func (u *UserPostgreSQLRepository) Find(dtoLoginRequest *dto.DTOLoginRequest) (*dto.DTOUser, *exception.ApiException) {
+	user, err := u.find(dtoLoginRequest.Username, dtoLoginRequest.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -44,9 +44,9 @@ func (u *UserPostgreSQLRepository) Find(dtoLoginRequest *dto.DTOUser) (*dto.DTOU
 	return dto.FromUser(user), nil
 }
 
-func (u *UserPostgreSQLRepository) find(dtoLoginRequest *dto.DTOUser) (*entity.User, *exception.ApiException) {
+func (u *UserPostgreSQLRepository) find(username, password string) (*entity.User, *exception.ApiException) {
 	query := "SELECT username, email, firstname,lastname, password FROM users WHERE username = $1"
-	row := u.db.QueryRow(query, dtoLoginRequest.Username)
+	row := u.db.QueryRow(query, username)
 
 	userDTO := new(dto.DTOUser)
 	if err := row.Scan(&userDTO.Username, &userDTO.Email, &userDTO.Firstname, &userDTO.Lastname, &userDTO.Password); err != nil {
@@ -64,8 +64,8 @@ func (u *UserPostgreSQLRepository) find(dtoLoginRequest *dto.DTOUser) (*entity.U
 		return nil, exception.NewApiException(500, errBuilder.Error())
 	}
 
-	if err := user.CheckPasswordIntegrity(dtoLoginRequest.Password); err != nil {
-		return nil, exception.NewApiException(404, "Contraseña incorrecta")
+	if err := user.CheckPasswordIntegrity(password); err != nil {
+		return nil, exception.NewApiException(400, "Contraseña incorrecta")
 	}
 
 	return user, nil
@@ -163,7 +163,7 @@ func (u *UserPostgreSQLRepository) Update(dtoUpdateUser *dto.DTOUser) (int64, *e
 
 func (u *UserPostgreSQLRepository) Delete(dtoDeleteUser *dto.DTOUser) (int64, *exception.ApiException) {
 	// Comprobamos que el usuario exista y que la contraseña sea correcta para eliminar el usuario
-	_, errFind := u.find(dtoDeleteUser)
+	_, errFind := u.find(dtoDeleteUser.Username, dtoDeleteUser.Password)
 	if errFind != nil {
 		return 0, errFind
 	}
