@@ -16,6 +16,47 @@ definitions:
         example: MiContraseñaSegura
         type: string
     type: object
+  dto.DTOImage:
+    description: Contiene la información de una imagen, incluyendo su identificador,
+      nombre, extensión, contenido en base64 y propietario (usuario)
+    properties:
+      content_file:
+        description: |-
+          Contenido de la imagen en base64
+          Example: /9j/4AAQSkZJRgABAQEAAAAAAAD...
+        example: /9j/4AAQSkZJRgABAQEAAAAAAAD.
+        type: string
+      extension:
+        description: |-
+          Extensión del archivo de imagen
+          Example: jpg
+        example: .jpeg
+        type: string
+      id_image:
+        description: |-
+          ID único de la imagen
+          Example: 64a1f8b8e4b0c10d3c5b2e75
+        example: 64a1f8b8e4b0c10d3c5b2e75
+        type: string
+      name:
+        description: |-
+          Nombre del archivo de la imagen
+          Example: foto_perfil
+        example: prueba
+        type: string
+      owner:
+        description: |-
+          Usuario propietario de la imagen
+          Example: usuario123
+        example: usuario123
+        type: string
+      size:
+        description: |-
+          Tamaño de la imagen en bytes
+          Example: 204800
+        example: 2.3 kB
+        type: string
+    type: object
   dto.DTOLoginRequest:
     description: Datos requeridos para realizar autentificación del usuario
     properties:
@@ -398,6 +439,154 @@ paths:
       summary: Actualizar usuario
       tags:
       - auth
+  /docs/definition/swagger.json:
+    get:
+      description: Retorna la definición de la API(OpenAPI) en formato JSON
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Archivo JSON cargado correctamente
+        "500":
+          description: Error al cargar el archivo JSON
+      summary: Obtiene la documentación de la API en formato JSON
+      tags:
+      - docs
+  /docs/definition/swagger.yml:
+    get:
+      description: Retorna la definición de la API(OpenAPI) en formato YAML
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Archivo YAML cargado correctamente
+        "500":
+          description: Error al cargar el archivo YAML
+      summary: Obtiene la documentación de la API en formato YAML
+      tags:
+      - docs
+  /image/deleteImage/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Borra una imagen específica del usuario autentificado
+      parameters:
+      - description: Identificador de la imagen
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Imagen eliminada correctamente
+          schema:
+            $ref: '#/definitions/dto.DTOImage'
+        "401":
+          description: Usuario no autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "403":
+          description: Los datos proporcionados no coinciden con el usuario autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "404":
+          description: Usuario/Imagen no encontrada
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "500":
+          description: Ha ocurrido un error inesperado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      security:
+      - CookieAuth: []
+      summary: Elimina una imagen
+      tags:
+      - image
+  /image/getImage/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una imagen específica del usuario según el identificador
+        proporcionado
+      parameters:
+      - description: Identificador de la imagen
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DTOImage'
+        "401":
+          description: Usuario no autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "403":
+          description: Los datos proporcionados no coinciden con el usuario autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "404":
+          description: Usuario/Imagen no encontrada
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "500":
+          description: Ha ocurrido un error inesperado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      security:
+      - CookieAuth: []
+      summary: Obtiene una imagen por su identificador
+      tags:
+      - image
+  /image/uploadImage:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Permite a un usuario autenticado persistir una imagen
+      parameters:
+      - description: Archivo de imagen a subir (jpeg, jpg, png, webp)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Imagen subida correctamente
+          schema:
+            $ref: '#/definitions/dto.DTOImage'
+        "400":
+          description: Error al procesar la imagen
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "401":
+          description: Usuario no autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "403":
+          description: Los datos proporcionados no coinciden con el usuario autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "404":
+          description: Usuario/Imagen no encontrada
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "500":
+          description: Ha ocurrido un error inesperado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      security:
+      - CookieAuth: []
+      summary: Persiste una imagen
+      tags:
+      - image
 securityDefinitions:
   CookieAuth:
     in: header

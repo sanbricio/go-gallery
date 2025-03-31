@@ -27,6 +27,13 @@ func (c *SwaggerController) ServeSwagger(ctx *fiber.Ctx) error {
 	return swagger.New(c.swaggerConfiguration)(ctx)
 }
 
+// @Summary Obtiene la documentación de la API en formato YAML
+// @Description Retorna la definición de la API(OpenAPI) en formato YAML
+// @Tags docs
+// @Produce plain
+// @Success 200 "Archivo YAML cargado correctamente"
+// @Failure 500 "Error al cargar el archivo YAML"
+// @Router /docs/definition/swagger.yml [get]
 func (c *SwaggerController) ServeYAML(ctx *fiber.Ctx) error {
 	fileContent, err := os.ReadFile("./docs/swagger.yaml")
 	if err != nil {
@@ -37,6 +44,13 @@ func (c *SwaggerController) ServeYAML(ctx *fiber.Ctx) error {
 	return ctx.Send(fileContent)
 }
 
+// @Summary Obtiene la documentación de la API en formato JSON
+// @Description Retorna la definición de la API(OpenAPI) en formato JSON
+// @Tags docs
+// @Produce json
+// @Success 200 "Archivo JSON cargado correctamente"
+// @Failure 500 "Error al cargar el archivo JSON"
+// @Router /docs/definition/swagger.json [get]
 func (c *SwaggerController) ServeJSON(ctx *fiber.Ctx) error {
 	fileContent, err := os.ReadFile("./docs/swagger.json")
 	if err != nil {

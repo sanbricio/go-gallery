@@ -350,6 +350,235 @@
                     }
                 }
             }
+        },
+        "/docs/definition/swagger.json": {
+            "get": {
+                "description": "Retorna la definición de la API(OpenAPI) en formato JSON",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "docs"
+                ],
+                "summary": "Obtiene la documentación de la API en formato JSON",
+                "responses": {
+                    "200": {
+                        "description": "Archivo JSON cargado correctamente"
+                    },
+                    "500": {
+                        "description": "Error al cargar el archivo JSON"
+                    }
+                }
+            }
+        },
+        "/docs/definition/swagger.yml": {
+            "get": {
+                "description": "Retorna la definición de la API(OpenAPI) en formato YAML",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "docs"
+                ],
+                "summary": "Obtiene la documentación de la API en formato YAML",
+                "responses": {
+                    "200": {
+                        "description": "Archivo YAML cargado correctamente"
+                    },
+                    "500": {
+                        "description": "Error al cargar el archivo YAML"
+                    }
+                }
+            }
+        },
+        "/image/deleteImage/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Borra una imagen específica del usuario autentificado",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "image"
+                ],
+                "summary": "Elimina una imagen",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Identificador de la imagen",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Imagen eliminada correctamente",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DTOImage"
+                        }
+                    },
+                    "401": {
+                        "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "403": {
+                        "description": "Los datos proporcionados no coinciden con el usuario autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario/Imagen no encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    }
+                }
+            }
+        },
+        "/image/getImage/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Obtiene una imagen específica del usuario según el identificador proporcionado",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "image"
+                ],
+                "summary": "Obtiene una imagen por su identificador",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Identificador de la imagen",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DTOImage"
+                        }
+                    },
+                    "401": {
+                        "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "403": {
+                        "description": "Los datos proporcionados no coinciden con el usuario autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario/Imagen no encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    }
+                }
+            }
+        },
+        "/image/uploadImage": {
+            "post": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Permite a un usuario autenticado persistir una imagen",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "image"
+                ],
+                "summary": "Persiste una imagen",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "Archivo de imagen a subir (jpeg, jpg, png, webp)",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Imagen subida correctamente",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DTOImage"
+                        }
+                    },
+                    "400": {
+                        "description": "Error al procesar la imagen",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "401": {
+                        "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "403": {
+                        "description": "Los datos proporcionados no coinciden con el usuario autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario/Imagen no encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -366,6 +595,42 @@
                     "description": "Contraseña del usuario para confirmar la eliminación\nexample \"MiContraseñaSegura\"",
                     "type": "string",
                     "example": "MiContraseñaSegura"
+                }
+            }
+        },
+        "dto.DTOImage": {
+            "description": "Contiene la información de una imagen, incluyendo su identificador, nombre, extensión, contenido en base64 y propietario (usuario)",
+            "type": "object",
+            "properties": {
+                "content_file": {
+                    "description": "Contenido de la imagen en base64\nExample: /9j/4AAQSkZJRgABAQEAAAAAAAD...",
+                    "type": "string",
+                    "example": "/9j/4AAQSkZJRgABAQEAAAAAAAD."
+                },
+                "extension": {
+                    "description": "Extensión del archivo de imagen\nExample: jpg",
+                    "type": "string",
+                    "example": ".jpeg"
+                },
+                "id_image": {
+                    "description": "ID único de la imagen\nExample: 64a1f8b8e4b0c10d3c5b2e75",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                },
+                "name": {
+                    "description": "Nombre del archivo de la imagen\nExample: foto_perfil",
+                    "type": "string",
+                    "example": "prueba"
+                },
+                "owner": {
+                    "description": "Usuario propietario de la imagen\nExample: usuario123",
+                    "type": "string",
+                    "example": "usuario123"
+                },
+                "size": {
+                    "description": "Tamaño de la imagen en bytes\nExample: 204800",
+                    "type": "string",
+                    "example": "2.3 kB"
                 }
             }
         },
