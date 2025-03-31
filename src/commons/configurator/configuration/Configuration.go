@@ -3,19 +3,22 @@ package configuration
 import (
 	"strconv"
 	"time"
+
+	"github.com/gofiber/swagger"
 )
 
-const serviceName = "api-upload-photos"
+const serviceName = "GoGallery"
 
 var configuration *Configuration
 
 type Configuration struct {
-	args        map[string]string
-	serviceName string
-	sesionId    string
-	timestamp   time.Time
-	port        string
-	jwtSecret   string
+	args                 map[string]string
+	serviceName          string
+	sesionId             string
+	timestamp            time.Time
+	port                 string
+	jwtSecret            string
+	swaggerConfiguration swagger.Config
 }
 
 func Instance(args map[string]string) *Configuration {
@@ -24,12 +27,13 @@ func Instance(args map[string]string) *Configuration {
 		miliseconds := timestamp.UnixMilli()
 
 		return &Configuration{
-			serviceName: serviceName,
-			sesionId:    serviceName + "-" + strconv.FormatInt(miliseconds, 10),
-			timestamp:   timestamp,
-			args:        args,
-			port:        args["GO_GALLERY_API_PORT"],
-			jwtSecret:   args["JWT_SECRET"],
+			serviceName:          serviceName,
+			sesionId:             serviceName + "-" + strconv.FormatInt(miliseconds, 10),
+			timestamp:            timestamp,
+			args:                 args,
+			port:                 args["GO_GALLERY_API_PORT"],
+			jwtSecret:            args["JWT_SECRET"],
+			swaggerConfiguration: createSwaggerConfiguration(),
 		}
 	}
 
@@ -41,6 +45,16 @@ func GetInstance() *Configuration {
 		panic("ERROR: Configuration is not instanced")
 	}
 	return configuration
+}
+
+func createSwaggerConfiguration() swagger.Config {
+	return swagger.Config{
+		URL: "/api/docs/definition/swagger.json",
+	}
+}
+
+func (conf *Configuration) GetSwaggerConfiguration() swagger.Config {
+	return conf.swaggerConfiguration
 }
 
 func (conf *Configuration) GetArgs() map[string]string {

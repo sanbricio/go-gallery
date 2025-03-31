@@ -14,14 +14,14 @@ import (
 type AuthController struct {
 	userService        *service.UserService
 	emailSenderService *service.EmailSenderService
-	jwtMiddleware     *middlewares.JWTMiddleware
+	jwtMiddleware      *middlewares.JWTMiddleware
 }
 
 func NewAuthController(userService *service.UserService, emailSenderService *service.EmailSenderService, jwtMiddleware *middlewares.JWTMiddleware) *AuthController {
 	return &AuthController{
 		userService:        userService,
 		emailSenderService: emailSenderService,
-		jwtMiddleware:     jwtMiddleware,
+		jwtMiddleware:      jwtMiddleware,
 	}
 }
 
@@ -34,8 +34,21 @@ func (c *AuthController) SetUpRoutes(router fiber.Router) {
 	router.Delete("/delete", c.jwtMiddleware.Handler(), c.confirmDelete)
 }
 
+// @Summary      Iniciar sesión
+// @Description  Autentica un usuario y genera un token JWT para guardarlo en una cookie
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request body dto.DTOLoginRequest true "Datos de autenticación"
+// @Success      200 {object} dto.DTOLoginResponse "Se ha iniciado sesion correctamente"
+// @Header       200 {string} Set-Cookie "Authorization=auth_token; HttpOnly; Secure"
+// @Failure      400 {object} exception.ApiException "Contraseña incorrecta"
+// @Failure      401 {object} exception.ApiException "No autorizado"
+// @Failure      404 {object} exception.ApiException "Usuario no encontrado"
+// @Failure      500 {object} exception.ApiException "Ha ocurrido un error inesperado"
+// @Router       /auth/login [post]
 func (c *AuthController) login(ctx *fiber.Ctx) error {
-	dtoLoginRequest := new(dto.DTOUser)
+	dtoLoginRequest := new(dto.DTOLoginRequest)
 	err := ctx.BodyParser(dtoLoginRequest)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erróneo"))
@@ -43,7 +56,7 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 
 	dtoUser, errFind := c.userService.Find(dtoLoginRequest)
 	if errFind != nil {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(errFind)
+		return ctx.Status(errFind.Status).JSON(errFind)
 	}
 
 	errJWT := c.jwtMiddleware.CreateJWTToken(ctx, dtoUser.Username, dtoUser.Email)
@@ -61,6 +74,16 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
+// @Summary      Registro de un nuevo usuario
+// @Description  Registra un nuevo usuario en el sistema
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request body dto.DTOUser true "Datos de registro"
+// @Success      201 {object} dto.DTORegisterResponse "Usuario creado"
+// @Failure      400 {object} exception.ApiException "Solicitud incorrecta"
+// @Failure      500 {object} exception.ApiException "Ha ocurrido un error inesperado"
+// @Router       /auth/register [post]
 func (c *AuthController) register(ctx *fiber.Ctx) error {
 	dtoRegisterRequest := new(dto.DTOUser)
 	err := ctx.BodyParser(dtoRegisterRequest)
@@ -68,7 +91,7 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erróneo"))
 	}
 
-	errHandler := handler.ProcessUser(dtoRegisterRequest)
+	errHandler := handler.ProcessUser(dtoRegisterRequest.Password, dtoRegisterRequest.Email)
 	if errHandler != nil {
 		return ctx.Status(errHandler.Status).JSON(errHandler)
 	}
@@ -86,6 +109,16 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusCreated).JSON(dto)
 }
 
+// @Summary      Cerrar sesión
+// @Description  Cierra la sesión del usuario autenticado, elimina la cookie auth_token
+// @Tags         auth
+// @Security     CookieAuth
+// @Success      200 {object} dto.DTOMessageResponse "Se ha cerrado sesión correctamente"
+// @Failure      401 {object} exception.ApiException "Usuario no autenticado"
+// @Failure      403 {object} exception.ApiException "Los datos proporcionados no coinciden con el usuario autenticado"
+// @Failure      404 {object} exception.ApiException "Usuario no encontrado"
+// @Failure      500 {object} exception.ApiException "Ha ocurrido un error inesperado"
+// @Router       /auth/logout [post]
 func (c *AuthController) logout(ctx *fiber.Ctx) error {
 	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
 	if !ok {
@@ -101,11 +134,25 @@ func (c *AuthController) logout(ctx *fiber.Ctx) error {
 	c.jwtMiddleware.DeleteAuthCookie(ctx)
 
 	// Respuesta con el nombre del usuario
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": fmt.Sprintf("Se ha cerrado sesión correctamente, %s", claims.Username),
+	return ctx.Status(fiber.StatusOK).JSON(&dto.DTOMessageResponse{
+		Message: fmt.Sprintf("Se ha cerrado sesión correctamente, %s", claims.Username),
 	})
 }
 
+// @Summary      Actualizar usuario
+// @Description  Actualiza los datos de un usuario autenticado
+// @Tags         auth
+// @Security     CookieAuth
+// @Accept       json
+// @Produce      json
+// @Param        request body dto.DTOUpdateUser true "Datos de actualización"
+// @Success      200 {object} dto.DTOMessageResponse "Se han actualizado los datos del usuario correctamente."
+// @Failure      400 {object} exception.ApiException "Solicitud incorrecta"
+// @Failure      401 {object} exception.ApiException "Usuario no autenticado"
+// @Failure      403 {object} exception.ApiException "Los datos proporcionados no coinciden con el usuario autenticado"
+// @Failure      404 {object} exception.ApiException "Usuario no encontrado"
+// @Failure      500 {object} exception.ApiException "Ha ocurrido un error inesperado"
+// @Router       /auth/update [put]
 func (c *AuthController) update(ctx *fiber.Ctx) error {
 	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
 	if !ok {
@@ -135,7 +182,7 @@ func (c *AuthController) update(ctx *fiber.Ctx) error {
 	}
 
 	// Si el usuario quiere cambiar el email y la contraseña lo validamos
-	errUser = handler.ProcessUser(dtoUser)
+	errUser = handler.ProcessUser(dtoUser.Password, dtoUser.Email)
 	if errUser != nil {
 		return ctx.Status(errUser.Status).JSON(errUser)
 	}
@@ -158,11 +205,21 @@ func (c *AuthController) update(ctx *fiber.Ctx) error {
 	}
 
 	// Respuesta con el nombre del usuario
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": fmt.Sprintf("Se han actualizado los datos del usuario %s correctamente.", dtoUser.Username),
+	return ctx.Status(fiber.StatusOK).JSON(&dto.DTOMessageResponse{
+		Message: fmt.Sprintf("Se han actualizado los datos del usuario %s correctamente.", dtoUser.Username),
 	})
 }
 
+// @Summary      Solicitar eliminación de cuenta
+// @Description  Envía un código de verificación al correo para eliminar la cuenta
+// @Tags         auth
+// @Security     CookieAuth
+// @Success      200 {object} dto.DTOMessageResponse "Se ha enviado un código de confirmación al correo electrónico"
+// @Failure      401 {object} exception.ApiException "Usuario no autenticado"
+// @Failure      403 {object} exception.ApiException "Los datos proporcionados no coinciden con el usuario autenticado"
+// @Failure      404 {object} exception.ApiException "Usuario no encontrado"
+// @Failure      500 {object} exception.ApiException "Ha ocurrido un error inesperado"
+// @Router       /auth/request-delete [post]
 func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
 	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
 	if !ok {
@@ -181,16 +238,30 @@ func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
 	// Enviamos al usuario un correo electrónico con el código
 	errEmail := c.emailSenderService.SendEmail(code, claims.Email)
 	if errEmail != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "No se ha podido enviar un código de confirmación al correo electrónico debido a un fallo interno del sistema.",
+		return ctx.Status(fiber.StatusInternalServerError).JSON(&dto.DTOMessageResponse{
+			Message: "No se ha podido enviar un código de confirmación al correo electrónico debido a un fallo interno del sistema.",
 		})
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": fmt.Sprintf("Se ha enviado un código de confirmación al correo electrónico %s .", claims.Email),
+	return ctx.Status(fiber.StatusOK).JSON(&dto.DTOMessageResponse{
+		Message: fmt.Sprintf("Se ha enviado un código de confirmación al correo electrónico %s .", claims.Email),
 	})
 }
 
+// @Summary      Confirmar eliminación de cuenta
+// @Description  Elimina la cuenta de usuario tras verificar el código enviado
+// @Tags         auth
+// @Security     ApiKeyAuth
+// @Accept       json
+// @Produce      json
+// @Param        request body dto.DTODeleteUser true "Datos para confirmar eliminación"
+// @Success      200 {object} dto.DTOMessageResponse "Se han eliminado los datos del usuario correctamente"
+// @Failure      400 {object} exception.ApiException "Solicitud incorrecta"
+// @Failure      401 {object} exception.ApiException "Usuario no autenticado"
+// @Failure      403 {object} exception.ApiException "Los datos proporcionados no coinciden con el usuario autenticado"
+// @Failure      404 {object} exception.ApiException "Usuario no encontrado"
+// @Failure      500 {object} exception.ApiException "Ha ocurrido un error inesperado"
+// @Router       /auth/delete [delete]
 func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
 	claims, ok := ctx.Locals("user").(*dto.DTOClaimsJwt)
 	if !ok {
@@ -211,15 +282,15 @@ func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
 	}
 
 	// Comprobamos que el código sea correcto
-	ok = handler.VerifyCode(dtoDeleteUser.Username, dtoDeleteUser.Code)
+	ok = handler.VerifyCode(claims.Username, dtoDeleteUser.Code)
 	if !ok {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "El código de verificación es incorrecto"))
 	}
 
 	// Creamos la entidad para proceder a la eliminacion del usuario
 	dtoUser := &dto.DTOUser{
-		Username: dtoDeleteUser.Username,
-		Email:    dtoDeleteUser.Email,
+		Username: claims.Username,
+		Email:    claims.Email,
 		Password: dtoDeleteUser.Password,
 	}
 
@@ -230,13 +301,13 @@ func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
 	}
 
 	// Eliminamos el codigo unico del usuario del mapa
-	handler.RemoveCode(dtoDeleteUser.Username)
+	handler.RemoveCode(dtoUser.Username)
 
 	// Eliminamos la cookie de autenticación
 	c.jwtMiddleware.DeleteAuthCookie(ctx)
 
 	// Respuesta con el nombre del usuario
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": fmt.Sprintf("Se han eliminado los datos del usuario %s correctamente.", dtoUser.Username),
+	return ctx.Status(fiber.StatusOK).JSON(&dto.DTOMessageResponse{
+		Message: fmt.Sprintf("Se han eliminado los datos del usuario %s correctamente.", dtoUser.Username),
 	})
 }

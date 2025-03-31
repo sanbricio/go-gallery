@@ -20,7 +20,7 @@ func (s *UserService) Insert(dtoInsertUser *dto.DTOUser) (*dto.DTOUser, *excepti
 	return s.repository.Insert(dtoInsertUser)
 }
 
-func (s *UserService) Find(dtoFindUser *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (s *UserService) Find(dtoFindUser *dto.DTOLoginRequest) (*dto.DTOUser, *exception.ApiException) {
 	return s.repository.Find(dtoFindUser)
 }
 

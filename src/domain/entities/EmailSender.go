@@ -1,4 +1,4 @@
-package domain
+package entity
 
 type EmailSender struct {
 	Host     string

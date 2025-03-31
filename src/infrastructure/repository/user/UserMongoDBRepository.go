@@ -52,7 +52,7 @@ func connect(urlConnection, databaseName string) *mongo.Database {
 	return client.Database(databaseName)
 }
 
-func (r *UserMongoDBRepository) Find(dtoUserFind *dto.DTOUser) (*dto.DTOUser, *exception.ApiException) {
+func (r *UserMongoDBRepository) Find(dtoUserFind *dto.DTOLoginRequest) (*dto.DTOUser, *exception.ApiException) {
 	filter := bson.M{USERNAME: dtoUserFind.Username}
 	user, err := r.find(filter)
 	if err != nil {

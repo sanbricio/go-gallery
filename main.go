@@ -10,6 +10,15 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
+// @title GoGallery
+// @version 1.0.0
+// @description API para la gestión de subida de fotos, con una autentificación
+// @contact.name Support GoGallery
+// @contact.email gogalleryteam@gmail.com
+// @BasePath /api
+// @securityDefinitions.apiKey CookieAuth
+// @in header
+// @name Cookie
 func main() {
 	// Inicializamos la aplicación Fiber
 	app := fiber.New()
@@ -30,17 +39,22 @@ func main() {
 		},
 	}))
 
+	// Configuración de rutas para la documentación de Swagger
+	docsController := controller.NewSwaggerController(configuration.GetSwaggerConfiguration())
+	docsGroup := app.Group("/api/docs")
+	docsController.SetUpRoutes(docsGroup)
+
 	// Inicializamos el middleware de autenticación JWT
 	jwtMiddleware := middlewares.NewJWTMiddleware(configuration.GetJWTSecret())
 
 	// Configuración de rutas de autenticación de usuario
 	authController := controller.NewAuthController(userService, emailSenderService, jwtMiddleware)
-	authGroup := app.Group("/auth")
+	authGroup := app.Group("/api/auth")
 	authController.SetUpRoutes(authGroup)
 
 	// Configuración de rutas de imágenes con autenticación JWT
 	imageController := controller.NewImageController(imageService, userService)
-	imageGroup := app.Group("/image")
+	imageGroup := app.Group("/api/image")
 	imageGroup.Use(jwtMiddleware.Handler())
 	imageController.SetUpRoutes(imageGroup)
 

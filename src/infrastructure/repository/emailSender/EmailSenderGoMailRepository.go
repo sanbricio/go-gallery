@@ -1,7 +1,7 @@
 package emailsender_repository
 
 import (
-	"api-upload-photos/src/domain"
+	entity "api-upload-photos/src/domain/entities"
 	"fmt"
 	"log"
 	"net/smtp"
@@ -10,11 +10,11 @@ import (
 )
 
 type EmailSenderGoMailRepository struct {
-	emailSender domain.EmailSender
+	emailSender entity.EmailSender
 }
 
 func NewEmailSenderGoMailRepository(args map[string]string) *EmailSenderGoMailRepository {
-	emailSender := domain.EmailSender{}
+	emailSender := entity.EmailSender{}
 	// Cargamos de configuración para el sender de emails
 	emailSender.Host = args["EMAIL_SENDER_HOST"]
 	port, err := strconv.Atoi(args["EMAIL_SENDER_PORT"])

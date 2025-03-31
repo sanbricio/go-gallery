@@ -15,12 +15,11 @@ const (
 )
 
 type JWTMiddleware struct {
-	secret     string
-	cookieName string
+	secret string
 }
 
 func NewJWTMiddleware(secret string) *JWTMiddleware {
-	return &JWTMiddleware{secret: secret, cookieName: COOKIE_NAME}
+	return &JWTMiddleware{secret: secret}
 }
 
 // Middleware para validar la cookie JWT
@@ -117,7 +116,7 @@ func (auth *JWTMiddleware) createJwtToken(username, email string) (string, *exce
 }
 func (auth *JWTMiddleware) createCookie(ctx *fiber.Ctx, token string) {
 	ctx.Cookie(&fiber.Cookie{
-		Name:     auth.cookieName,
+		Name:     COOKIE_NAME,
 		Value:    token,
 		Expires:  time.Now().Add(JWT_EXPIRATION_HOURS),
 		HTTPOnly: true,
@@ -129,7 +128,7 @@ func (auth *JWTMiddleware) createCookie(ctx *fiber.Ctx, token string) {
 func (auth *JWTMiddleware) DeleteAuthCookie(ctx *fiber.Ctx) {
 	// Eliminar la cookie
 	ctx.Cookie(&fiber.Cookie{
-		Name:     auth.cookieName,
+		Name:     COOKIE_NAME,
 		Value:    "",
 		MaxAge:   0, // Expira inmediatamente
 		HTTPOnly: true,
