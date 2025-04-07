@@ -1,12 +1,12 @@
 package user_repository
 
 import (
-	"api-upload-photos/src/commons/exception"
-	entity "api-upload-photos/src/domain/entities"
-	"api-upload-photos/src/domain/entities/builder"
-	"api-upload-photos/src/infrastructure/dto"
 	"context"
 	"fmt"
+	"go-gallery/src/commons/exception"
+	entity "go-gallery/src/domain/entities"
+	"go-gallery/src/domain/entities/builder"
+	"go-gallery/src/infrastructure/dto"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

@@ -1,20 +1,22 @@
 package configuration
 
 import (
+	"go-gallery/src/commons/configurator/version"
 	"strconv"
 	"time"
 
 	"github.com/gofiber/swagger"
 )
 
-const serviceName = "GoGallery"
+const serviceName = "go-gallery"
 
 var configuration *Configuration
 
 type Configuration struct {
 	args                 map[string]string
 	serviceName          string
-	sesionId             string
+	version              string
+	sessionId            string
 	timestamp            time.Time
 	port                 string
 	jwtSecret            string
@@ -26,15 +28,18 @@ func Instance(args map[string]string) *Configuration {
 		timestamp := time.Now()
 		miliseconds := timestamp.UnixMilli()
 
-		return &Configuration{
+		configuration = &Configuration{
 			serviceName:          serviceName,
-			sesionId:             serviceName + "-" + strconv.FormatInt(miliseconds, 10),
+			version:              version.AppVersion,
+			sessionId:            serviceName + "-" + strconv.FormatInt(miliseconds, 10),
 			timestamp:            timestamp,
 			args:                 args,
 			port:                 args["GO_GALLERY_API_PORT"],
 			jwtSecret:            args["JWT_SECRET"],
 			swaggerConfiguration: createSwaggerConfiguration(),
 		}
+
+		return configuration
 	}
 
 	panic("ERROR: Configuration is already intanced")
@@ -51,6 +56,10 @@ func createSwaggerConfiguration() swagger.Config {
 	return swagger.Config{
 		URL: "/api/docs/definition/swagger.json",
 	}
+}
+
+func (conf *Configuration) GetVersion() string {
+	return conf.version
 }
 
 func (conf *Configuration) GetSwaggerConfiguration() swagger.Config {
@@ -70,7 +79,7 @@ func (conf *Configuration) GetServiceName() string {
 }
 
 func (conf *Configuration) GetSessionId() string {
-	return conf.sesionId
+	return conf.sessionId
 }
 
 func (conf *Configuration) GetTimestamp() time.Time {

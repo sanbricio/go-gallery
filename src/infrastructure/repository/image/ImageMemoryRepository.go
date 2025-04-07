@@ -1,11 +1,11 @@
 package image_repository
 
 import (
-	"api-upload-photos/src/commons/exception"
-	"api-upload-photos/src/domain/entities/builder"
-	"api-upload-photos/src/infrastructure/dto"
 	"encoding/json"
 	"fmt"
+	"go-gallery/src/commons/exception"
+	"go-gallery/src/domain/entities/builder"
+	"go-gallery/src/infrastructure/dto"
 	"os"
 	"path/filepath"
 	"strings"

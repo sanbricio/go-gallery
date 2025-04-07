@@ -1,9 +1,9 @@
 package service
 
 import (
-	"api-upload-photos/src/commons/exception"
-	"api-upload-photos/src/infrastructure/dto"
-	repository "api-upload-photos/src/infrastructure/repository/user"
+	"go-gallery/src/commons/exception"
+	"go-gallery/src/infrastructure/dto"
+	repository "go-gallery/src/infrastructure/repository/user"
 )
 
 type UserService struct {

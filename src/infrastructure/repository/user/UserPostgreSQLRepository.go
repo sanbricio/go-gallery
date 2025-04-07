@@ -1,12 +1,12 @@
 package user_repository
 
 import (
-	"api-upload-photos/src/commons/exception"
-	entity "api-upload-photos/src/domain/entities"
-	"api-upload-photos/src/domain/entities/builder"
-	"api-upload-photos/src/infrastructure/dto"
 	"database/sql"
 	"fmt"
+	"go-gallery/src/commons/exception"
+	entity "go-gallery/src/domain/entities"
+	"go-gallery/src/domain/entities/builder"
+	"go-gallery/src/infrastructure/dto"
 
 	_ "github.com/lib/pq"
 )

@@ -1,7 +1,7 @@
 package handler_test
 
 import (
-	handler "api-upload-photos/src/infrastructure/controller/handler"
+	handler "go-gallery/src/infrastructure/controller/handler"
 	"testing"
 	"time"
 )

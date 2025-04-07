@@ -1,8 +1,8 @@
 package builder_test
 
 import (
-	"api-upload-photos/src/domain/entities/builder"
-	"api-upload-photos/src/infrastructure/dto"
+	"go-gallery/src/domain/entities/builder"
+	"go-gallery/src/infrastructure/dto"
 	"testing"
 )
 

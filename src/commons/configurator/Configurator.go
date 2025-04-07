@@ -1,9 +1,9 @@
 package configurator
 
 import (
-	"api-upload-photos/src/commons/configurator/configuration"
-	dependency_container "api-upload-photos/src/commons/dependency-container"
-	dependency_dictionary "api-upload-photos/src/commons/dependency-container/dependency-dictionary"
+	"go-gallery/src/commons/configurator/configuration"
+	dependency_container "go-gallery/src/commons/dependency-container"
+	dependency_dictionary "go-gallery/src/commons/dependency-container/dependency-dictionary"
 	"log"
 	"os"
 	"strings"

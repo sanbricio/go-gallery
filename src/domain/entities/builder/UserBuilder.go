@@ -1,9 +1,9 @@
 package builder
 
 import (
-	"api-upload-photos/src/commons/exception"
-	entity "api-upload-photos/src/domain/entities"
-	"api-upload-photos/src/infrastructure/dto"
+	"go-gallery/src/commons/exception"
+	entity "go-gallery/src/domain/entities"
+	"go-gallery/src/infrastructure/dto"
 	"strings"
 )
 

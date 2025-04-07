@@ -1,11 +1,11 @@
 package handler_test
 
 import (
-	"api-upload-photos/src/commons/exception"
-	"api-upload-photos/src/infrastructure/controller/handler"
-	"api-upload-photos/src/infrastructure/dto"
 	"bytes"
 	"encoding/json"
+	"go-gallery/src/commons/exception"
+	"go-gallery/src/infrastructure/controller/handler"
+	"go-gallery/src/infrastructure/dto"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -32,7 +32,6 @@ var tests = []struct {
 
 func TestProcessImageFile(t *testing.T) {
 	app := loadFiberApp()
-
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

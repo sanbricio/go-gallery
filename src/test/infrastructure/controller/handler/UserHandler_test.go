@@ -1,8 +1,8 @@
 package handler_test
 
 import (
-	"api-upload-photos/src/infrastructure/controller/handler"
-	"api-upload-photos/src/infrastructure/dto"
+	"go-gallery/src/infrastructure/controller/handler"
+	"go-gallery/src/infrastructure/dto"
 	"testing"
 )
 

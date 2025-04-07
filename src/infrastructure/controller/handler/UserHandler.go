@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"api-upload-photos/src/commons/exception"
+	"go-gallery/src/commons/exception"
 	"net/http"
 	"regexp"
 )

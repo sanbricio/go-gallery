@@ -1,9 +1,9 @@
 package dependency_dictionary
 
 import (
-	emailsender_repository "api-upload-photos/src/infrastructure/repository/emailSender"
-	image_repository "api-upload-photos/src/infrastructure/repository/image"
-	user_repository "api-upload-photos/src/infrastructure/repository/user"
+	emailsender_repository "go-gallery/src/infrastructure/repository/emailSender"
+	image_repository "go-gallery/src/infrastructure/repository/image"
+	user_repository "go-gallery/src/infrastructure/repository/user"
 )
 
 func FindImageDependency(code string, args map[string]string) image_repository.ImageRepository {

@@ -1,4 +1,4 @@
-module api-upload-photos
+module go-gallery
 
 go 1.24
 

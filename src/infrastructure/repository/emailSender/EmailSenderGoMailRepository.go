@@ -1,8 +1,8 @@
 package emailsender_repository
 
 import (
-	entity "api-upload-photos/src/domain/entities"
 	"fmt"
+	entity "go-gallery/src/domain/entities"
 	"log"
 	"net/smtp"
 	"strconv"

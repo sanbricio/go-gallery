@@ -1,11 +1,11 @@
 package image_repository
 
 import (
-	"api-upload-photos/src/commons/exception"
-	"api-upload-photos/src/domain/entities/builder"
-	"api-upload-photos/src/infrastructure/dto"
 	"context"
 	"fmt"
+	"go-gallery/src/commons/exception"
+	"go-gallery/src/domain/entities/builder"
+	"go-gallery/src/infrastructure/dto"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -26,7 +26,7 @@ type ImageMongoDBRepository struct {
 }
 
 func NewImageMongoDBRepository(args map[string]string) ImageRepository {
-	urlConnection := args["MONGODB_URL_CONNECTION"]
+	urlConnection := args["MONGODB_URL_CONNECTION_APP"]
 	databaseName := args["MONGODB_DATABASE"]
 
 	db := connect(urlConnection, databaseName)

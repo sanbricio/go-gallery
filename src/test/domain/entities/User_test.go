@@ -1,7 +1,7 @@
 package entity_test
 
 import (
-	entity "api-upload-photos/src/domain/entities"
+	entity "go-gallery/src/domain/entities"
 	"testing"
 )
 

@@ -1,6 +1,6 @@
 package dto
 
-import entity "api-upload-photos/src/domain/entities"
+import entity "go-gallery/src/domain/entities"
 
 // DTOImage representa la estructura de una imagen
 // @Description Contiene la información de una imagen, incluyendo su identificador, nombre, extensión, contenido en base64 y propietario (usuario)

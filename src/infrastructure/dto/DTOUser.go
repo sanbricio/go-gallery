@@ -1,6 +1,6 @@
 package dto
 
-import entity "api-upload-photos/src/domain/entities"
+import entity "go-gallery/src/domain/entities"
 
 // DTOUser Representa los datos del usuario
 // @Description Estructura que define los datos del usuario

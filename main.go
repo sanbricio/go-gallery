@@ -1,10 +1,10 @@
 package main
 
 import (
-	"api-upload-photos/src/commons/configurator"
-	"api-upload-photos/src/infrastructure/controller"
-	"api-upload-photos/src/infrastructure/controller/middlewares"
-	"api-upload-photos/src/service"
+	"go-gallery/src/commons/configurator"
+	"go-gallery/src/infrastructure/controller"
+	"go-gallery/src/infrastructure/controller/middlewares"
+	"go-gallery/src/service"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"

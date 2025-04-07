@@ -1,6 +1,6 @@
 package service
 
-import emailsender_repository "api-upload-photos/src/infrastructure/repository/emailSender"
+import emailsender_repository "go-gallery/src/infrastructure/repository/emailSender"
 
 type EmailSenderService struct {
 	repository emailsender_repository.EmailSenderRepository

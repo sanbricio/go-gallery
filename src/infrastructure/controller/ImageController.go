@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"api-upload-photos/src/commons/exception"
-	"api-upload-photos/src/infrastructure/controller/handler"
-	"api-upload-photos/src/infrastructure/dto"
-	"api-upload-photos/src/service"
+	"go-gallery/src/commons/exception"
+	"go-gallery/src/infrastructure/controller/handler"
+	"go-gallery/src/infrastructure/dto"
+	"go-gallery/src/service"
 
 	"github.com/gofiber/fiber/v2"
 )

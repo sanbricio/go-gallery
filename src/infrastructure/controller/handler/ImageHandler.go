@@ -1,16 +1,17 @@
 package handler
 
 import (
-	"api-upload-photos/src/commons/exception"
-	"api-upload-photos/src/infrastructure/dto"
 	"encoding/base64"
+	"go-gallery/src/commons/exception"
+	"go-gallery/src/infrastructure/dto"
 	"io"
 	"mime/multipart"
 	"path/filepath"
 	"strings"
 
-	"github.com/dustin/go-humanize"
 	"slices"
+
+	"github.com/dustin/go-humanize"
 )
 
 func ProcessImageFile(fileInput *multipart.FileHeader, owner string) (*dto.DTOImage, *exception.ApiException) {
