@@ -218,7 +218,7 @@ info:
     name: Support GoGallery
   description: API para la gestión de subida de fotos, con una autentificación
   title: GoGallery
-  version: 1.0.0
+  version: v1.0.0
 paths:
   /auth/delete:
     delete:

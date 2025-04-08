@@ -11,7 +11,7 @@ import (
 )
 
 // @title GoGallery
-// @version 1.0.0
+// @version v1.0.0
 // @description API para la gestión de subida de fotos, con una autentificación
 // @contact.name Support GoGallery
 // @contact.email gogalleryteam@gmail.com

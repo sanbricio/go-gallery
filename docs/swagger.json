@@ -7,7 +7,7 @@
             "name": "Support GoGallery",
             "email": "gogalleryteam@gmail.com"
         },
-        "version": "1.0.0"
+        "version": "v1.0.0"
     },
     "basePath": "/api",
     "paths": {
