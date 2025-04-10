@@ -4,10 +4,12 @@ on:
   push:
     branches:
       - main
-      - release/**
   pull_request:
     branches:
       - main
+
+permissions:
+  contents: write
 
 jobs:
   build-and-test:
@@ -32,10 +34,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
           go-version: '1.24'
+
       - name: Versioning and Tagging
         run: |
           BRANCH_NAME=${GITHUB_REF#refs/heads/}
@@ -43,10 +47,19 @@ jobs:
             VERSION="${BASH_REMATCH[1]}"
             echo "Executing script generate-version.sh"
             ./scripts/generate-version.sh
-            git config user.name "CI Bot"
+
+            git config user.name "CI go-gallery"
             git config user.email "gogalleryteam@gmail.com"
-            git commit -am "Release version $VERSION [skip ci]"
-            git push
+
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+
+            if [[ -n $(git status --porcelain) ]]; then
+              git commit -am "Release version $VERSION [skip ci]"
+              git push
+            else
+              echo "No changes to commit"
+            fi
+
             git tag -a "v$VERSION" -m "Release version $VERSION"
             git push origin "v$VERSION"
           else
