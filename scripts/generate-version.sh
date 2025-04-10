@@ -4,10 +4,6 @@ MAIN_GO_FILE="../main.go"
 BRANCH_NAME=$(git symbolic-ref --short HEAD)
 
 echo "Branch: $BRANCH_NAME"
-if [[ ! "$BRANCH_NAME" =~ ^release/v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
-    echo "Not a valid release branch. Exiting."
-    exit 1
-fi
 VERSION="v${BASH_REMATCH[1]}"
 echo "Release version: $VERSION"
 COMMIT=$(git rev-parse HEAD)
