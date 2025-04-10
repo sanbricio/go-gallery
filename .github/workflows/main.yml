@@ -8,7 +8,6 @@ on:
 permissions:
   contents: write
 
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -27,7 +26,7 @@ jobs:
         run: go test -v ./...
 
   release-versioning:
-    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/')
+    if: startsWith(github.ref, 'refs/heads/release/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,7 +38,7 @@ jobs:
 
       - name: Versioning and Tagging
         run: |
-          VERSION=$(echo "${{ github.event.pull_request.head.ref }}" | sed 's|release/v||')
+          VERSION=$(echo "${{ github.ref }}" | sed 's|refs/heads/release/v||')
 
           echo "✔ Detected release version: $VERSION"
           ./scripts/generate-version.sh
