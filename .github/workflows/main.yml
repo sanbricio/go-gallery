@@ -44,7 +44,7 @@ jobs:
           VERSION=$(echo "${{ github.event.pull_request.head.ref }}" | sed 's|release/v||')
 
           echo "✔ Detected release version: $VERSION"
-          ./scripts/generate-version.sh
+          ./scripts/generate-version.sh "$VERSION"
 
           git config user.name "CI GoGallery Bot"
           git config user.email "gogalleryteam@gmail.com"

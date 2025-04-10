@@ -1,9 +1,15 @@
 #!/bin/bash
 # scripts/generate-version.sh
-MAIN_GO_FILE="main.go"
-BRANCH_NAME=$(git symbolic-ref --short HEAD)
 
-echo "Branch: $BRANCH_NAME"
+VERSION=$1 
+
+if [ -z "$VERSION" ]; then
+    echo "Error: VERSION is not provided!"
+    exit 1
+fi
+
+MAIN_GO_FILE="main.go"
+
 echo "Release version: $VERSION"
 COMMIT=$(git rev-parse HEAD)
 DATE=$(date +'%d/%m/%Y %H:%M:%S')
@@ -25,6 +31,9 @@ echo "✔ Version generated: $VERSION"
 echo "Updating the version in the file $MAIN_GO_FILE..."
 
 cd ./..
+
+echo "✔ Content of root directory before updating main.go:"
+ls -la
 
 # Update the version in main.go file
 grep -q "^// @version " "$MAIN_GO_FILE"
