@@ -28,6 +28,7 @@ jobs:
         run: go test -v ./...
 
   release-versioning:
+    needs: build-and-test
     if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/v')
     runs-on: ubuntu-latest
     steps:
@@ -40,21 +41,28 @@ jobs:
 
       - name: Versioning and Tagging
         run: |
-          VERSION=$(echo "${{ github.event.pull_request.head.ref }}" | sed 's|release/v||')
+          VERSION=$(echo "${{ github.event.pull_request.head.ref }}" | sed 's|release/||')
 
           echo "✔ Detected release version: $VERSION"
-          ./scripts/generate-version.sh
 
-          git config user.name "CI Bot"
+          echo "✔ Changing to the scripts directory"
+          cd ./scripts  # Cambia a la carpeta scripts
+
+          echo "✔ Running the versioning script"
+          ./generate-version.sh "$VERSION"
+
+          git config user.name "CI GoGallery Bot"
           git config user.email "gogalleryteam@gmail.com"
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
           if [[ -n $(git status --porcelain) ]]; then
+            git add . 
             git commit -am "Release version $VERSION [skip ci]"
             git push
           else
-            echo "No changes to commit"
+            echo "⚠ No changes to commit for version $VERSION"
+            exit 1 
           fi
 
-          git tag -a "v$VERSION" -m "Release version $VERSION"
-          git push origin "v$VERSION"
+          git tag -a "$VERSION" -m "Release version $VERSION"
+          git push origin "$VERSION"

@@ -1,18 +1,23 @@
 #!/bin/bash
 # scripts/generate-version.sh
-MAIN_GO_FILE="../main.go"
-BRANCH_NAME=$(git symbolic-ref --short HEAD)
 
-echo "Branch: $BRANCH_NAME"
-VERSION="v${BASH_REMATCH[1]}"
+VERSION=$1 
+
+if [ -z "$VERSION" ]; then
+    echo "Error: VERSION is not provided!"
+    exit 1
+fi
+
+MAIN_GO_FILE="main.go"
+
 echo "Release version: $VERSION"
 COMMIT=$(git rev-parse HEAD)
 DATE=$(date +'%d/%m/%Y %H:%M:%S')
 
 # Create version.go file with current values
-mkdir -p ../src/commons/configurator/version
+mkdir -p src/commons/configurator/version
 
-cat <<EOF >../src/commons/configurator/version/version.go
+cat <<EOF >src/commons/configurator/version/version.go
 package version
 
 var (
@@ -24,6 +29,8 @@ EOF
 
 echo "✔ Version generated: $VERSION"
 echo "Updating the version in the file $MAIN_GO_FILE..."
+
+cd ./..
 
 # Update the version in main.go file
 grep -q "^// @version " "$MAIN_GO_FILE"
@@ -40,6 +47,6 @@ fi
 
 # Generate Swagger documentation
 echo "✔ Generating Swagger documentation..."
-cd ..
 swag init
 echo "✔ Documentation generated successfully"
+echo "✔ Version generation script completed"
