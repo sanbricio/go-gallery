@@ -1,9 +1,11 @@
 name: Release Versioning on Merge
 
 on:
-  push:
+  pull_request:
     branches:
       - main
+    types:
+      - closed
 
 permissions:
   contents: write
@@ -26,7 +28,7 @@ jobs:
         run: go test -v ./...
 
   release-versioning:
-    if: startsWith(github.ref, 'refs/heads/release/')
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +40,7 @@ jobs:
 
       - name: Versioning and Tagging
         run: |
-          VERSION=$(echo "${{ github.ref }}" | sed 's|refs/heads/release/v||')
+          VERSION=$(echo "${{ github.event.pull_request.head.ref }}" | sed 's|release/v||')
 
           echo "✔ Detected release version: $VERSION"
           ./scripts/generate-version.sh
