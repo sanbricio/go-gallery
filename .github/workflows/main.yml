@@ -56,10 +56,12 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
           if [[ -n $(git status --porcelain) ]]; then
+            git add . 
             git commit -am "Release version $VERSION [skip ci]"
             git push
           else
-            echo "No changes to commit"
+            echo "⚠ No changes to commit for version $VERSION"
+            exit 1 
           fi
 
           git tag -a "$VERSION" -m "Release version $VERSION"

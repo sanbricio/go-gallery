@@ -32,9 +32,6 @@ echo "Updating the version in the file $MAIN_GO_FILE..."
 
 cd ./..
 
-echo "✔ Content of root directory before updating main.go:"
-ls -la
-
 # Update the version in main.go file
 grep -q "^// @version " "$MAIN_GO_FILE"
 sed -i "s|^// @version .*|// @version $VERSION|" "$MAIN_GO_FILE"
@@ -52,3 +49,4 @@ fi
 echo "✔ Generating Swagger documentation..."
 swag init
 echo "✔ Documentation generated successfully"
+echo "✔ Version generation script completed"
