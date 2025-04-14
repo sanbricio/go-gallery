@@ -1,18 +1,17 @@
-name: Hotfix Versioning
+name: Hotfix Tagging
 
 on:
-  pull_request:
-    branches:
-      - main
-    types:
-      - closed
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
   hotfix-versioning:
-    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'hotfix/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,10 +23,13 @@ jobs:
 
       - name: Generate version, update docs, commit and tag
         run: |
-          VERSION=$(echo "${{ github.event.pull_request.head.ref }}" | sed 's|hotfix/||')
+          VERSION="${{ inputs.version }}"
           echo "✔ Detected hotfix version: $VERSION"
 
+          echo "✔ Changing to the scripts directory"
           cd ./scripts
+
+          echo "✔ Running the versioning script"
           ./generate-version.sh "$VERSION"
 
           git config user.name "CI GoGallery Bot"
@@ -36,11 +38,10 @@ jobs:
 
           if [[ -n $(git status --porcelain) ]]; then
             git add .
-            git commit -m "Hotfix version $VERSION [skip ci]"
+            git commit -m "Hotfix version $VERSION"
             git push
           else
             echo "⚠ No changes to commit"
-            exit 0
           fi
 
           git tag -a "$VERSION" -m "Hotfix version $VERSION"
