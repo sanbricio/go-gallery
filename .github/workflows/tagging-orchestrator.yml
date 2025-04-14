@@ -1,0 +1,40 @@
+name: Tagging & Release Orchestrator
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch-tagging:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Detect PR type and dispatch
+        run: |
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+
+          echo "🔍 Evaluating branch: $BRANCH"
+
+          if [[ "$BRANCH" =~ ^hotfix/v ]]; then
+            echo "🚀 Dispatching hotfix workflow"
+            gh workflow run hotfix-versioning.yml -f version="${BRANCH#hotfix/}"
+          elif [[ "$BRANCH" =~ ^release/v ]]; then
+            echo "🚀 Dispatching release workflow"
+            gh workflow run release-versioning.yml -f version="${BRANCH#release/}"
+          else
+            echo "✅ Not a release-related PR. Nothing to do."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh

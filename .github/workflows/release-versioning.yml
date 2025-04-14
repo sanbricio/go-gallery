@@ -1,18 +1,17 @@
 name: Release Versioning on Merge
 
 on:
-  pull_request:
-    branches:
-      - main
-    types:
-      - closed
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 jobs:
   release-versioning:
-    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'release/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,14 +21,14 @@ jobs:
         with:
           go-version: '1.24'
 
-      - name: Versioning and Tagging
+      - name: Generate version, update docs, commit and tag
         run: |
-          VERSION=$(echo "${{ github.event.pull_request.head.ref }}" | sed 's|release/||')
+          VERSION="${{ inputs.version }}"
 
           echo "✔ Detected release version: $VERSION"
 
           echo "✔ Changing to the scripts directory"
-          cd ./scripts  # Cambia a la carpeta scripts
+          cd ./scripts
 
           echo "✔ Running the versioning script"
           ./generate-version.sh "$VERSION"
@@ -40,7 +39,7 @@ jobs:
 
           if [[ -n $(git status --porcelain) ]]; then
             git add . 
-            git commit -am "Release version $VERSION [skip ci]"
+            git commit -am "Release version $VERSION"
             git push
           else
             echo "⚠ No changes to commit for version $VERSION"
