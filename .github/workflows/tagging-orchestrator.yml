@@ -16,6 +16,13 @@ jobs:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - uses: actions/checkout@v4
+
       - name: Detect PR type and dispatch
         run: |
           BRANCH="${{ github.event.pull_request.head.ref }}"
@@ -34,7 +41,3 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
