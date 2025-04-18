@@ -1,4 +1,4 @@
-name: Hotfix Tagging
+name: Versioning Hotfix Updates
 
 on:
   workflow_dispatch:

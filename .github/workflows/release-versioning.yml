@@ -1,4 +1,4 @@
-name: Release Versioning on Merge
+name: Versioning Release Updates
 
 on:
   workflow_dispatch:
