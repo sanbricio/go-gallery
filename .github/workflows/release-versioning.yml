@@ -38,6 +38,7 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
           if [[ -n $(git status --porcelain) ]]; then
+            git pull
             git add . 
             git commit -am "Release version $VERSION"
             git push
