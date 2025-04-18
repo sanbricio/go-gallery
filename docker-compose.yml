@@ -11,6 +11,8 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${DOCKER_MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${DOCKER_MONGO_INITDB_ROOT_PASSWORD}
+    networks:
+      - app_network
 
   mongo-express:
     container_name: mongo_express
@@ -24,19 +26,56 @@ services:
       ME_CONFIG_MONGODB_URL: ${MONGODB_URL_CONNECTION}
     depends_on:
       - mongodb
+    networks:
+      - app_network
 
   postgres:
     container_name: postgres
     image: postgres:16
     restart: always
     ports:
-      - 5432:5432
+      - "${POSTGRESQL_PORT}:${POSTGRESQL_PORT}"
     environment:
+      POSTGRES_USER: ${POSTGRESQL_USER}
+      POSTGRES_PASSWORD: ${POSTGRESQL_PASSWORD}
+      POSTGRES_DB: ${POSTGRESQL_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  go-gallery:
+    container_name: go-gallery
+    image: go-gallery:v1.0.0
+    restart: always
+    ports:
+      - "${GO_GALLERY_API_PORT}:${GO_GALLERY_API_PORT}"
+    environment:
+      MONGODB_URL_CONNECTION: ${MONGODB_URL_CONNECTION}
+      MONGODB_DATABASE: ${MONGODB_DATABASE}
       POSTGRESQL_USER: ${POSTGRESQL_USER}
       POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
       POSTGRESQL_DB: ${POSTGRESQL_DB}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRESQL_PORT: ${POSTGRESQL_PORT}
+      POSTGRESQL_HOST: ${POSTGRESQL_HOST}
+      JWT_SECRET: ${JWT_SECRET}
+      GO_GALLERY_API_PORT: ${GO_GALLERY_API_PORT}
+      USER_REPOSITORY: ${USER_REPOSITORY}
+      IMAGE_REPOSITORY: ${IMAGE_REPOSITORY}
+      EMAIL_SENDER_REPOSITORY: ${EMAIL_SENDER_REPOSITORY}
+      EMAIL_SENDER_HOST: ${EMAIL_SENDER_HOST}
+      EMAIL_SENDER_PORT: ${EMAIL_SENDER_PORT}
+      EMAIL_SENDER_USERNAME: ${EMAIL_SENDER_USERNAME}
+      EMAIL_SENDER_PASSWORD: ${EMAIL_SENDER_PASSWORD}
+    depends_on:
+      - mongodb
+      - postgres
+    networks:
+      - app_network
 
 volumes:
   postgres_data:
+
+networks:
+  app_network:
+    driver: bridge
