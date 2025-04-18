@@ -7,6 +7,8 @@ import (
 	entity "go-gallery/src/domain/entities"
 	"go-gallery/src/domain/entities/builder"
 	"go-gallery/src/infrastructure/dto"
+	"os"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -16,6 +18,10 @@ const UserPostgreSQLRepositoryKey = "UserPostgreSQLRepository"
 type UserPostgreSQLRepository struct {
 	db *sql.DB
 }
+
+const (
+	retries uint = 5
+)
 
 func NewUserPostgreSQLRepository(args map[string]string) UserRepository {
 	user := args["POSTGRESQL_USER"]
@@ -30,6 +36,35 @@ func NewUserPostgreSQLRepository(args map[string]string) UserRepository {
 	db, err := sql.Open("postgres", urlConnection)
 	if err != nil {
 		panic(fmt.Sprintf("No se ha podido conectar a PostgreSQL: %s", err.Error()))
+	}
+
+	// Comprobamos si la base de datos realmente está disponible
+	for i := range retries {
+		err = db.Ping()
+		if err == nil {
+			fmt.Println("Conexión a PostgreSQL exitosa")
+			break
+		}
+
+		// Si hemos llegado al último intento, mostramos un mensaje de error
+		if i == retries-1 {
+			fmt.Println("No se pudo conectar a PostgreSQL después de varios intentos.")
+			panic(fmt.Sprintf("Error al intentar conectar a PostgreSQL: %s", err.Error()))
+		}
+
+		fmt.Printf("Intento %d de conexion %d. Reintentando...\n", i+1, retries)
+		time.Sleep(5 * time.Second)
+	}
+
+	// Ejecutar el DDL para crear la tabla si no existe
+	ddl, err := os.ReadFile("sql/userTableDDL.sql")
+	if err != nil {
+		panic(fmt.Sprintf("No se pudo leer el archivo DDL: %s", err.Error()))
+	}
+
+	_, err = db.Exec(string(ddl))
+	if err != nil {
+		panic(fmt.Sprintf("Error al ejecutar el DDL de creacción: %s", err.Error()))
 	}
 
 	return &UserPostgreSQLRepository{db: db}

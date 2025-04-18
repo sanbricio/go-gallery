@@ -8,10 +8,8 @@ import (
 
 func FindImageDependency(code string, args map[string]string) image_repository.ImageRepository {
 	switch code {
-	case image_repository.ImageMongoDBRepositoryKey:
-		return image_repository.NewImageMongoDBRepository(args)
 	default:
-		return image_repository.NewImageMemoryRepository()
+		return image_repository.NewImageMongoDBRepository(args)
 	}
 }
 

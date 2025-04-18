@@ -26,7 +26,7 @@ type ImageMongoDBRepository struct {
 }
 
 func NewImageMongoDBRepository(args map[string]string) ImageRepository {
-	urlConnection := args["MONGODB_URL_CONNECTION_APP"]
+	urlConnection := args["MONGODB_URL_CONNECTION"]
 	databaseName := args["MONGODB_DATABASE"]
 
 	db := connect(urlConnection, databaseName)
