@@ -1,12 +1,11 @@
 name: Publish Docker image
 
 on:
-  workflow_run:
-    workflows: 
-      - "Versioning Release Updates"
-      - "Versioning Hotfix Updates"
-    types:
-      - completed
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        type: string
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -28,4 +27,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: sanbricio/go-gallery:${{ github.ref_name }}
+          tags: sanbricio/go-gallery${{ inputs.version }}
