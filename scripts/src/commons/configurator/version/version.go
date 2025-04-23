@@ -2,6 +2,6 @@ package version
 
 var (
     AppVersion = "v1.0.0"
-    CommitHash = "2d7f70e0b77027a544f4f995aea3586d3d118e94"
-    BuildDate  = "14/04/2025 18:41:22"
+    CommitHash = "4103385bd2d04517039125fec461d4914b352968"
+    BuildDate  = "23/04/2025 18:36:41"
 )
