@@ -49,12 +49,6 @@ jobs:
 
           git tag -a "$VERSION" -m "Release version $VERSION"
           git push origin "$VERSION"
-      - name: Trigger Docker publish workflow
-        run: |
-          echo "🚀 Dispatching docker publish for version $VERSION"
-          gh workflow run docker-publish.yml -f version="$VERSION"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   docker-publish:
     needs: release-versioning
     runs-on: ubuntu-latest
