@@ -3,6 +3,10 @@ package imageDTO
 // ImageUploadRequestDTO representa la estructura de la petición para subir una imagen.
 // Contiene los metadatos de la imagen y el contenido en diferentes formatos.
 type ImageUploadRequestDTO struct {
+	// ID de la imagen almacenada.
+	// Example: 64a1f8b8e4b0c10d3c5b2e75
+	Id string `json:"id" bson:"id" example:"64a1f8b8e4b0c10d3c5b2e75"`
+	
 	// Nombre del archivo de imagen.
 	// Example: foto_perfil
 	Name string `json:"name" bson:"name" example:"foto_perfil"`

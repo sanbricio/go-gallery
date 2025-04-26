@@ -22,11 +22,11 @@ var tests = []struct {
 	expectedExt  string
 	expectError  bool
 }{
-	{"Valid JPG", "../../../resources/images/landscape.jpg", "landscape", ".jpg", false},
-	{"Valid WEBP", "../../../resources/images/landscape.webp", "landscape", ".webp", false},
-	{"Valid PNG", "../../../resources/images/landscape.png", "landscape", ".png", false},
-	{"Valid JPEG", "../../../resources/images/landscape.jpeg", "landscape", ".jpeg", false},
-	{"Invalid TXT", "../../../resources/images/landscape.txt", "landscape", "", true},
+	{"Valid JPG", "../../../../test/resources/images/landscape.jpg", "landscape", ".jpg", false},
+	{"Valid WEBP", "../../../../test/resources/images/landscape.webp", "landscape", ".webp", false},
+	{"Valid PNG", "../../../../test/resources/images/landscape.png", "landscape", ".png", false},
+	{"Valid JPEG", "../../../../test/resources/images/landscape.jpeg", "landscape", ".jpeg", false},
+	{"Invalid TXT", "../../../../test/resources/images/landscape.txt", "landscape", "", true},
 }
 
 func TestProcessImageFile(t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"go-gallery/src/commons/exception"
+	imageBuilder "go-gallery/src/domain/entities/builder/image"
 
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 
@@ -94,32 +95,32 @@ func (r *ImageMongoDBRepository) find(filter bson.M) ([]imageDTO.ImageDTO, *exce
 }
 
 func (r *ImageMongoDBRepository) Insert(dtoInsertImage *imageDTO.ImageUploadRequestDTO) (*imageDTO.ImageUploadResponseDTO, *exception.ApiException) {
-	// image, errBuilder := imageBuilder.NewImageBuilder().
-	// 	FromDTO(dtoInsertImage).
-	// 	Build()
+	image, errBuilder := imageBuilder.NewImageBuilder().
+	FromImageUploadRequestDTO(dtoInsertImage).
+		Build()
 
-	// if errBuilder != nil {
-	// 	errorMessage := fmt.Sprintf("Error al construir la imagen: %s", errBuilder.Error())
-	// 	return nil, exception.NewApiException(404, errorMessage)
+	if errBuilder != nil {
+		errorMessage := fmt.Sprintf("Error al construir la imagen: %s", errBuilder.Error())
+		return nil, exception.NewApiException(404, errorMessage)
+	}
+
+	_, err := r.mongoImage.InsertOne(context.Background(), image)
+	if err != nil {
+		return nil, exception.NewApiException(500, "Error al insertar el documento")
+	}
+
+	// resizedBytes, format, errResize := utils.ResizeImage(dtoInsertImage.RawContentFile, 200, 200)
+	// if errResize != nil {
+	// 	errorMessage := fmt.Sprintf("Error al generar miniatura: %s", errResize.Error())
+	// 	return nil, exception.NewApiException(500, errorMessage)
 	// }
 
-	// _, err := r.mongoImage.InsertOne(context.Background(), image)
-	// if err != nil {
-	// 	return nil, exception.NewApiException(500, "Error al insertar el documento")
-	// }
-
-	// // resizedBytes, format, errResize := utils.ResizeImage(dtoInsertImage.RawContentFile, 200, 200)
-	// // if errResize != nil {
-	// // 	errorMessage := fmt.Sprintf("Error al generar miniatura: %s", errResize.Error())
-	// // 	return nil, exception.NewApiException(500, errorMessage)
-	// // }
-
-	// return &imageDTO.ImageUploadResponseDTO{
-	// 	Id:        image.GetId(),
-	// 	Name:      image.GetName(),
-	// 	Extension: image.GetExtension(),
-	// 	Size:      image.GetSize(),
-	// }, nil
+	return &imageDTO.ImageUploadResponseDTO{
+		Id:        image.GetId(),
+		Name:      image.GetName(),
+		Extension: image.GetExtension(),
+		Size:      image.GetSize(),
+	}, nil
 	return nil, nil
 }
 

@@ -20,6 +20,15 @@ func NewImageBuilder() *ImageBuilder {
 	return &ImageBuilder{}
 }
 
+func (b *ImageBuilder) FromImageUploadRequestDTO(dto *imageDTO.ImageUploadRequestDTO){
+	b.id = dto.Id
+	b.name = dto.Name
+	b.extension = dto.Extension
+	b.contentFile = dto.ContentFile
+	b.owner = dto.Owner
+	b.size = dto.Size
+}
+
 func (b *ImageBuilder) FromDTO(dto *imageDTO.ImageDTO) *ImageBuilder {
 	b.id = dto.Id
 	b.thumbnailId = dto.ThumbnailId
