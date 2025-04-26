@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"go-gallery/src/commons/constants"
 	"image"
 	"image/jpeg"
 	"image/png"
@@ -21,9 +22,9 @@ func ResizeImage(input []byte, width, height int) ([]byte, string, error) {
 
 	var buf bytes.Buffer
 	switch format {
-	case "jpeg":
+	case constants.JPEG:
 		err = jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 80})
-	case "png":
+	case constants.PNG:
 		err = png.Encode(&buf, dst)
 	default:
 		return nil, "", err
