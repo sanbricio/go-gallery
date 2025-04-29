@@ -4,8 +4,8 @@ package userDTO
 // @Description Datos requeridos para realizar autentificación del usuario
 type LoginRequestDTO struct {
 	// Nombre de usuario
-	// example "usuario"
-	Username string `json:"username"  bson:"username" example:"usuario"`
+	// example "usuario123"
+	Username string `json:"username"  bson:"username" example:"usuario123"`
 
 	// Contraseña del usuario
 	// example "MiContraseñaSegura."

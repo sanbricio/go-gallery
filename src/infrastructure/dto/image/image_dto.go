@@ -9,7 +9,7 @@ import (
 type ImageDTO struct {
 	// ID de la imagen
 	// Example: 64a1f8b8e4b0c10d3c5b2e75
-	Id string `json:"id" bson:"id" example:"64a1f8b8e4b0c10d3c5b2e75"`
+	Id *string `json:"id" bson:"_id,omitempty" example:"64a1f8b8e4b0c10d3c5b2e75"`
 
 	// ID de la imagen miniatura asociada.
 	// Example: 64a1f8b8e4b0c10d3c5b2e75
@@ -37,8 +37,10 @@ type ImageDTO struct {
 }
 
 func FromImage(image *imageEntity.Image) *ImageDTO {
+	id := image.GetId()
 	return &ImageDTO{
-		Id:          image.GetId(),
+		Id:          id,
+		ThumbnailId: image.GetThumbnailId(),
 		Name:        image.GetName(),
 		Extension:   image.GetExtension(),
 		ContentFile: image.GetContentFile(),

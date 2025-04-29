@@ -2,12 +2,13 @@ package imageBuilder
 
 import (
 	"go-gallery/src/commons/exception"
+	utilsImage "go-gallery/src/commons/utils/image"
 	imageEntity "go-gallery/src/domain/entities/image"
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 )
 
 type ImageBuilder struct {
-	id          string
+	id          *string
 	thumbnailId string
 	name        string
 	extension   string
@@ -20,17 +21,19 @@ func NewImageBuilder() *ImageBuilder {
 	return &ImageBuilder{}
 }
 
-func (b *ImageBuilder) FromImageUploadRequestDTO(dto *imageDTO.ImageUploadRequestDTO){
-	b.id = dto.Id
+func (b *ImageBuilder) FromImageUploadRequestDTO(dto *imageDTO.ImageUploadRequestDTO) *ImageBuilder {
 	b.name = dto.Name
 	b.extension = dto.Extension
-	b.contentFile = dto.ContentFile
+	b.contentFile = utilsImage.EncondeImageToBase64(dto.RawContentFile)
 	b.owner = dto.Owner
 	b.size = dto.Size
+
+	return b
 }
 
 func (b *ImageBuilder) FromDTO(dto *imageDTO.ImageDTO) *ImageBuilder {
-	b.id = dto.Id
+	id := dto.Id
+	b.id = id
 	b.thumbnailId = dto.ThumbnailId
 	b.name = dto.Name
 	b.extension = dto.Extension
@@ -41,8 +44,32 @@ func (b *ImageBuilder) FromDTO(dto *imageDTO.ImageDTO) *ImageBuilder {
 	return b
 }
 
+func (b *ImageBuilder) BuildNew() (*imageEntity.Image, *exception.BuilderException) {
+	if b.name == "" {
+		return nil, exception.NewBuilderException("name", "El campo 'name' no debe estar vacio")
+	}
+
+	if b.extension == "" {
+		return nil, exception.NewBuilderException("extension", "El campo 'extension' no debe de estar vacio")
+	}
+
+	if b.contentFile == "" {
+		return nil, exception.NewBuilderException("contentFile", "El campo 'contentFile' no debe de estar vacio")
+	}
+
+	if b.owner == "" {
+		return nil, exception.NewBuilderException("owner", "El campo 'owner' no debe estar vacio")
+	}
+
+	if b.size == "" {
+		return nil, exception.NewBuilderException("size", "El campo 'size' no debe estar vacio")
+	}
+
+	return imageEntity.NewImage(nil, b.thumbnailId, b.name, b.extension, b.contentFile, b.owner, b.size), nil
+}
+
 func (b *ImageBuilder) Build() (*imageEntity.Image, *exception.BuilderException) {
-	if b.id == "" {
+	if b.id == nil {
 		return nil, exception.NewBuilderException("id", "El campo 'id' no debe estar vacio")
 	}
 
@@ -73,7 +100,7 @@ func (b *ImageBuilder) Build() (*imageEntity.Image, *exception.BuilderException)
 	return imageEntity.NewImage(b.id, b.thumbnailId, b.name, b.extension, b.contentFile, b.owner, b.size), nil
 }
 
-func (b *ImageBuilder) SetId(id string) *ImageBuilder {
+func (b *ImageBuilder) SetId(id *string) *ImageBuilder {
 	b.id = id
 	return b
 }

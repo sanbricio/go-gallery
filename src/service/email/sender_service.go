@@ -1,12 +1,12 @@
 package emailService
 
-import emailsender_repository "go-gallery/src/infrastructure/repository/emailSenderRepository"
+import emailSenderRepository "go-gallery/src/infrastructure/repository/emailSender"
 
 type EmailSenderService struct {
-	repository emailsender_repository.EmailSenderRepository
+	repository emailSenderRepository.EmailSenderRepository
 }
 
-func NewEmailSenderService(repository emailsender_repository.EmailSenderRepository) *EmailSenderService {
+func NewEmailSenderService(repository emailSenderRepository.EmailSenderRepository) *EmailSenderService {
 	return &EmailSenderService{
 		repository: repository,
 	}

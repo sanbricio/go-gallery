@@ -1,8 +1,8 @@
 package imageHandler
 
 import (
-	"encoding/base64"
 	"go-gallery/src/commons/exception"
+	utilsImage "go-gallery/src/commons/utils/image"
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 	"io"
 	"mime/multipart"
@@ -10,8 +10,6 @@ import (
 	"strings"
 
 	"slices"
-
-	"github.com/dustin/go-humanize"
 )
 
 func ProcessImageFile(fileInput *multipart.FileHeader, owner string) (*imageDTO.ImageUploadRequestDTO, *exception.ApiException) {
@@ -23,18 +21,17 @@ func ProcessImageFile(fileInput *multipart.FileHeader, owner string) (*imageDTO.
 		return nil, exception.NewApiException(400, "Formato de archivo no soportado. Solo se aceptan imágenes jpg, jpeg, png y webp")
 	}
 
-	encoded, rawData, err := encodeToBase64(fileInput)
+	rawData, err := encodeToRawBytes(fileInput)
 	if err != nil {
 		return nil, err
 	}
 
-	fileSizeHumanReadable := humanize.Bytes(uint64(fileInput.Size))
+	fileSizeHumanReadable := utilsImage.HumanizeBytes(uint64(fileInput.Size))
 
 	return &imageDTO.ImageUploadRequestDTO{
 		Name:           fileName,
 		Extension:      fileExtension,
 		Size:           fileSizeHumanReadable,
-		ContentFile:    encoded,
 		RawContentFile: rawData,
 		Owner:          owner,
 	}, nil
@@ -46,18 +43,18 @@ func isValidExtension(extension string) bool {
 	return slices.Contains(validExtensions, extension)
 }
 
-func encodeToBase64(fileInput *multipart.FileHeader) (string, []byte, *exception.ApiException) {
+func encodeToRawBytes(fileInput *multipart.FileHeader) ([]byte, *exception.ApiException) {
 	fileBytes, err := fileInput.Open()
 	if err != nil {
-		return "", nil, exception.NewApiException(500, "Error al abrir el archivo de imagen")
+		return nil, exception.NewApiException(500, "Error al abrir el archivo de imagen")
 	}
 
 	defer fileBytes.Close()
 
 	fileData, err := io.ReadAll(fileBytes)
 	if err != nil {
-		return "", nil, exception.NewApiException(500, "Error al leer el archivo de imagen")
+		return nil, exception.NewApiException(500, "Error al leer el archivo de imagen")
 	}
 
-	return base64.StdEncoding.EncodeToString(fileData), fileData, nil
+	return fileData, nil
 }

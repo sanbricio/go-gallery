@@ -34,7 +34,7 @@ func main() {
 	// Inicializamos los servicios de emailSender, usuario e imagen
 	emailSenderService := emailService.NewEmailSenderService(dependencyContainer.GetEmailSenderRepository())
 	userService := userService.NewUserService(dependencyContainer.GetUserRepository())
-	imageService := imageService.NewImageService(dependencyContainer.GetImageRepository())
+	imageService := imageService.NewImageService(dependencyContainer.GetImageRepository(), dependencyContainer.GetThumbnailImageRepository())
 
 	// Middleware para permitir CORS
 	app.Use(cors.New(cors.Config{

@@ -1,14 +1,16 @@
-package image_repository
+package imageRepository
 
 import (
 	"context"
 	"fmt"
 	"go-gallery/src/commons/exception"
+
 	imageBuilder "go-gallery/src/domain/entities/builder/image"
 
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -17,15 +19,13 @@ import (
 const ImageMongoDBRepositoryKey = "ImageMongoDBRepository"
 
 const (
-	IMAGE_COLLECTION           string = "Image"
-	THUMBNAIL_IMAGE_COLLECTION string = "ThumbnailImage "
-	ID                         string = "id"
-	OWNER                      string = "owner"
+	IMAGE_COLLECTION string = "Image"
+	ID               string = "_id"
+	OWNER            string = "owner"
 )
 
 type ImageMongoDBRepository struct {
-	mongoImage          *mongo.Collection
-	mongoThumbnailImage *mongo.Collection
+	mongoImage *mongo.Collection
 }
 
 func NewImageMongoDBRepository(args map[string]string) ImageRepository {
@@ -35,8 +35,7 @@ func NewImageMongoDBRepository(args map[string]string) ImageRepository {
 	db := connect(urlConnection, databaseName)
 
 	repo := &ImageMongoDBRepository{
-		mongoImage:          db.Collection(IMAGE_COLLECTION),
-		mongoThumbnailImage: db.Collection(THUMBNAIL_IMAGE_COLLECTION),
+		mongoImage: db.Collection(IMAGE_COLLECTION),
 	}
 
 	return repo
@@ -55,8 +54,6 @@ func connect(urlConnection string, databaseName string) *mongo.Database {
 
 	return database.Database(databaseName)
 }
-
-// TODO FIND all resized by owner
 
 func (r *ImageMongoDBRepository) Find(dtoFind *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException) {
 	filter := bson.M{
@@ -94,34 +91,47 @@ func (r *ImageMongoDBRepository) find(filter bson.M) ([]imageDTO.ImageDTO, *exce
 	return results, nil
 }
 
-func (r *ImageMongoDBRepository) Insert(dtoInsertImage *imageDTO.ImageUploadRequestDTO) (*imageDTO.ImageUploadResponseDTO, *exception.ApiException) {
+func (r *ImageMongoDBRepository) Insert(dtoInsertImage *imageDTO.ImageUploadRequestDTO, thumbnailImageID string) (*imageDTO.ImageUploadResponseDTO, *exception.ApiException) {
+	// Validamos que la imagen no esta insertada en base de datos
+	filter := bson.M{
+		"name":      dtoInsertImage.Name,
+		"owner":     dtoInsertImage.Owner,
+		"extension": dtoInsertImage.Extension,
+	}
+
+	// Si la imagen ya existe, no la insertamos
+	results, err := r.find(filter)
+	if err != nil && err.Status != 404 {
+		return nil, err
+	}
+
+	if err == nil && len(results) > 0 {
+		return nil, exception.NewApiException(409, "La imagen ya existe")
+	}
+
 	image, errBuilder := imageBuilder.NewImageBuilder().
-	FromImageUploadRequestDTO(dtoInsertImage).
-		Build()
+		FromImageUploadRequestDTO(dtoInsertImage).
+		SetThumbnailId(thumbnailImageID).
+		BuildNew()
 
 	if errBuilder != nil {
 		errorMessage := fmt.Sprintf("Error al construir la imagen: %s", errBuilder.Error())
 		return nil, exception.NewApiException(404, errorMessage)
 	}
 
-	_, err := r.mongoImage.InsertOne(context.Background(), image)
-	if err != nil {
+	dto := imageDTO.FromImage(image)
+	imageID, errInsert := r.mongoImage.InsertOne(context.Background(), dto)
+	if errInsert != nil {
 		return nil, exception.NewApiException(500, "Error al insertar el documento")
 	}
 
-	// resizedBytes, format, errResize := utils.ResizeImage(dtoInsertImage.RawContentFile, 200, 200)
-	// if errResize != nil {
-	// 	errorMessage := fmt.Sprintf("Error al generar miniatura: %s", errResize.Error())
-	// 	return nil, exception.NewApiException(500, errorMessage)
-	// }
-
 	return &imageDTO.ImageUploadResponseDTO{
-		Id:        image.GetId(),
-		Name:      image.GetName(),
-		Extension: image.GetExtension(),
-		Size:      image.GetSize(),
+		Id:          imageID.InsertedID.(primitive.ObjectID).Hex(),
+		ThumbnailId: thumbnailImageID,
+		Name:        dto.Name,
+		Extension:   dto.Extension,
+		Size:        dto.Size,
 	}, nil
-	return nil, nil
 }
 
 func (r *ImageMongoDBRepository) Delete(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException) {

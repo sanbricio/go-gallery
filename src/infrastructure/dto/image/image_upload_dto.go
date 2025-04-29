@@ -3,10 +3,6 @@ package imageDTO
 // ImageUploadRequestDTO representa la estructura de la petición para subir una imagen.
 // Contiene los metadatos de la imagen y el contenido en diferentes formatos.
 type ImageUploadRequestDTO struct {
-	// ID de la imagen almacenada.
-	// Example: 64a1f8b8e4b0c10d3c5b2e75
-	Id string `json:"id" bson:"id" example:"64a1f8b8e4b0c10d3c5b2e75"`
-	
 	// Nombre del archivo de imagen.
 	// Example: foto_perfil
 	Name string `json:"name" bson:"name" example:"foto_perfil"`
@@ -14,11 +10,6 @@ type ImageUploadRequestDTO struct {
 	// Extensión del archivo de imagen (ejemplo: .jpeg, .png).
 	// Example: .jpeg
 	Extension string `json:"extension" bson:"extension" example:".jpeg"`
-
-	// Contenido de la imagen codificado en base64.
-	// Nota: utilizado si se envía en texto plano.
-	// Example: /9j/4AAQSkZJRgABAQEAAAAAAAD...
-	ContentFile string `json:"content_file" bson:"content_file" example:"/9j/4AAQSkZJRgABAQEAAAAAAAD..."`
 
 	// Contenido de la imagen en bytes sin codificar.
 	// Example: []byte
@@ -38,7 +29,7 @@ type ImageUploadRequestDTO struct {
 type ImageUploadResponseDTO struct {
 	// ID de la imagen almacenada.
 	// Example: 64a1f8b8e4b0c10d3c5b2e75
-	Id string `json:"id" bson:"id" example:"64a1f8b8e4b0c10d3c5b2e75"`
+	Id string `json:"id" bson:"_id" example:"64a1f8b8e4b0c10d3c5b2e75"`
 
 	// ID de la imagen miniatura asociada.
 	// Example: 64a1f8b8e4b0c10d3c5b2e75

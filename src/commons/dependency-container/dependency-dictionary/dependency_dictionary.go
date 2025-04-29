@@ -1,32 +1,40 @@
 package dependency_dictionary
 
 import (
-	emailsender_repository "go-gallery/src/infrastructure/repository/emailSenderRepository"
-	image_repository "go-gallery/src/infrastructure/repository/image"
-	user_repository "go-gallery/src/infrastructure/repository/user"
+	emailSenderRepository "go-gallery/src/infrastructure/repository/emailSender"
+	imageRepository "go-gallery/src/infrastructure/repository/image"
+	thumbnailImageRepository "go-gallery/src/infrastructure/repository/image/thumbnailImage"
+	userRepository "go-gallery/src/infrastructure/repository/user"
 )
 
-func FindImageDependency(code string, args map[string]string) image_repository.ImageRepository {
+func FindImageDependency(code string, args map[string]string) imageRepository.ImageRepository {
 	switch code {
 	default:
-		return image_repository.NewImageMongoDBRepository(args)
+		return imageRepository.NewImageMongoDBRepository(args)
 	}
 }
 
-func FindUserDependency(code string, args map[string]string) user_repository.UserRepository {
+func FindThumbnailImageDependency(code string, args map[string]string) thumbnailImageRepository.ThumbnailImageRepository {
 	switch code {
-	case user_repository.UserMongoDBRepositoryKey:
-		return user_repository.NewUserMongoDBRepository(args)
 	default:
-		return user_repository.NewUserPostgreSQLRepository(args)
+		return thumbnailImageRepository.NewThumbnailImageMongoDBRepository(args)
+	}
+}
+
+func FindUserDependency(code string, args map[string]string) userRepository.UserRepository {
+	switch code {
+	case userRepository.UserMongoDBRepositoryKey:
+		return userRepository.NewUserMongoDBRepository(args)
+	default:
+		return userRepository.NewUserPostgreSQLRepository(args)
 	}
 
 }
 
-func FindEmailSenderDependency(code string, args map[string]string) emailsender_repository.EmailSenderRepository {
+func FindEmailSenderDependency(code string, args map[string]string) emailSenderRepository.EmailSenderRepository {
 	switch code {
-	case emailsender_repository.EmailSenderGoMailRepositoryKey:
-		return emailsender_repository.NewEmailSenderGoMailRepository(args)
+	case emailSenderRepository.EmailSenderGoMailRepositoryKey:
+		return emailSenderRepository.NewEmailSenderGoMailRepository(args)
 	default:
 		panic("EmailSenderRepository not found")
 	}

@@ -1,4 +1,4 @@
-package image_repository
+package imageRepository
 
 import (
 	"go-gallery/src/commons/exception"
@@ -6,7 +6,7 @@ import (
 )
 
 type ImageRepository interface {
-	Insert(dto *imageDTO.ImageUploadRequestDTO) (*imageDTO.ImageUploadResponseDTO, *exception.ApiException)
+	Insert(dto *imageDTO.ImageUploadRequestDTO, thumbnailImageId string) (*imageDTO.ImageUploadResponseDTO, *exception.ApiException)
 	Find(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException)
 	Delete(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException)
 }

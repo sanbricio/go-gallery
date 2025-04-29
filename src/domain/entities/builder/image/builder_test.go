@@ -9,8 +9,9 @@ var baseDTO *imageDTO.ImageDTO
 
 // Inicializamos el mock dto
 func init() {
+	id := "valid-id"
 	baseDTO = &imageDTO.ImageDTO{
-		Id:          "valid-id",
+		Id:          &id,
 		ThumbnailId: "valid-thumbnail-id",
 		Name:        "valid-name",
 		Extension:   "jpg",
@@ -23,7 +24,7 @@ func init() {
 func TestImageBuilderEmptyFields(t *testing.T) {
 	// Caso: 'id' vacío
 	dto := copyDTO()
-	dto.Id = ""
+	dto.Id = nil
 	assertBuilderException(t, dto, "id")
 
 	// Caso: 'thumbnailId' vacío

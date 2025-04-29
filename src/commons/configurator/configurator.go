@@ -57,5 +57,9 @@ func buildDependencyContainer(conf *configuration.Configuration) *dependency_con
 	imageRepositoryDependency := dependency_dictionary.FindImageDependency(imageRepositoryKey, args)
 	dependencyContainer.SetImageRepository(imageRepositoryDependency)
 
+	thumbnailImageRepositoryKey := conf.GetArg("THUMBNAIL_IMAGE_REPOSITORY")
+	thumbnailImageRepositoryDependency := dependency_dictionary.FindThumbnailImageDependency(thumbnailImageRepositoryKey, args)
+	dependencyContainer.SetThumbnailImageRepository(thumbnailImageRepositoryDependency)
+
 	return dependencyContainer
 }
