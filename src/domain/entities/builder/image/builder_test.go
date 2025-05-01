@@ -1,6 +1,8 @@
 package imageBuilder
 
 import (
+	utilsImage "go-gallery/src/commons/utils/image"
+	imageEntity "go-gallery/src/domain/entities/image"
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 	"testing"
 )
@@ -56,6 +58,113 @@ func TestImageBuilderEmptyFields(t *testing.T) {
 	dto = copyDTO()
 	dto.Size = ""
 	assertBuilderException(t, dto, "size")
+}
+
+func TestImageBuilderNew(t *testing.T) {
+	image, err := NewImageBuilder().
+		SetThumbnailId(baseDTO.ThumbnailId).
+		SetName(baseDTO.Name).
+		SetExtension(baseDTO.Extension).
+		SetOwner(baseDTO.Owner).
+		SetSize(baseDTO.Size).
+		SetContentFile(baseDTO.ContentFile).
+		BuildNew()
+
+	if err != nil {
+		t.Errorf("No se esperaba un error al construir el la imagen: %v", err.Error())
+		t.FailNow()
+	}
+
+	compareCommonFieldsImages(t, baseDTO, image)
+
+	// Error a la hora de hacer un builder sin un campo especifico
+	_, err = NewImageBuilder().
+		SetName(baseDTO.Name).
+		SetExtension(baseDTO.Extension).
+		SetOwner(baseDTO.Owner).
+		SetSize(baseDTO.Size).
+		SetContentFile(baseDTO.ContentFile).
+		BuildNew()
+
+	if err == nil {
+		t.Errorf("Se esperaba un error al construir el la imagen debido a que faltaba 'thumbnailID': %v", err.Error())
+		t.FailNow()
+	}
+
+}
+
+func TestImageBuilderFromImageUploadRequestDTO(t *testing.T) {
+	rawContent := []byte("fake-binary-content")
+
+	dto := &imageDTO.ImageUploadRequestDTO{
+		Name:           "upload-name",
+		Extension:      "png",
+		RawContentFile: rawContent,
+		Owner:          "upload-owner",
+		Size:           "2048",
+	}
+
+	builder := NewImageBuilder().FromImageUploadRequestDTO(dto)
+	image, err := builder.BuildNew()
+	if err != nil {
+		t.Errorf("No se esperaba un error al construir el la imagen: %v", err.Error())
+		t.FailNow()
+	}
+
+	compareCommonFieldsImages(t, baseDTO, image)
+
+	expectedContent := utilsImage.EncondeImageToBase64(rawContent)
+	if image.GetContentFile() != expectedContent {
+		t.Errorf("expected contentFile %v, but got %v", expectedContent, image.GetContentFile())
+	}
+}
+
+func TestImageBuilderWithSetValues(t *testing.T) {
+	image, err := NewImageBuilder().
+		SetId(baseDTO.Id).
+		SetThumbnailId(baseDTO.ThumbnailId).
+		SetName(baseDTO.Name).
+		SetExtension(baseDTO.Extension).
+		SetOwner(baseDTO.Owner).
+		SetSize(baseDTO.Size).
+		SetContentFile(baseDTO.ContentFile).
+		Build()
+
+	if err != nil {
+		t.Errorf("No se esperaba un error al construir el la imagen: %v", err.Error())
+		t.FailNow()
+	}
+
+	compareAllFieldsImages(t, baseDTO, image)
+}
+
+func compareAllFieldsImages(t *testing.T, expected *imageDTO.ImageDTO, actual *imageEntity.Image) {
+	if expected.Id != actual.GetId() {
+		t.Errorf("expected id %v, but got %v", expected.Id, actual.GetId())
+	}
+
+	compareCommonFieldsImages(t, expected, actual)
+}
+
+func compareCommonFieldsImages(t *testing.T, expected *imageDTO.ImageDTO, actual *imageEntity.Image) {
+	if expected.ThumbnailId != actual.GetThumbnailId() {
+		t.Errorf("expected thumbnailId %v, but got %v", expected.ThumbnailId, actual.GetThumbnailId())
+	}
+	if expected.Name != actual.GetName() {
+		t.Errorf("expected name %v, but got %v", expected.Name, actual.GetName())
+	}
+	if expected.Extension != actual.GetExtension() {
+		t.Errorf("expected extension %v, but got %v", expected.Extension, actual.GetExtension())
+	}
+	if expected.Owner != actual.GetOwner() {
+		t.Errorf("expected owner %v, but got %v", expected.Owner, actual.GetOwner())
+	}
+	if expected.Size != actual.GetSize() {
+		t.Errorf("expected size %v, but got %v", expected.Size, actual.GetSize())
+	}
+	if expected.ContentFile != actual.GetContentFile() {
+		t.Errorf("expected contentFile %v, but got %v", expected.ContentFile, actual.GetContentFile())
+	}
 }
 
 func assertBuilderException(t *testing.T, dto *imageDTO.ImageDTO, field string) {

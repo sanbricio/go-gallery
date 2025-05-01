@@ -45,59 +45,73 @@ func (b *ImageBuilder) FromDTO(dto *imageDTO.ImageDTO) *ImageBuilder {
 }
 
 func (b *ImageBuilder) BuildNew() (*imageEntity.Image, *exception.BuilderException) {
-	if b.name == "" {
-		return nil, exception.NewBuilderException("name", "El campo 'name' no debe estar vacio")
-	}
-
-	if b.extension == "" {
-		return nil, exception.NewBuilderException("extension", "El campo 'extension' no debe de estar vacio")
-	}
-
-	if b.contentFile == "" {
-		return nil, exception.NewBuilderException("contentFile", "El campo 'contentFile' no debe de estar vacio")
-	}
-
-	if b.owner == "" {
-		return nil, exception.NewBuilderException("owner", "El campo 'owner' no debe estar vacio")
-	}
-
-	if b.size == "" {
-		return nil, exception.NewBuilderException("size", "El campo 'size' no debe estar vacio")
+	err := b.validateCommons()
+	if err != nil {
+		return nil, err
 	}
 
 	return imageEntity.NewImage(nil, b.thumbnailId, b.name, b.extension, b.contentFile, b.owner, b.size), nil
 }
 
 func (b *ImageBuilder) Build() (*imageEntity.Image, *exception.BuilderException) {
-	if b.id == nil {
-		return nil, exception.NewBuilderException("id", "El campo 'id' no debe estar vacio")
-	}
-
-	if b.thumbnailId == "" {
-		return nil, exception.NewBuilderException("thumbnailId", "El campo 'thumbnailId' no debe estar vacio")
-	}
-
-	if b.name == "" {
-		return nil, exception.NewBuilderException("name", "El campo 'name' no debe estar vacio")
-	}
-
-	if b.extension == "" {
-		return nil, exception.NewBuilderException("extension", "El campo 'extension' no debe de estar vacio")
-	}
-
-	if b.contentFile == "" {
-		return nil, exception.NewBuilderException("contentFile", "El campo 'contentFile' no debe de estar vacio")
-	}
-
-	if b.owner == "" {
-		return nil, exception.NewBuilderException("owner", "El campo 'owner' no debe estar vacio")
-	}
-
-	if b.size == "" {
-		return nil, exception.NewBuilderException("size", "El campo 'size' no debe estar vacio")
+	err := b.validateAll()
+	if err != nil {
+		return nil, err
 	}
 
 	return imageEntity.NewImage(b.id, b.thumbnailId, b.name, b.extension, b.contentFile, b.owner, b.size), nil
+}
+
+func (b *ImageBuilder) validateAll() *exception.BuilderException {
+	err := b.validateStringPointerField("id", b.id)
+	if err != nil {
+		return err
+	}
+
+	err = b.validateCommons()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (b *ImageBuilder) validateCommons() *exception.BuilderException {
+	if err := b.validateStringField("thumbnailId", b.thumbnailId); err != nil {
+		return err
+	}
+
+	if err := b.validateStringField("name", b.name); err != nil {
+		return err
+	}
+
+	if err := b.validateStringField("extension", b.extension); err != nil {
+		return err
+	}
+	if err := b.validateStringField("contentFile", b.contentFile); err != nil {
+		return err
+	}
+	if err := b.validateStringField("owner", b.owner); err != nil {
+		return err
+	}
+	if err := b.validateStringField("size", b.size); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *ImageBuilder) validateStringField(fieldName, fieldValue string) *exception.BuilderException {
+	if fieldValue == "" {
+		return exception.NewBuilderException(fieldName, "El campo '"+fieldName+"' no debe estar vacio")
+	}
+	return nil
+}
+
+func (b *ImageBuilder) validateStringPointerField(fieldName string, fieldValue *string) *exception.BuilderException {
+	if fieldValue == nil || *fieldValue == "" {
+		return exception.NewBuilderException(fieldName, "El campo '"+fieldName+"' no debe estar vacio")
+	}
+	return nil
 }
 
 func (b *ImageBuilder) SetId(id *string) *ImageBuilder {
