@@ -34,10 +34,8 @@ jobs:
         with:
           go-version: '1.24'
 
-      - name: Sonar Scan
-        uses: SonarSource/sonarcloud-github-action@v5
-        with:
-          projectBaseDir: .
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
