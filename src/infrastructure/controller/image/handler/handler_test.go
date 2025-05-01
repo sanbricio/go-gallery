@@ -60,6 +60,21 @@ func TestProcessImageFile(t *testing.T) {
 	}
 }
 
+func TestProcessImageFileFailToOpen(t *testing.T) {
+	fileHeader := &multipart.FileHeader{
+		Filename: "nonexistent.jpg",
+	}
+
+	result, apiErr := ProcessImageFile(fileHeader, "testOwner")
+
+	if result != nil {
+		t.Errorf("Esperaba que result fuera nil, pero obtuve: %+v", result)
+	}
+	if apiErr == nil || apiErr.Message != "Error al abrir el archivo de imagen" {
+		t.Errorf("Esperaba error al abrir el archivo, pero obtuve: %v", apiErr)
+	}
+}
+
 func TestEncodeToRawBytes(t *testing.T) {
 	fileHeader := &multipart.FileHeader{
 		Filename: "nonexistent.jpg",
