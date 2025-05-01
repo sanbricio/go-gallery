@@ -236,7 +236,10 @@ func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
 	}
 
 	// Generamos el código único temporal
-	code := codeGeneratorHandler.GenerateCode(claims.Username)
+	code, err := codeGeneratorHandler.GenerateCode(claims.Username)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(exception.NewApiException(fiber.StatusInternalServerError, "Ha ocurrido un error al generar el código para la eliminación de la cuenta"))
+	}
 
 	// Enviamos al usuario un correo electrónico con el código
 	errEmail := c.emailSenderService.SendEmail(code, claims.Email)

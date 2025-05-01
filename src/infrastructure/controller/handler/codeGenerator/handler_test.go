@@ -1,6 +1,9 @@
 package codeGeneratorHandler
 
 import (
+	"errors"
+	"io"
+	"math/big"
 	"testing"
 	"time"
 )
@@ -15,7 +18,7 @@ func TestGenerateCode(t *testing.T) {
 	email := EMAIL_EXAMPLE
 
 	// Act
-	code := GenerateCode(email)
+	code, _ := GenerateCode(email)
 
 	// Assert
 	if code == "" {
@@ -23,10 +26,38 @@ func TestGenerateCode(t *testing.T) {
 	}
 }
 
+func TestGenerateCodeWithError(t *testing.T) {
+	// Simulamos un error en la generación del código aleatorio
+	originalRandFunc := RandFunc
+	defer func() { RandFunc = originalRandFunc }() // Restaurar la función original después del test
+
+	// Inyectamos un error
+	RandFunc = func(r io.Reader, max *big.Int) (*big.Int, error) {
+		return nil, errors.New("simulated random number generator error")
+	}
+
+	// Arrange
+	email := EMAIL_EXAMPLE
+
+	// Act
+	code, err := GenerateCode(email)
+
+	// Assert
+	if code != "" {
+		t.Errorf("expected empty code, but got %s", code)
+	}
+	if err == nil {
+		t.Errorf("expected error, but got nil")
+	}
+	if err.Error() != "simulated random number generator error" {
+		t.Errorf("expected simulated random number generator error, but got %s", err.Error())
+	}
+}
+
 // Test para VerifyCode
 func TestVerifyCode(t *testing.T) {
 	// Arrange
-	code := GenerateCode(EMAIL_EXAMPLE)
+	code, _ := GenerateCode(EMAIL_EXAMPLE)
 
 	// Act: Verificamos el código generado
 	isValid := VerifyCode(EMAIL_EXAMPLE, code)
@@ -57,7 +88,7 @@ func TestVerifyCode(t *testing.T) {
 func TestVerifyCodeExpired(t *testing.T) {
 	// Arrange
 	email := EMAIL_EXAMPLE
-	code := GenerateCode(email)
+	code, _ := GenerateCode(email)
 
 	// Simulamos que el código ha expirado (esperamos más de 5 minutos)
 	// Ajustamos la función NowFunc para devolver un tiempo futuro
@@ -80,7 +111,7 @@ func TestVerifyCodeExpired(t *testing.T) {
 func TestRemoveCode(t *testing.T) {
 	// Arrange
 	email := EMAIL_EXAMPLE
-	code := GenerateCode(email)
+	code, _ := GenerateCode(email)
 
 	// Act: Eliminamos el código
 	RemoveCode(email)

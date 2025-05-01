@@ -1,7 +1,8 @@
 package codeGeneratorHandler
 
 import (
-	"math/rand"
+	"crypto/rand"
+	"math/big"
 	"sync"
 	"time"
 )
@@ -19,12 +20,16 @@ var (
 )
 
 var NowFunc = time.Now
+var RandFunc = rand.Int
 
-func GenerateCode(key string) string {
+func GenerateCode(key string) (string, error) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	code := generateRandomCode(6)
+	code, err := generateRandomCode(6)
+	if err != nil {
+		return "", err
+	}
 	codes[key] = struct {
 		Code       string
 		Expiration time.Time
@@ -33,7 +38,7 @@ func GenerateCode(key string) string {
 		Expiration: NowFunc().Add(EXPIRATION_CODE), // Código válido por 5 minutos
 	}
 
-	return code
+	return code, nil
 }
 
 func VerifyCode(key, code string) bool {
@@ -48,7 +53,7 @@ func VerifyCode(key, code string) bool {
 	if !exists {
 		return false
 	}
-	// Si ha expirado el codigo lo eliminamos y devolvemos false
+	// Si ha expirado el código lo eliminamos y devolvemos false
 	if NowFunc().After(entry.Expiration) {
 		RemoveCode(key)
 		return false
@@ -63,15 +68,15 @@ func RemoveCode(key string) {
 	delete(codes, key)
 }
 
-func generateRandomCode(n int) string {
-	// Fuente de números aleatorios
-	source := rand.NewSource(NowFunc().UnixNano())
-	r := rand.New(source)
-
+func generateRandomCode(n int) (string, error) {
 	const digits = "0123456789"
 	code := make([]byte, n)
 	for i := range code {
-		code[i] = digits[r.Intn(len(digits))]
+		num, err := RandFunc(rand.Reader, big.NewInt(int64(len(digits))))
+		if err != nil {
+			return "", err
+		}
+		code[i] = digits[num.Int64()]
 	}
-	return string(code)
+	return string(code), nil
 }
