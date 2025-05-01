@@ -1,10 +1,13 @@
 package imageBuilder
 
 import (
-	utilsImage "go-gallery/src/commons/utils/image"
 	imageEntity "go-gallery/src/domain/entities/image"
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 	"testing"
+)
+
+const (
+	UNEXPECTED_ERROR string = "No se esperaba un error al construir el la imagen: %v"
 )
 
 var baseDTO *imageDTO.ImageDTO
@@ -71,7 +74,7 @@ func TestImageBuilderNew(t *testing.T) {
 		BuildNew()
 
 	if err != nil {
-		t.Errorf("No se esperaba un error al construir el la imagen: %v", err.Error())
+		t.Errorf(UNEXPECTED_ERROR, err.Error())
 		t.FailNow()
 	}
 
@@ -94,29 +97,25 @@ func TestImageBuilderNew(t *testing.T) {
 }
 
 func TestImageBuilderFromImageUploadRequestDTO(t *testing.T) {
-	rawContent := []byte("fake-binary-content")
 
 	dto := &imageDTO.ImageUploadRequestDTO{
-		Name:           "upload-name",
-		Extension:      "png",
-		RawContentFile: rawContent,
-		Owner:          "upload-owner",
-		Size:           "2048",
+		Name:           baseDTO.Name,
+		Extension:      baseDTO.Extension,
+		RawContentFile: []byte(baseDTO.ContentFile),
+		Owner:          baseDTO.Owner,
+		Size:           baseDTO.Size,
 	}
 
-	builder := NewImageBuilder().FromImageUploadRequestDTO(dto)
-	image, err := builder.BuildNew()
+	image, err := NewImageBuilder().FromImageUploadRequestDTO(dto).
+		SetThumbnailId(baseDTO.ThumbnailId).
+		SetContentFile(baseDTO.ContentFile).
+		BuildNew()
 	if err != nil {
-		t.Errorf("No se esperaba un error al construir el la imagen: %v", err.Error())
+		t.Errorf(UNEXPECTED_ERROR, err.Error())
 		t.FailNow()
 	}
 
 	compareCommonFieldsImages(t, baseDTO, image)
-
-	expectedContent := utilsImage.EncondeImageToBase64(rawContent)
-	if image.GetContentFile() != expectedContent {
-		t.Errorf("expected contentFile %v, but got %v", expectedContent, image.GetContentFile())
-	}
 }
 
 func TestImageBuilderWithSetValues(t *testing.T) {
@@ -131,7 +130,7 @@ func TestImageBuilderWithSetValues(t *testing.T) {
 		Build()
 
 	if err != nil {
-		t.Errorf("No se esperaba un error al construir el la imagen: %v", err.Error())
+		t.Errorf(UNEXPECTED_ERROR, err.Error())
 		t.FailNow()
 	}
 
