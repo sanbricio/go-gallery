@@ -3,6 +3,8 @@ package imageHandler
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"go-gallery/src/commons/constants"
 	"go-gallery/src/commons/exception"
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 	"io"
@@ -22,10 +24,10 @@ var tests = []struct {
 	expectedExt  string
 	expectError  bool
 }{
-	{"Valid JPG", "../../../../test/resources/images/landscape.jpg", "landscape", ".jpg", false},
-	{"Valid WEBP", "../../../../test/resources/images/landscape.webp", "landscape", ".webp", false},
-	{"Valid PNG", "../../../../test/resources/images/landscape.png", "landscape", ".png", false},
-	{"Valid JPEG", "../../../../test/resources/images/landscape.jpeg", "landscape", ".jpeg", false},
+	{"Valid JPG", "../../../../test/resources/images/landscape.jpg", "landscape", constants.JPG_EXTENSION, false},
+	{"Valid WEBP", "../../../../test/resources/images/landscape.webp", "landscape", constants.WEBP_EXTENSION, false},
+	{"Valid PNG", "../../../../test/resources/images/landscape.png", "landscape", constants.PNG_EXTENSION, false},
+	{"Valid JPEG", "../../../../test/resources/images/landscape.jpeg", "landscape", constants.JPEG_EXTENSION, false},
 	{"Invalid TXT", "../../../../test/resources/images/landscape.txt", "landscape", "", true},
 }
 
@@ -58,6 +60,26 @@ func TestProcessImageFile(t *testing.T) {
 	}
 }
 
+func TestEncodeToRawBytes(t *testing.T) {
+	fileHeader := &multipart.FileHeader{
+		Filename: "nonexistent.jpg",
+	}
+	_, apiErr := encodeToRawBytes(fileHeader)
+
+	if apiErr == nil || apiErr.Message != "Error al abrir el archivo de imagen" {
+		t.Errorf("Esperaba error al abrir el archivo, pero obtuve: %v", apiErr)
+	}
+}
+
+func TestReadAllFile(t *testing.T) {
+	reader := &failingFile{}
+
+	_, apiErr := readAllFile(reader)
+	if apiErr == nil || apiErr.Message != "Error al leer el archivo de imagen" {
+		t.Errorf("Esperaba error al leer el archivo, pero obtuve: %v", apiErr)
+	}
+}
+
 func loadFiberApp() *fiber.App {
 	// Inicializar Fiber
 	app := fiber.New()
@@ -83,7 +105,7 @@ func loadFiberApp() *fiber.App {
 
 func evaluateImage(t *testing.T, body []byte, expectedName, expectedExt string) {
 	// Verificar respuesta esperada
-	var result imageDTO.ImageDTO
+	var result imageDTO.ImageUploadRequestDTO
 	if err := json.Unmarshal(body, &result); err != nil {
 		t.Fatalf("Error al parsear la respuesta JSON: %v", err)
 	}
@@ -99,10 +121,10 @@ func evaluateImage(t *testing.T, body []byte, expectedName, expectedExt string) 
 		t.Errorf("Se esperaba el Owner 'testOwner', pero se obtuvo '%s'", result.Owner)
 	}
 	if result.Size == "" {
-		t.Errorf("El campo Size está vacío")
+		t.Errorf("El campo 'Size' está vacío")
 	}
-	if result.ContentFile == "" {
-		t.Errorf("El campo ContentFile está vacío")
+	if len(result.RawContentFile) == 0 {
+		t.Errorf("El campo 'RawContentFile' está vacío")
 	}
 
 }
@@ -150,4 +172,25 @@ func createRequest(t *testing.T, imagePath string) *http.Request {
 	req := httptest.NewRequest(http.MethodPost, "/test", &requestBody)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	return req
+}
+
+//Mock para probar que cuando lee un fichero saca el error especifico
+
+type failingFile struct{}
+
+func (f *failingFile) Read(p []byte) (n int, err error) {
+	return 0, errors.New("forced read error")
+}
+
+func (f *failingFile) Close() error {
+	return nil
+}
+
+// Métodos adicionales para implementar multipart.File pero no los usamos en este test
+func (f *failingFile) Seek(offset int64, whence int) (int64, error) {
+	return 0, nil
+}
+
+func (f *failingFile) ReadAt(p []byte, off int64) (n int, err error) {
+	return 0, io.EOF
 }

@@ -14,7 +14,6 @@ func NewBuilderException(fieldName, message string) *BuilderException {
 	}
 }
 
-
 func (e *BuilderException) Error() string {
 	return fmt.Sprintf("Error en el campo '%s': %s", e.Field, e.Message)
 }

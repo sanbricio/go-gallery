@@ -7,4 +7,3 @@ type UserMessageResponseDTO struct {
 	// example "Operación realizada con éxito"
 	Message string `json:"message" example:"Ha funcionado correctamente"`
 }
-

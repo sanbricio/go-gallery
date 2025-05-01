@@ -23,6 +23,17 @@ jobs:
       - name: Run Tests
         run: go test -v ./...
 
+  code-analysis-and-vulnerability-check:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
       - name: Sonar Scan
         uses: SonarSource/sonarcloud-github-action@v5
         with:

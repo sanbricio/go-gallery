@@ -25,12 +25,12 @@ func (s *ImageService) Find(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *except
 }
 
 func (s *ImageService) Insert(dto *imageDTO.ImageUploadRequestDTO) (*imageDTO.ImageUploadResponseDTO, *exception.ApiException) {
-	thumbnailId, err :=s.thumbnailImageRepository.Insert(dto)
+	thumbnailId, err := s.thumbnailImageRepository.Insert(dto)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.imageRepository.Insert(dto,thumbnailId)
+	return s.imageRepository.Insert(dto, thumbnailId)
 }
 
 func (s *ImageService) Delete(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException) {

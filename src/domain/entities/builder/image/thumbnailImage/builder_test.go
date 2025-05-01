@@ -1,11 +1,12 @@
 package thumbnailImageBuilder
+
 // TODO REHACER ESTE TEST para thumbnail
 // import (
 // 	imageDTO "go-gallery/src/infrastructure/dto/image"
 // 	"testing"
 // )
 
-// 
+//
 // var baseDTO *imageDTO.ImageDTO
 
 // // Inicializamos el mock dto
