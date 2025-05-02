@@ -3,36 +3,33 @@ package utilsImage
 import (
 	"bytes"
 	"encoding/base64"
-	"go-gallery/src/commons/constants"
 	"image"
-	"image/jpeg"
-	"image/png"
 
+	_ "image/jpeg"  
+	_ "image/png"      
+	_ "golang.org/x/image/webp" 
+
+	"github.com/HugoSmits86/nativewebp"
 	"github.com/dustin/go-humanize"
 	"golang.org/x/image/draw"
 )
 
+// ResizeImage redimensiona la imagen y la convierte a WebP.
 func ResizeImage(input []byte, width, height int) ([]byte, error) {
-	img, format, err := image.Decode(bytes.NewReader(input))
+	// Decodificar la imagen de entrada
+	img, _, err := image.Decode(bytes.NewReader(input))
 	if err != nil {
 		return nil, err
 	}
 
+	// Crear una nueva imagen en blanco para el redimensionamiento
 	dst := image.NewRGBA(image.Rect(0, 0, width, height))
 
+	// Redimensionar la imagen
 	draw.ApproxBiLinear.Scale(dst, dst.Bounds(), img, img.Bounds(), draw.Over, nil)
 
 	var buf bytes.Buffer
-	//TODO AÑADIR los formatos webp y png creo que faltan mirar el handler
-	switch format {
-	case constants.JPEG:
-		err = jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 80})
-	case constants.PNG:
-		err = png.Encode(&buf, dst)
-	default:
-		return nil, err
-	}
-
+	err = nativewebp.Encode(&buf, dst, nil)
 	if err != nil {
 		return nil, err
 	}

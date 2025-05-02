@@ -2,7 +2,7 @@ package thumbnailImageBuilder
 
 import (
 	"go-gallery/src/commons/exception"
-	utilsImage "go-gallery/src/commons/utils/image"
+	validators "go-gallery/src/commons/utils/validations"
 	thumbnailImageEntity "go-gallery/src/domain/entities/image/thumbnailImage"
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 	thumbnailImageDTO "go-gallery/src/infrastructure/dto/image/thumbnailImage"
@@ -52,13 +52,17 @@ func (b *ThumbnailImageBuilder) SetName(name string) *ThumbnailImageBuilder {
 	return b
 }
 
+func (b *ThumbnailImageBuilder) SetOwner(owner string) *ThumbnailImageBuilder {
+	b.owner = owner
+	return b
+}
 func (b *ThumbnailImageBuilder) SetExtension(extension string) *ThumbnailImageBuilder {
 	b.extension = extension
 	return b
 }
 
-func (b *ThumbnailImageBuilder) SetContentFile(contentFile []byte) *ThumbnailImageBuilder {
-	b.contentFile = utilsImage.EncondeImageToBase64(contentFile)
+func (b *ThumbnailImageBuilder) SetContentFile(contentFile string) *ThumbnailImageBuilder {
+	b.contentFile = contentFile
 	return b
 }
 
@@ -68,49 +72,56 @@ func (b *ThumbnailImageBuilder) SetSize(size string) *ThumbnailImageBuilder {
 }
 
 func (b *ThumbnailImageBuilder) BuildNew() (*thumbnailImageEntity.ThumbnailImage, *exception.BuilderException) {
-	if b.name == "" {
-		return nil, exception.NewBuilderException("name", "El campo 'name' no debe estar vacío")
-	}
-	if b.extension == "" {
-		return nil, exception.NewBuilderException("extension", "El campo 'extension' no debe estar vacío")
-	}
-	if b.contentFile == "" {
-		return nil, exception.NewBuilderException("contentFile", "El campo 'contentFile' no debe estar vacío")
-	}
-	if b.size == "" {
-		return nil, exception.NewBuilderException("size", "El campo 'size' no debe estar vacío")
-	}
-	if b.owner == "" {
-		return nil, exception.NewBuilderException("owner", "El campo 'owner' no debe estar vacio")
+	err := b.validateCommons()
+	if err != nil {
+		return nil, err
 	}
 
 	return thumbnailImageEntity.NewThumbnailImage(nil, b.name, b.extension, b.contentFile, b.size, b.owner), nil
 }
 
 func (b *ThumbnailImageBuilder) Build() (*thumbnailImageEntity.ThumbnailImage, *exception.BuilderException) {
-	if b.id == nil {
-		return nil, exception.NewBuilderException("id", "El campo 'id' no debe estar vacio")
-	}
-
-	if b.name == "" {
-		return nil, exception.NewBuilderException("name", "El campo 'name' no debe estar vacio")
-	}
-
-	if b.extension == "" {
-		return nil, exception.NewBuilderException("extension", "El campo 'extension' no debe de estar vacio")
-	}
-
-	if b.contentFile == "" {
-		return nil, exception.NewBuilderException("contentFile", "El campo 'contentFile' no debe de estar vacio")
-	}
-
-	if b.owner == "" {
-		return nil, exception.NewBuilderException("owner", "El campo 'owner' no debe estar vacio")
-	}
-
-	if b.size == "" {
-		return nil, exception.NewBuilderException("size", "El campo 'size' no debe estar vacio")
+	err := b.validateAll()
+	if err != nil {
+		return nil, err
 	}
 
 	return thumbnailImageEntity.NewThumbnailImage(b.id, b.name, b.extension, b.contentFile, b.size, b.owner), nil
+}
+
+func (b *ThumbnailImageBuilder) validateAll() *exception.BuilderException {
+	err := validators.ValidateNonEmptyStringField("id", b.id)
+	if err != nil {
+		return exception.NewBuilderException("id", err.Error())
+	}
+
+	errBuilder := b.validateCommons()
+	if errBuilder != nil {
+		return errBuilder
+	}
+
+	return nil
+}
+
+func (b *ThumbnailImageBuilder) validateCommons() *exception.BuilderException {
+	if err := validators.ValidateNonEmptyStringField("name", b.name); err != nil {
+		return exception.NewBuilderException("name", err.Error())
+	}
+
+	if err := validators.ValidateNonEmptyStringField("extension", b.extension); err != nil {
+		return exception.NewBuilderException("extension", err.Error())
+	}
+
+	if err := validators.ValidateNonEmptyStringField("contentFile", b.contentFile); err != nil {
+		return exception.NewBuilderException("contentFile", err.Error())
+	}
+
+	if err := validators.ValidateNonEmptyStringField("owner", b.owner); err != nil {
+		return exception.NewBuilderException("owner", err.Error())
+	}
+
+	if err := validators.ValidateNonEmptyStringField("size", b.size); err != nil {
+		return exception.NewBuilderException("size", err.Error())
+	}
+	return nil
 }

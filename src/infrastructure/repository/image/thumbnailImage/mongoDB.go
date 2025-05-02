@@ -3,6 +3,7 @@ package thumbnailImageRepository
 import (
 	"context"
 	"fmt"
+	"go-gallery/src/commons/constants"
 	"go-gallery/src/commons/exception"
 	utilsImage "go-gallery/src/commons/utils/image"
 	thumbnailImageBuilder "go-gallery/src/domain/entities/builder/image/thumbnailImage"
@@ -24,8 +25,6 @@ const (
 	THUMBNAIL_IMAGE_COLLECTION string = "ThumbnailImage"
 	ID                         string = "id"
 	OWNER                      string = "owner"
-	THUMBNAIL_WIDTH            int    = 200
-	THUMBNAIL_HEIGHT           int    = 200
 )
 
 type ThumbnailImageMongoDBRepository struct {
@@ -100,7 +99,7 @@ func (r *ThumbnailImageMongoDBRepository) Insert(dto *imageDTO.ImageUploadReques
 		return "", exception.NewApiException(409, "La miniatura ya existe")
 	}
 
-	resizedBytes, errResize := utilsImage.ResizeImage(dto.RawContentFile, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT)
+	resizedBytes, errResize := utilsImage.ResizeImage(dto.RawContentFile, constants.THUMBNAIL_WIDTH, constants.THUMBNAIL_HEIGHT)
 	if errResize != nil {
 		errorMessage := fmt.Sprintf("Error al generar miniatura: %s", errResize.Error())
 		return "", exception.NewApiException(500, errorMessage)
@@ -108,7 +107,7 @@ func (r *ThumbnailImageMongoDBRepository) Insert(dto *imageDTO.ImageUploadReques
 
 	thumbnailImage, errBuilder := thumbnailImageBuilder.NewThumbnailImageBuilder().
 		FromImageUploadRequestDTO(dto).
-		SetContentFile(resizedBytes).
+		SetContentFile(utilsImage.EncondeImageToBase64(resizedBytes)).
 		BuildNew()
 
 	if errBuilder != nil {

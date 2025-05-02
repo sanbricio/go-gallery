@@ -3,6 +3,7 @@ package imageBuilder
 import (
 	"go-gallery/src/commons/exception"
 	utilsImage "go-gallery/src/commons/utils/image"
+	validators "go-gallery/src/commons/utils/validations"
 	imageEntity "go-gallery/src/domain/entities/image"
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 )
@@ -63,53 +64,42 @@ func (b *ImageBuilder) Build() (*imageEntity.Image, *exception.BuilderException)
 }
 
 func (b *ImageBuilder) validateAll() *exception.BuilderException {
-	err := b.validateStringPointerField("id", b.id)
+	err := validators.ValidateNonEmptyStringField("id", b.id)
 	if err != nil {
-		return err
+		return exception.NewBuilderException("id", err.Error())
 	}
 
-	err = b.validateCommons()
-	if err != nil {
-		return err
+	errBuilder := b.validateCommons()
+	if errBuilder != nil {
+		return errBuilder
 	}
 
 	return nil
 }
 
 func (b *ImageBuilder) validateCommons() *exception.BuilderException {
-	if err := b.validateStringField("thumbnailId", b.thumbnailId); err != nil {
-		return err
+	if err := validators.ValidateNonEmptyStringField("thumbnailId", b.thumbnailId); err != nil {
+		return exception.NewBuilderException("thumbnailId", err.Error())
 	}
 
-	if err := b.validateStringField("name", b.name); err != nil {
-		return err
+	if err := validators.ValidateNonEmptyStringField("name", b.name); err != nil {
+		return exception.NewBuilderException("name", err.Error())
 	}
 
-	if err := b.validateStringField("extension", b.extension); err != nil {
-		return err
+	if err := validators.ValidateNonEmptyStringField("extension", b.extension); err != nil {
+		return exception.NewBuilderException("extension", err.Error())
 	}
-	if err := b.validateStringField("contentFile", b.contentFile); err != nil {
-		return err
-	}
-	if err := b.validateStringField("owner", b.owner); err != nil {
-		return err
-	}
-	if err := b.validateStringField("size", b.size); err != nil {
-		return err
-	}
-	return nil
-}
 
-func (b *ImageBuilder) validateStringField(fieldName, fieldValue string) *exception.BuilderException {
-	if fieldValue == "" {
-		return exception.NewBuilderException(fieldName, "El campo '"+fieldName+"' no debe estar vacio")
+	if err := validators.ValidateNonEmptyStringField("contentFile", b.contentFile); err != nil {
+		return exception.NewBuilderException("contentFile", err.Error())
 	}
-	return nil
-}
 
-func (b *ImageBuilder) validateStringPointerField(fieldName string, fieldValue *string) *exception.BuilderException {
-	if fieldValue == nil || *fieldValue == "" {
-		return exception.NewBuilderException(fieldName, "El campo '"+fieldName+"' no debe estar vacio")
+	if err := validators.ValidateNonEmptyStringField("owner", b.owner); err != nil {
+		return exception.NewBuilderException("owner", err.Error())
+	}
+
+	if err := validators.ValidateNonEmptyStringField("size", b.size); err != nil {
+		return exception.NewBuilderException("size", err.Error())
 	}
 	return nil
 }

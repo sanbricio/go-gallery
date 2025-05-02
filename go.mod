@@ -17,6 +17,7 @@ require (
 )
 
 require (
+	github.com/HugoSmits86/nativewebp v1.2.0
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/go-openapi/jsonpointer v0.21.1 // indirect
