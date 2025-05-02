@@ -578,6 +578,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/exception.ApiException"
                         }
                     },
+                    "409": {
+                        "description": "La imagen ya existe",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
                     "500": {
                         "description": "Ha ocurrido un error inesperado",
                         "schema": {

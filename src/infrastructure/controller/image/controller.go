@@ -81,6 +81,7 @@ func (c *ImageController) getImage(ctx *fiber.Ctx) error {
 // @Failure		401	{object}	exception.ApiException	"Usuario no autenticado"
 // @Failure		403	{object}	exception.ApiException	"Los datos proporcionados no coinciden con el usuario autenticado"
 // @Failure		404	{object}	exception.ApiException	"Usuario/Imagen no encontrada"
+// @Failure		409	{object}	exception.ApiException	"La imagen ya existe"
 // @Failure		500	{object}	exception.ApiException	"Ha ocurrido un error inesperado"
 // @Router			/image/uploadImage [post]
 func (c *ImageController) uploadImage(ctx *fiber.Ctx) error {
