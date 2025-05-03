@@ -7,6 +7,7 @@ import (
 	userBuilder "go-gallery/src/domain/entities/builder/user"
 	userEntity "go-gallery/src/domain/entities/user"
 	userDTO "go-gallery/src/infrastructure/dto/user"
+	log "go-gallery/src/infrastructure/logger"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -30,6 +31,8 @@ func NewUserMongoDBRepository(args map[string]string) UserRepository {
 	urlConnection := args["MONGODB_URL_CONNECTION"]
 	databaseName := args["MONGODB_DATABASE"]
 
+	logger = log.Instance()
+
 	db := connect(urlConnection, databaseName)
 
 	repo := &UserMongoDBRepository{
@@ -41,54 +44,74 @@ func NewUserMongoDBRepository(args map[string]string) UserRepository {
 func connect(urlConnection, databaseName string) *mongo.Database {
 	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(urlConnection))
 	if err != nil {
-		panic(fmt.Sprintf("No se ha podido conectar a MongoDB: %s", err.Error()))
+		panicMessage := fmt.Sprintf("Unable to connect to MongoDB: %s", err.Error())
+		logger.Panic(panicMessage)
+		panic(panicMessage)
 	}
 
 	err = client.Ping(context.Background(), readpref.Primary())
 	if err != nil {
-		panic(fmt.Sprintf("No se ha podido hacer ping a MongoDB: %s", err.Error()))
+		panicMessage := fmt.Sprintf("Unable to ping MongoDB: %s", err.Error())
+		logger.Panic(panicMessage)
+		panic(panicMessage)
 	}
 
 	return client.Database(databaseName)
 }
 
 func (r *UserMongoDBRepository) Find(dtoUserFind *userDTO.LoginRequestDTO) (*userDTO.UserDTO, *exception.ApiException) {
+	logger.Info(fmt.Sprintf("Searching for user: %s", dtoUserFind.Username))
 	filter := bson.M{USERNAME: dtoUserFind.Username}
 	user, err := r.find(filter)
 	if err != nil {
+		logger.Warning(fmt.Sprintf("User not found: %s", dtoUserFind.Username))
 		return nil, err
 	}
 
-	errPasword := user[0].CheckPasswordIntegrity(dtoUserFind.Password)
-	if errPasword != nil {
-		return nil, exception.NewApiException(404, "Contraseña incorrecta")
+	errPassword := user[0].CheckPasswordIntegrity(dtoUserFind.Password)
+	if errPassword != nil {
+		logger.Warning(fmt.Sprintf("Incorrect password for user: %s", dtoUserFind.Username))
+		return nil, exception.NewApiException(404, "Incorrect password")
 	}
 
 	dto := userDTO.FromUser(user[0])
+
+	logger.Info(fmt.Sprintf("User found: %s", user[0].GetUsername()))
 
 	return dto, nil
 }
 
 func (r *UserMongoDBRepository) FindAndCheckJWT(claims *userDTO.JwtClaimsDTO) (*userDTO.UserDTO, *exception.ApiException) {
+	logger.Info(fmt.Sprintf("Verifying JWT for user: %s", claims.Username))
+
 	filter := bson.M{USERNAME: claims.Username}
 	user, err := r.find(filter)
 	if err != nil {
+		logger.Warning(fmt.Sprintf("User not found while verifying JWT: %s", claims.Username))
 		return nil, err
 	}
 
 	if user[0].GetEmail() != claims.Email ||
 		user[0].GetUsername() != claims.Username {
-		return nil, exception.NewApiException(403, "Los datos proporcionados no coinciden con el usuario autenticado")
+		logger.Warning(fmt.Sprintf(
+			"Data mismatch in JWT verification. Username: expected %s / obtained %s, Email: expected %s / obtained %s",
+			claims.Username, user[0].GetUsername(), claims.Email, user[0].GetEmail(),
+		))
+		return nil, exception.NewApiException(403, "The provided data does not match the authenticated user")
 	}
 
 	dto := userDTO.FromUser(user[0])
+
+	logger.Info(fmt.Sprintf("JWT successfully verified for user: %s", claims.Username))
 
 	return dto, nil
 }
 
 func (r *UserMongoDBRepository) Insert(dtoInsertUser *userDTO.UserDTO) (*userDTO.UserDTO, *exception.ApiException) {
+	logger.Info(fmt.Sprintf("Attempting to register user: %s", dtoInsertUser.Username))
 	err := r.checkUserIsCreated(dtoInsertUser)
 	if err != nil {
+		logger.Warning(fmt.Sprintf("User already exists or verification error: %s", err.Message))
 		return nil, err
 	}
 
@@ -96,6 +119,7 @@ func (r *UserMongoDBRepository) Insert(dtoInsertUser *userDTO.UserDTO) (*userDTO
 		FromDTO(dtoInsertUser).
 		Build()
 	if errBuilder != nil {
+		logger.Error(fmt.Sprintf("Error building user: %s", errBuilder.Error()))
 		return nil, exception.NewApiException(500, errBuilder.Error())
 	}
 
@@ -103,20 +127,25 @@ func (r *UserMongoDBRepository) Insert(dtoInsertUser *userDTO.UserDTO) (*userDTO
 
 	_, errInsert := r.mongo.InsertOne(context.Background(), dto)
 	if errInsert != nil {
-		return nil, exception.NewApiException(500, "Error al insertar el documento")
+		logger.Error(fmt.Sprintf("Error inserting user %s: %s", user.GetUsername(), errInsert.Error()))
+		return nil, exception.NewApiException(500, "Error inserting document")
 	}
 
+	logger.Info(fmt.Sprintf("User successfully inserted: %s", user.GetUsername()))
 	return dto, nil
 }
 
 func (r *UserMongoDBRepository) Update(dtoUpdateUser *userDTO.UserDTO) (int64, *exception.ApiException) {
+	logger.Info(fmt.Sprintf("Attempting to update user: %s", dtoUpdateUser.Username))
+
 	filter := bson.M{"username": dtoUpdateUser.Username}
 	_, err := r.find(filter)
 	if err != nil {
+		logger.Warning(fmt.Sprintf("User not found: %s", dtoUpdateUser.Username))
 		return 0, err
 	}
 
-	// Construir solo los campos que deben actualizarse
+	// Build only the fields that need to be updated
 	updateFields := bson.M{}
 
 	if dtoUpdateUser.Email != "" {
@@ -133,44 +162,52 @@ func (r *UserMongoDBRepository) Update(dtoUpdateUser *userDTO.UserDTO) (int64, *
 	}
 
 	if len(updateFields) == 0 {
-		return 0, exception.NewApiException(400, "No hay datos para actualizar")
+		logger.Warning(fmt.Sprintf("No data to update for user: %s", dtoUpdateUser.Username))
+		return 0, exception.NewApiException(400, "No data to update")
 	}
 
 	update := bson.M{"$set": updateFields}
-	// Actualizamos el usuario
+	// Update the user
 	result, errUpdate := r.mongo.UpdateOne(context.Background(), filter, update)
 	if errUpdate != nil {
-		return 0, exception.NewApiException(500, "Error al actualizar el usuario en la base de datos")
+		logger.Error(fmt.Sprintf("Error updating user %s: %s", dtoUpdateUser.Username, errUpdate.Error()))
+		return 0, exception.NewApiException(500, "Error updating the user in the database")
 	}
 
 	if result.ModifiedCount == 0 {
-		return 0, exception.NewApiException(404, "No se ha actualizado ningún usuario")
+		logger.Warning(fmt.Sprintf("User not found to update: %s", dtoUpdateUser.Username))
+		return 0, exception.NewApiException(404, "No user updated")
 	}
 
 	return result.ModifiedCount, nil
 }
 
 func (r *UserMongoDBRepository) Delete(dtoDeleteUser *userDTO.UserDTO) (int64, *exception.ApiException) {
+	logger.Info(fmt.Sprintf("Attempting to delete user: %s", dtoDeleteUser.Username))
+
 	filter := bson.M{USERNAME: dtoDeleteUser.Username}
 	user, err := r.find(filter)
 	if err != nil {
+		logger.Warning(fmt.Sprintf("Error searching for user to delete %s: %s", dtoDeleteUser.Username, err.Message))
 		return 0, err
 	}
 
 	errPassword := user[0].CheckPasswordIntegrity(dtoDeleteUser.Password)
 	if errPassword != nil {
-		return 0, exception.NewApiException(404, "Contraseña incorrecta")
+		return 0, exception.NewApiException(404, "Incorrect password")
 	}
 
 	result, errDelete := r.mongo.DeleteOne(context.Background(), filter)
 	if errDelete != nil {
-		return 0, exception.NewApiException(500, "Error al eliminar el usuario")
+		logger.Error(fmt.Sprintf("Error deleting user %s: %s", dtoDeleteUser.Username, errDelete.Error()))
+		return 0, exception.NewApiException(500, "Error deleting the user")
 	}
 
 	deleteCount := result.DeletedCount
 
 	if deleteCount == 0 {
-		return 0, exception.NewApiException(404, "No se ha eliminado ningún usuario")
+		logger.Warning(fmt.Sprintf("User not found to delete: %s", dtoDeleteUser.Username))
+		return 0, exception.NewApiException(404, "No user deleted")
 	}
 
 	return deleteCount, nil
@@ -191,10 +228,10 @@ func (r *UserMongoDBRepository) checkUserIsCreated(dtoInsertUser *userDTO.UserDT
 
 	for _, user := range users {
 		if user.GetEmail() == dtoInsertUser.Email {
-			return exception.NewApiException(400, "El correo electrónico ya está registrado")
+			return exception.NewApiException(400, "Email is already registered")
 		}
 		if user.GetUsername() == dtoInsertUser.Username {
-			return exception.NewApiException(400, "El usuario ya está registrado")
+			return exception.NewApiException(400, "Username is already registered")
 		}
 	}
 
@@ -204,17 +241,17 @@ func (r *UserMongoDBRepository) checkUserIsCreated(dtoInsertUser *userDTO.UserDT
 func (r *UserMongoDBRepository) find(filter bson.M) ([]*userEntity.User, *exception.ApiException) {
 	cursor, err := r.mongo.Find(context.Background(), filter)
 	if err != nil {
-		return nil, exception.NewApiException(500, "Error al buscar usuarios")
+		return nil, exception.NewApiException(500, "Error searching for users")
 	}
 	defer cursor.Close(context.Background())
 
 	var users []*userDTO.UserDTO
 	if err := cursor.All(context.Background(), &users); err != nil {
-		return nil, exception.NewApiException(500, "Error al decodificar usuarios")
+		return nil, exception.NewApiException(500, "Error decoding users")
 	}
 
 	if len(users) == 0 {
-		return nil, exception.NewApiException(404, "Usuario no encontrado")
+		return nil, exception.NewApiException(404, "User not found")
 	}
 
 	var userEntities []*userEntity.User

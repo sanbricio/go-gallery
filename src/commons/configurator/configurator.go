@@ -1,10 +1,12 @@
 package configurator
 
 import (
+	"fmt"
 	"go-gallery/src/commons/configurator/configuration"
 	dependency_container "go-gallery/src/commons/dependency-container"
 	dependency_dictionary "go-gallery/src/commons/dependency-container/dependency-dictionary"
-	"log"
+	"go-gallery/src/infrastructure/logger"
+
 	"os"
 	"strings"
 
@@ -14,14 +16,15 @@ import (
 func LoadConfiguration() (configuration.Configuration, dependency_container.DependencyContainer) {
 	rawEnvConfig := loadArgsEnvConfiguration()
 	configuration := configuration.Instance(rawEnvConfig)
+	logger := buildLogger(configuration)
 
-	log.Println("INFO: Loading configuration...")
-	log.Println("INFO: Session id established:", configuration.GetSessionId())
-	log.Println("INFO: Start date:", configuration.GetTimestamp().String())
+	logger.Info("Loading configuration...")
+	logger.Info(fmt.Sprintf("Session id established: %v", configuration.GetSessionId()))
+	logger.Info(fmt.Sprintf("Start date: %v", configuration.GetTimestamp().String()))
 
 	dependencyContainer := buildDependencyContainer(configuration)
 
-	log.Println("INFO: Configuration loaded successfully.")
+	logger.Info("Configuration loaded successfully.")
 	return *configuration, *dependencyContainer
 }
 
@@ -29,7 +32,7 @@ func loadArgsEnvConfiguration() map[string]string {
 	// Cargar variables desde el archivo .env
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("WARN: Could not load the .env file. Using system environment variables instead.")
+		fmt.Println("WARN: Could not load the .env file. Using system environment variables instead.")
 	}
 
 	envConfig := make(map[string]string)
@@ -41,25 +44,41 @@ func loadArgsEnvConfiguration() map[string]string {
 	return envConfig
 }
 
+func buildLogger(conf *configuration.Configuration) logger.Logger {
+	var loggers []logger.Logger
+
+	consoleLogger := logger.NewConsoleLogger()
+	loggers = append(loggers, consoleLogger)
+
+	loggerKey := conf.GetArg("LOGGER_TYPE")
+	loggerDependency := dependency_dictionary.FindLoggerDependency(loggerKey, conf.GetArgs())
+	if loggerDependency != nil {
+		loggers = append(loggers, loggerDependency)
+	}
+
+	compositeLogger := logger.NewCompositeLogger(loggers...)
+	return logger.Init(compositeLogger)
+}
+
 func buildDependencyContainer(conf *configuration.Configuration) *dependency_container.DependencyContainer {
 	args := conf.GetArgs()
-	dependencyContainer := dependency_container.GetIntance()
+	dp := dependency_container.Instance()
 
 	emailSenderRepositoryKey := conf.GetArg("EMAIL_SENDER_REPOSITORY")
 	emailSenderRepositoryDependency := dependency_dictionary.FindEmailSenderDependency(emailSenderRepositoryKey, args)
-	dependencyContainer.SetEmailSenderRepository(emailSenderRepositoryDependency)
+	dp.SetEmailSenderRepository(emailSenderRepositoryDependency)
 
 	userRepositoryKey := conf.GetArg("USER_REPOSITORY")
 	userRepositoryDependency := dependency_dictionary.FindUserDependency(userRepositoryKey, args)
-	dependencyContainer.SetUserRepository(userRepositoryDependency)
+	dp.SetUserRepository(userRepositoryDependency)
 
 	imageRepositoryKey := conf.GetArg("IMAGE_REPOSITORY")
 	imageRepositoryDependency := dependency_dictionary.FindImageDependency(imageRepositoryKey, args)
-	dependencyContainer.SetImageRepository(imageRepositoryDependency)
+	dp.SetImageRepository(imageRepositoryDependency)
 
 	thumbnailImageRepositoryKey := conf.GetArg("THUMBNAIL_IMAGE_REPOSITORY")
 	thumbnailImageRepositoryDependency := dependency_dictionary.FindThumbnailImageDependency(thumbnailImageRepositoryKey, args)
-	dependencyContainer.SetThumbnailImageRepository(thumbnailImageRepositoryDependency)
+	dp.SetThumbnailImageRepository(thumbnailImageRepositoryDependency)
 
-	return dependencyContainer
+	return dp
 }

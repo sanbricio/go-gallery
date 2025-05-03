@@ -3,11 +3,15 @@ package emailSenderRepository
 import (
 	"fmt"
 	entity "go-gallery/src/domain/entities"
-	"log"
+	log "go-gallery/src/infrastructure/logger"
 	"net/smtp"
 	"strconv"
 	"strings"
 )
+
+const EmailSenderGoMailRepositoryKey = "EmailSenderGoMailRepository"
+
+var logger log.Logger
 
 type EmailSenderGoMailRepository struct {
 	emailSender entity.EmailSender
@@ -15,25 +19,32 @@ type EmailSenderGoMailRepository struct {
 
 func NewEmailSenderGoMailRepository(args map[string]string) *EmailSenderGoMailRepository {
 	emailSender := entity.EmailSender{}
-	// Cargamos de configuración para el sender de emails
+	logger = log.Instance()
+
+	logger.Info("Initializing EmailSenderGoMailRepository...")
+
 	emailSender.Host = args["EMAIL_SENDER_HOST"]
 	port, err := strconv.Atoi(args["EMAIL_SENDER_PORT"])
 	if err != nil {
-		panic(fmt.Sprintf("invalid port value: %v", err))
+		panicMessage := fmt.Sprintf("Invalid value for port: %v", err)
+		logger.Panic(panicMessage)
+		panic(panicMessage)
 	}
+
 	emailSender.Port = port
 	emailSender.Username = args["EMAIL_SENDER_USERNAME"]
 	emailSender.Password = args["EMAIL_SENDER_PASSWORD"]
 	emailSender.From = emailSender.Username
+
+	logger.Info(fmt.Sprintf("EmailSender successfully configured with host: %s and port: %d", emailSender.Host, emailSender.Port))
 
 	return &EmailSenderGoMailRepository{
 		emailSender: emailSender,
 	}
 }
 
-const EmailSenderGoMailRepositoryKey = "EmailSenderGoMailRepository"
-
 func (r *EmailSenderGoMailRepository) SendEmail(code, email string) error {
+	logger.Info(fmt.Sprintf("Sending verification email to %s with code: %s", email, code))
 
 	// Mensaje del email
 	message := r.buildMessage(code, email)
@@ -47,16 +58,17 @@ func (r *EmailSenderGoMailRepository) SendEmail(code, email string) error {
 	// Enviar el correo
 	err := smtp.SendMail(serverAddress, auth, r.emailSender.From, []string{email}, []byte(message))
 	if err != nil {
-		log.Printf("ERROR: ❌ No se ha podido enviar el email a %s para la eliminación del usuario", email)
-		return fmt.Errorf("error enviando el email: %w", err)
+		errorMessage := fmt.Sprintf("Failed to send email to %s: %s", email, err.Error())
+		logger.Error(errorMessage)
+		return fmt.Errorf("error sending email: %w", err)
 	}
 
-	log.Printf("INFO: ✅ Email enviado correctamente a %s para la eliminación del usuario", email)
+	logger.Info(fmt.Sprintf("Email successfully sent to %s for account deletion", email))
 	return nil
 }
 
 func (r *EmailSenderGoMailRepository) buildMessage(code, email string) string {
-	subject := "⚠️ Código de verificación para eliminar tu cuenta de GoGallery"
+	subject := "⚠️ Verification code to delete your go-gallery account"
 
 	// Cuerpo para el email
 	htmlBody := fmt.Sprintf(`
@@ -64,18 +76,18 @@ func (r *EmailSenderGoMailRepository) buildMessage(code, email string) string {
 		<html>
 		<head>
 			<meta charset="UTF-8">
-			<title>Confirmación de eliminación de cuenta</title>
+			<title>Account Deletion Confirmation</title>
 		</head>
 		<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
 			<table align="center" width="100%%" bgcolor="#ffffff" style="max-width: 600px; padding: 20px; border-radius: 8px; box-shadow: 0px 0px 10px #cccccc;">
 				<tr>
 					<td align="center" style="padding-bottom: 20px;">
-						<h2 style="color: #333;">🔐 Código de verificación</h2>
+						<h2 style="color: #333;">🔐 Verification Code</h2>
 					</td>
 				</tr>
 				<tr>
 					<td align="center" style="font-size: 16px; color: #555;">
-						Hemos recibido una solicitud para eliminar tu cuenta. Para confirmar esta acción, usa el siguiente código de verificación:
+						We received a request to delete your account. To confirm this action, please use the following verification code:
 					</td>
 				</tr>
 				<tr>
@@ -87,19 +99,19 @@ func (r *EmailSenderGoMailRepository) buildMessage(code, email string) string {
 				</tr>
 				<tr>
 					<td align="center" style="font-size: 14px; color: #777; padding-top: 20px;">
-						⚠️ Este código es válido solo por los próximos <strong>5 minutos</strong>. No lo compartas con nadie.
+						⚠️ This code is valid only for the next <strong>5 minutes</strong>. Do not share it with anyone.
 					</td>
 				</tr>
 				<tr>
 					<td align="center" style="font-size: 14px; color: #777; padding-top: 10px;">
-						Si no solicitaste la eliminación de tu cuenta, ignora este mensaje y tu cuenta permanecerá activa.
+						If you did not request the deletion of your account, please ignore this message and your account will remain active.
 					</td>
 				</tr>
 				<tr>
 					<td align="center" style="padding-top: 30px; font-size: 12px; color: #aaa;">
-						Atentamente, <br>
-						<strong>Equipo de Soporte</strong><br>
-						<a href="mailto:support@tuempresa.com" style="color: #3498db; text-decoration: none;">gogalleryteam@gmail.com</a>
+						Best regards, <br>
+						<strong>Support Team</strong><br>
+						<a href="mailto:support@yourcompany.com" style="color: #3498db; text-decoration: none;">gogalleryteam@gmail.com</a>
 					</td>
 				</tr>
 			</table>
@@ -114,7 +126,5 @@ func (r *EmailSenderGoMailRepository) buildMessage(code, email string) string {
 		"Content-Type: text/html; charset=\"UTF-8\"",
 	}
 
-	// Unimos cabecera y cuerpo
 	return strings.Join(headers, "\r\n") + "\r\n\r\n" + htmlBody
-
 }
