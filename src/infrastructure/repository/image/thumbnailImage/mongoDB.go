@@ -96,7 +96,7 @@ func (r *ThumbnailImageMongoDBRepository) find(filter bson.M) ([]thumbnailImageD
 		return nil, exception.NewApiException(404, "Thumbnail not found")
 	}
 
-	logger.Info(fmt.Sprintf("Thumbnails found: %+v", results))
+	logger.Info(fmt.Sprintf("Thumbnails found: %v", len(results)))
 	return results, nil
 }
 

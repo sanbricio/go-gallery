@@ -67,8 +67,13 @@ func connect(urlConnection string, databaseName string) *mongo.Database {
 }
 
 func (r *ImageMongoDBRepository) Find(dtoFind *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException) {
+	objectID, errObjectID := getObjectID(dtoFind.Id)
+	if errObjectID != nil {
+		return nil, errObjectID
+	}
+
 	filter := bson.M{
-		ID:    dtoFind.Id,
+		ID:    objectID,
 		OWNER: dtoFind.Owner,
 	}
 
@@ -76,11 +81,11 @@ func (r *ImageMongoDBRepository) Find(dtoFind *imageDTO.ImageDTO) (*imageDTO.Ima
 
 	result, err := r.find(filter)
 	if err != nil {
-		logger.Warning(fmt.Sprintf("Image not found with Id '%v' and Owner '%v'", dtoFind.Id, dtoFind.Owner))
+		logger.Warning(fmt.Sprintf("Image not found with Id '%v' and Owner '%v'", *dtoFind.Id, dtoFind.Owner))
 		return nil, err
 	}
 
-	logger.Info(fmt.Sprintf("Image found: %+v", result[0]))
+	logger.Info(fmt.Sprintf("Image found: %v", *result[0].Id))
 	return &result[0], nil
 }
 
@@ -146,18 +151,18 @@ func (r *ImageMongoDBRepository) Insert(dtoInsertImage *imageDTO.ImageUploadRequ
 
 	dto := imageDTO.FromImage(image)
 
-	logger.Info(fmt.Sprintf("Inserting new image into the database: %+v", dto))
+	logger.Info(fmt.Sprintf("Inserting new image into the database for owner '%s' with name '%s':", dto.Owner, dto.Name))
 
-	imageID, errInsert := r.mongoImage.InsertOne(context.Background(), dto)
+	result, errInsert := r.mongoImage.InsertOne(context.Background(), dto)
 	if errInsert != nil {
 		logger.Error(fmt.Sprintf("Error inserting image: %s", errInsert.Error()))
 		return nil, exception.NewApiException(500, "Error inserting the document")
 	}
-
-	logger.Info(fmt.Sprintf("Image successfully inserted with ID: %s", imageID.InsertedID.(primitive.ObjectID).Hex()))
+	imageID := result.InsertedID.(primitive.ObjectID).Hex()
+	logger.Info(fmt.Sprintf("Image successfully inserted with ID: %s", imageID))
 
 	return &imageDTO.ImageUploadResponseDTO{
-		Id:          imageID.InsertedID.(primitive.ObjectID).Hex(),
+		Id:          imageID,
 		ThumbnailId: thumbnailImageID,
 		Name:        dto.Name,
 		Extension:   dto.Extension,
@@ -166,8 +171,13 @@ func (r *ImageMongoDBRepository) Insert(dtoInsertImage *imageDTO.ImageUploadRequ
 }
 
 func (r *ImageMongoDBRepository) Delete(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException) {
+	objectID, errObjectID := getObjectID(dto.Id)
+	if errObjectID != nil {
+		return nil, errObjectID
+	}
+
 	filter := bson.M{
-		ID:    dto.Id,
+		ID:    objectID,
 		OWNER: dto.Owner,
 	}
 
@@ -175,7 +185,7 @@ func (r *ImageMongoDBRepository) Delete(dto *imageDTO.ImageDTO) (*imageDTO.Image
 
 	foundImages, err := r.find(filter)
 	if err != nil {
-		logger.Warning(fmt.Sprintf("Image not found for deletion with Id '%v' and Owner '%v'", dto.Id, dto.Owner))
+		logger.Warning(fmt.Sprintf("Image not found for deletion with Id '%v' and Owner '%v'", *dto.Id, dto.Owner))
 		return nil, err
 	}
 
@@ -185,6 +195,15 @@ func (r *ImageMongoDBRepository) Delete(dto *imageDTO.ImageDTO) (*imageDTO.Image
 		return nil, exception.NewApiException(500, "Error deleting the image")
 	}
 
-	logger.Info(fmt.Sprintf("Image successfully deleted: %+v", foundImages[0]))
+	logger.Info(fmt.Sprintf("Image successfully deleted: %+v", *foundImages[0].Id))
 	return &foundImages[0], nil
+}
+
+func getObjectID(id *string) (primitive.ObjectID, *exception.ApiException) {
+	objectID, errObjectID := primitive.ObjectIDFromHex(*id)
+	if errObjectID != nil {
+		logger.Error(fmt.Sprintf("Invalid ObjectID: %v", *id))
+		return primitive.NilObjectID, exception.NewApiException(400, "Invalid image ID format")
+	}
+	return objectID, nil
 }
