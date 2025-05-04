@@ -64,6 +64,61 @@ definitions:
         example: 64a1f8b8e4b0c10d3c5b2e75
         type: string
     type: object
+  thumbnailImageDTO.ThumbnailImageCursorDTO:
+    description: Contiene una lista de miniaturas y el identificador del último elemento
+      para la paginación.
+    properties:
+      lastID:
+        description: ID del último elemento para la paginación
+        example: 64a1f8b8e4b0c10d3c5b2e75
+        type: string
+      thumbnails:
+        description: Lista de miniaturas de imagen
+        items:
+          $ref: '#/definitions/thumbnailImageDTO.ThumbnailImageDTO'
+        type: array
+    type: object
+  thumbnailImageDTO.ThumbnailImageDTO:
+    description: Contiene la información de la miniatura de una imagen, incluyendo
+      su identificador, nombre, extensión, contenido en base64 y propietario (usuario)
+    properties:
+      content_file:
+        description: |-
+          Contenido de la miniatura en base64
+          Example: /9j/4AAQSkZJRgABAQEAAAAAAAD...
+        example: /9j/4AAQSkZJRgABAQEAAAAAAAD.
+        type: string
+      extension:
+        description: |-
+          Extensión del archivo de miniatura
+          Example: jpg
+        example: .jpeg
+        type: string
+      id:
+        description: |-
+          ID de la miniatura
+          Example: 64a1f8b8e4b0c10d3c5b2e75
+        example: 64a1f8b8e4b0c10d3c5b2e75
+        type: string
+      name:
+        description: |-
+          Nombre del archivo de la miniatura
+          Example: foto_perfil
+        example: prueba
+        type: string
+      owner:
+        description: |-
+          Usuario propietario de la miniatura
+          Example: usuario123
+        example: usuario123
+        type: string
+      size:
+        description: |-
+          Tamaño de la miniatura en bytes
+          Example: 204800
+        example: 2.3 kB
+        type: string
+    type: object
   userDTO.LoginRequestDTO:
     description: Datos requeridos para realizar autentificación del usuario
     properties:
@@ -212,7 +267,7 @@ info:
   contact:
     email: gogalleryteam@gmail.com
     name: Support GoGallery
-  description: API para la gestión de subida de fotos, con una autentificación
+  description: API for managing photo uploads, with authentication
   title: GoGallery
   version: v1.0.0
 paths:
@@ -540,6 +595,49 @@ paths:
       summary: Obtiene una imagen por su identificador
       tags:
       - image
+  /image/getThumbnailImages:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una lista paginada de imágenes en miniatura del usuario
+        autenticado, usando paginación por cursor (lastId y pageSize).
+      parameters:
+      - description: Último ID recibido para la paginación
+        in: query
+        name: lastID
+        type: string
+      - description: Cantidad de miniaturas a devolver (por defecto 10)
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de miniaturas con el último id para poder realizar paginacione
+          schema:
+            $ref: '#/definitions/thumbnailImageDTO.ThumbnailImageCursorDTO'
+        "401":
+          description: Usuario no autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "403":
+          description: Los datos proporcionados no coinciden con el usuario autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "404":
+          description: No se encontraron thumbnails
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "500":
+          description: Error inesperado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      security:
+      - CookieAuth: []
+      summary: Listar imágenes en miniatura (thumbnails)
+      tags:
+      - thumbnail
   /image/uploadImage:
     post:
       consumes:

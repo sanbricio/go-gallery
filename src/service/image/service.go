@@ -4,6 +4,7 @@ import (
 	"go-gallery/src/commons/exception"
 
 	imageDTO "go-gallery/src/infrastructure/dto/image"
+	thumbnailImageDTO "go-gallery/src/infrastructure/dto/image/thumbnailImage"
 	imageRepository "go-gallery/src/infrastructure/repository/image"
 	thumbnailImageRepository "go-gallery/src/infrastructure/repository/image/thumbnailImage"
 )
@@ -35,4 +36,8 @@ func (s *ImageService) Insert(dto *imageDTO.ImageUploadRequestDTO) (*imageDTO.Im
 
 func (s *ImageService) Delete(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException) {
 	return s.imageRepository.Delete(dto)
+}
+
+func (s *ImageService) FindAllThumbnails(owner, lastID string, pageSize int64) (*thumbnailImageDTO.ThumbnailImageCursorDTO, *exception.ApiException) {
+	return s.thumbnailImageRepository.FindAll(owner, lastID, pageSize)
 }

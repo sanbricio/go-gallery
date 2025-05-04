@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API para la gestión de subida de fotos, con una autentificación",
+        "description": "API for managing photo uploads, with authentication",
         "title": "GoGallery",
         "contact": {
             "name": "Support GoGallery",
@@ -513,6 +513,72 @@
                 }
             }
         },
+        "/image/getThumbnailImages": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Obtiene una lista paginada de imágenes en miniatura del usuario autenticado, usando paginación por cursor (lastId y pageSize).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "thumbnail"
+                ],
+                "summary": "Listar imágenes en miniatura (thumbnails)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Último ID recibido para la paginación",
+                        "name": "lastID",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Cantidad de miniaturas a devolver (por defecto 10)",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de miniaturas con el último id para poder realizar paginacione",
+                        "schema": {
+                            "$ref": "#/definitions/thumbnailImageDTO.ThumbnailImageCursorDTO"
+                        }
+                    },
+                    "401": {
+                        "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "403": {
+                        "description": "Los datos proporcionados no coinciden con el usuario autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "No se encontraron thumbnails",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Error inesperado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    }
+                }
+            }
+        },
         "/image/uploadImage": {
             "post": {
                 "security": [
@@ -642,6 +708,60 @@
                     "description": "ID de la imagen miniatura asociada.\nExample: 64a1f8b8e4b0c10d3c5b2e75",
                     "type": "string",
                     "example": "64a1f8b8e4b0c10d3c5b2e75"
+                }
+            }
+        },
+        "thumbnailImageDTO.ThumbnailImageCursorDTO": {
+            "description": "Contiene una lista de miniaturas y el identificador del último elemento para la paginación.",
+            "type": "object",
+            "properties": {
+                "lastID": {
+                    "description": "ID del último elemento para la paginación",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                },
+                "thumbnails": {
+                    "description": "Lista de miniaturas de imagen",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/thumbnailImageDTO.ThumbnailImageDTO"
+                    }
+                }
+            }
+        },
+        "thumbnailImageDTO.ThumbnailImageDTO": {
+            "description": "Contiene la información de la miniatura de una imagen, incluyendo su identificador, nombre, extensión, contenido en base64 y propietario (usuario)",
+            "type": "object",
+            "properties": {
+                "content_file": {
+                    "description": "Contenido de la miniatura en base64\nExample: /9j/4AAQSkZJRgABAQEAAAAAAAD...",
+                    "type": "string",
+                    "example": "/9j/4AAQSkZJRgABAQEAAAAAAAD."
+                },
+                "extension": {
+                    "description": "Extensión del archivo de miniatura\nExample: jpg",
+                    "type": "string",
+                    "example": ".jpeg"
+                },
+                "id": {
+                    "description": "ID de la miniatura\nExample: 64a1f8b8e4b0c10d3c5b2e75",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                },
+                "name": {
+                    "description": "Nombre del archivo de la miniatura\nExample: foto_perfil",
+                    "type": "string",
+                    "example": "prueba"
+                },
+                "owner": {
+                    "description": "Usuario propietario de la miniatura\nExample: usuario123",
+                    "type": "string",
+                    "example": "usuario123"
+                },
+                "size": {
+                    "description": "Tamaño de la miniatura en bytes\nExample: 204800",
+                    "type": "string",
+                    "example": "2.3 kB"
                 }
             }
         },

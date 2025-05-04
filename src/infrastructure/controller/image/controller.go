@@ -4,6 +4,7 @@ import (
 	"go-gallery/src/commons/exception"
 	imageService "go-gallery/src/service/image"
 	userService "go-gallery/src/service/user"
+	"strconv"
 
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 	userDTO "go-gallery/src/infrastructure/dto/user"
@@ -29,6 +30,9 @@ func (c *ImageController) SetUpRoutes(router fiber.Router) {
 	router.Get("/getImage/:id", c.getImage)
 	router.Post("/uploadImage", c.uploadImage)
 	router.Delete("/deleteImage/:id", c.deleteImage)
+
+	// Thumbnails
+	router.Get("/getThumbnailImages", c.getThumbnailImages)
 }
 
 // @Summary		Obtiene una imagen por su identificador
@@ -148,4 +152,49 @@ func (c *ImageController) deleteImage(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(image)
+}
+
+// @Summary		Listar imágenes en miniatura (thumbnails)
+// @Description	Obtiene una lista paginada de imágenes en miniatura del usuario autenticado, usando paginación por cursor (lastId y pageSize).
+// @Tags			thumbnail
+// @Accept			json
+// @Produce		json
+// @Param			lastID		query	string	false	"Último ID recibido para la paginación"
+// @Param			pageSize	query	int		false	"Cantidad de miniaturas a devolver (por defecto 10)"
+// @Security		CookieAuth
+// @Success		200	{object}	thumbnailImageDTO.ThumbnailImageCursorDTO	"Lista de miniaturas con el último id para poder realizar paginacione"
+// @Failure		401	{object}	exception.ApiException						"Usuario no autenticado"
+// @Failure		403	{object}	exception.ApiException						"Los datos proporcionados no coinciden con el usuario autenticado"
+// @Failure		404	{object}	exception.ApiException						"No se encontraron thumbnails"
+// @Failure		500	{object}	exception.ApiException						"Error inesperado"
+// @Router			/image/getThumbnailImages [get]
+func (c *ImageController) getThumbnailImages(ctx *fiber.Ctx) error {
+	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
+	if !ok {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
+	}
+
+	_, errUser := c.serviceUser.FindAndCheckJWT(claims)
+	if errUser != nil {
+		return ctx.Status(errUser.Status).JSON(errUser)
+	}
+
+	// Obtener parámetros de consulta
+	lastID := ctx.Query("lastID")
+	pageSizeParam := ctx.Query("pageSize")
+
+	// Validamos el pageSize (debe ser un entero positivo, default 10)
+	pageSize := int64(10)
+	if pageSizeParam != "" {
+		if parsedPageSize, err := strconv.ParseInt(pageSizeParam, 10, 64); err == nil && parsedPageSize > 0 {
+			pageSize = parsedPageSize
+		}
+	}
+
+	thumbnails, errThumb := c.serviceImage.FindAllThumbnails(claims.Username, lastID, pageSize)
+	if errThumb != nil {
+		return ctx.Status(errThumb.Status).JSON(errThumb)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(thumbnails)
 }

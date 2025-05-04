@@ -24,8 +24,9 @@ const ThumnbailImageMongoDBRepositoryKey = "ThumnbailImageMongoDBRepository"
 
 const (
 	THUMBNAIL_IMAGE_COLLECTION string = "ThumbnailImage"
-	ID                         string = "id"
+	ID                         string = "_id"
 	OWNER                      string = "owner"
+	SORT                       int    = -1 // Ordenado de manera descendente (mas reciente primero)
 )
 
 var logger log.Logger
@@ -72,9 +73,41 @@ func connect(urlConnection string, databaseName string) *mongo.Database {
 	return database.Database(databaseName)
 }
 
-func (r *ThumbnailImageMongoDBRepository) find(filter bson.M) ([]thumbnailImageDTO.ThumbnailImageDTO, *exception.ApiException) {
-	logger.Info(fmt.Sprintf("Searching for thumbnails with filter: %+v", filter))
-	cursor, err := r.mongoThumbnailImage.Find(context.Background(), filter)
+func (r *ThumbnailImageMongoDBRepository) FindAll(owner, lastID string, pageSize int64) (*thumbnailImageDTO.ThumbnailImageCursorDTO, *exception.ApiException) {
+
+	filter := bson.M{
+		"owner": strings.TrimSpace(owner),
+	}
+
+	logger.Info(fmt.Sprintf("Cursor-based search: filter=%+v, lastID=%s, pageSize=%d", filter, lastID, pageSize))
+
+	if lastID != "" {
+		lastObjectID, err := primitive.ObjectIDFromHex(lastID)
+		if err != nil {
+			logger.Error(fmt.Sprintf("Invalid lastID: %s", lastID))
+			return nil, exception.NewApiException(400, "Invalid last ID")
+		}
+		filter[ID] = bson.M{"$lt": lastObjectID}
+	}
+
+	findOptions := options.Find()
+	findOptions.SetLimit(pageSize)
+	findOptions.SetSort(bson.D{{Key: ID, Value: SORT}})
+
+	dto, err := r.find(filter, findOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	return &thumbnailImageDTO.ThumbnailImageCursorDTO{
+		Thumbnails: dto,
+		LastID:     *dto[len(dto)-1].Id,
+	}, nil
+}
+
+func (r *ThumbnailImageMongoDBRepository) find(filter bson.M, findOptions *options.FindOptions) ([]thumbnailImageDTO.ThumbnailImageDTO, *exception.ApiException) {
+	logger.Info(fmt.Sprintf("Searching for thumbnails with filter: %+v and options: %+v", filter, findOptions))
+	cursor, err := r.mongoThumbnailImage.Find(context.Background(), filter, findOptions)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Error searching for thumbnails: %s", err.Error()))
 		return nil, exception.NewApiException(500, "Error searching for thumbnails")
@@ -110,7 +143,7 @@ func (r *ThumbnailImageMongoDBRepository) Insert(dto *imageDTO.ImageUploadReques
 
 	logger.Info(fmt.Sprintf("Attempting to insert thumbnail for image: Name=%s, Owner=%s", dto.Name, dto.Owner))
 	// Si la miniatura ya existe, no la insertamos
-	results, err := r.find(filter)
+	results, err := r.find(filter, nil)
 	if err != nil && err.Status != 404 {
 		return "", err
 	}
@@ -127,9 +160,13 @@ func (r *ThumbnailImageMongoDBRepository) Insert(dto *imageDTO.ImageUploadReques
 		return "", exception.NewApiException(500, errorMessage)
 	}
 
+	sizeInBytes := len(resizedBytes)
+	size := utilsImage.HumanizeBytes(uint64(sizeInBytes))
+
 	thumbnailImage, errBuilder := thumbnailImageBuilder.NewThumbnailImageBuilder().
 		FromImageUploadRequestDTO(dto).
 		SetContentFile(utilsImage.EncondeImageToBase64(resizedBytes)).
+		SetSize(size).
 		BuildNew()
 
 	if errBuilder != nil {
