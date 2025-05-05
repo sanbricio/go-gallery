@@ -25,6 +25,7 @@ JWT_SECRET=
 GO_GALLERY_API_PORT=3000
 USER_REPOSITORY=UserPostgreSQLRepository
 IMAGE_REPOSITORY=ImageMongoDBRepository
+THUMBNAIL_IMAGE_REPOSITORY=ThumnbailImageMongoDBRepository
 EMAIL_SENDER_REPOSITORY=EmailSenderGoMailRepository
 
 EMAIL_SENDER_HOST=smtp.gmail.com
@@ -61,6 +62,7 @@ EMAIL_SENDER_PASSWORD=
   - GO_GALLERY_API_PORT: Port for the application.  
   - USER_REPOSITORY: Specifies the user repository implementation to use.  
   - IMAGE_REPOSITORY: Specifies the image repository implementation to use.  
+  - THUMBNAIL_IMAGE_REPOSITORY: Specifies the thumbnailImage repository implementation to use.  
   - EMAIL_SENDER_REPOSITORY: Specifies the email sender repository implementation to use.  
 
 ---
@@ -104,6 +106,7 @@ EMAIL_SENDER_REPOSITORY=EmailSenderGoMailRepository
 
 If you're running the backend locally without Docker, you can use a .env file with the following configuration:
 ```dotenv
+DOCKER_MONGODB_URL_CONNECTION=mongodb://root:example@mongodb:27017
 MONGODB_URL_CONNECTION=mongodb://root:example@localhost:27017/
 MONGODB_DATABASE=api-upload-images
 
@@ -122,6 +125,7 @@ JWT_SECRET=your_super_secret_key
 GO_GALLERY_API_PORT=3000
 USER_REPOSITORY=UserPostgreSQLRepository
 IMAGE_REPOSITORY=ImageMongoDBRepository
+THUMBNAIL_IMAGE_REPOSITORY=ThumnbailImageMongoDBRepository
 EMAIL_SENDER_REPOSITORY=EmailSenderGoMailRepository
 ```
 > Make sure MongoDB and PostgreSQL are running locally.

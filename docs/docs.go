@@ -43,7 +43,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.DTODeleteUser"
+                            "$ref": "#/definitions/userDTO.UserDeleteDTO"
                         }
                     }
                 ],
@@ -51,7 +51,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Se han eliminado los datos del usuario correctamente",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOMessageResponse"
+                            "$ref": "#/definitions/userDTO.UserRegisterResponseDTO"
                         }
                     },
                     "400": {
@@ -107,7 +107,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOLoginRequest"
+                            "$ref": "#/definitions/userDTO.LoginRequestDTO"
                         }
                     }
                 ],
@@ -115,7 +115,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Se ha iniciado sesion correctamente",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOLoginResponse"
+                            "$ref": "#/definitions/userDTO.LoginResponseDTO"
                         },
                         "headers": {
                             "Set-Cookie": {
@@ -167,7 +167,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Se ha cerrado sesión correctamente",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOMessageResponse"
+                            "$ref": "#/definitions/userDTO.UserMessageResponseDTO"
                         }
                     },
                     "401": {
@@ -217,7 +217,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOUser"
+                            "$ref": "#/definitions/userDTO.UserDTO"
                         }
                     }
                 ],
@@ -225,7 +225,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Usuario creado",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTORegisterResponse"
+                            "$ref": "#/definitions/userDTO.UserRegisterResponseDTO"
                         }
                     },
                     "400": {
@@ -259,7 +259,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Se ha enviado un código de confirmación al correo electrónico",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOMessageResponse"
+                            "$ref": "#/definitions/userDTO.UserRegisterResponseDTO"
                         }
                     },
                     "401": {
@@ -314,7 +314,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOUpdateUser"
+                            "$ref": "#/definitions/userDTO.UserUpdateDTO"
                         }
                     }
                 ],
@@ -322,7 +322,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Se han actualizado los datos del usuario correctamente.",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOMessageResponse"
+                            "$ref": "#/definitions/userDTO.UserRegisterResponseDTO"
                         }
                     },
                     "400": {
@@ -429,7 +429,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Imagen eliminada correctamente",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOImage"
+                            "$ref": "#/definitions/imageDTO.ImageDTO"
                         }
                     },
                     "401": {
@@ -490,7 +490,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOImage"
+                            "$ref": "#/definitions/imageDTO.ImageDTO"
                         }
                     },
                     "401": {
@@ -513,6 +513,72 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Ha ocurrido un error inesperado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    }
+                }
+            }
+        },
+        "/image/getThumbnailImages": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Obtiene una lista paginada de imágenes en miniatura del usuario autenticado, usando paginación por cursor (lastId y pageSize).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "thumbnail"
+                ],
+                "summary": "Listar imágenes en miniatura (thumbnails)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Último ID recibido para la paginación",
+                        "name": "lastID",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Cantidad de miniaturas a devolver (por defecto 10)",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de miniaturas con el último id para poder realizar paginacione",
+                        "schema": {
+                            "$ref": "#/definitions/thumbnailImageDTO.ThumbnailImageCursorDTO"
+                        }
+                    },
+                    "401": {
+                        "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "403": {
+                        "description": "Los datos proporcionados no coinciden con el usuario autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "No se encontraron thumbnails",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Error inesperado",
                         "schema": {
                             "$ref": "#/definitions/exception.ApiException"
                         }
@@ -551,7 +617,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Imagen subida correctamente",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOImage"
+                            "$ref": "#/definitions/imageDTO.ImageDTO"
                         }
                     },
                     "400": {
@@ -578,6 +644,12 @@ const docTemplate = `{
                             "$ref": "#/definitions/exception.ApiException"
                         }
                     },
+                    "409": {
+                        "description": "La imagen ya existe",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
                     "500": {
                         "description": "Ha ocurrido un error inesperado",
                         "schema": {
@@ -589,23 +661,23 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "dto.DTODeleteUser": {
-            "description": "Datos necesarios para proceder con la eliminación del usuario",
+        "exception.ApiException": {
+            "description": "Estructura para manejar excepciones con un código de estado y un mensaje de error",
             "type": "object",
             "properties": {
-                "code": {
-                    "description": "Código de verificación para la eliminación\nexample \"123456\"",
+                "message": {
+                    "description": "Mensaje de error\nexample \"Solicitud incorrecta\"",
                     "type": "string",
-                    "example": "123456"
+                    "example": "Solicitud incorrecta"
                 },
-                "password": {
-                    "description": "Contraseña del usuario para confirmar la eliminación\nexample \"MiContraseñaSegura\"",
-                    "type": "string",
-                    "example": "MiContraseñaSegura"
+                "status": {
+                    "description": "Código de estado HTTP\nexample 400",
+                    "type": "integer",
+                    "example": 400
                 }
             }
         },
-        "dto.DTOImage": {
+        "imageDTO.ImageDTO": {
             "description": "Contiene la información de una imagen, incluyendo su identificador, nombre, extensión, contenido en base64 y propietario (usuario)",
             "type": "object",
             "properties": {
@@ -619,8 +691,8 @@ const docTemplate = `{
                     "type": "string",
                     "example": ".jpeg"
                 },
-                "id_image": {
-                    "description": "ID único de la imagen\nExample: 64a1f8b8e4b0c10d3c5b2e75",
+                "id": {
+                    "description": "ID de la imagen\nExample: 64a1f8b8e4b0c10d3c5b2e75",
                     "type": "string",
                     "example": "64a1f8b8e4b0c10d3c5b2e75"
                 },
@@ -641,7 +713,66 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.DTOLoginRequest": {
+        "thumbnailImageDTO.ThumbnailImageCursorDTO": {
+            "description": "Contiene una lista de miniaturas y el identificador del último elemento para la paginación.",
+            "type": "object",
+            "properties": {
+                "lastID": {
+                    "description": "ID del último elemento para la paginación",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                },
+                "thumbnails": {
+                    "description": "Lista de miniaturas de imagen",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/thumbnailImageDTO.ThumbnailImageDTO"
+                    }
+                }
+            }
+        },
+        "thumbnailImageDTO.ThumbnailImageDTO": {
+            "description": "Contiene la información de la miniatura de una imagen, incluyendo su identificador, nombre, extensión, contenido en base64 y propietario (usuario)",
+            "type": "object",
+            "properties": {
+                "content_file": {
+                    "description": "Contenido de la miniatura en base64\nExample: /9j/4AAQSkZJRgABAQEAAAAAAAD...",
+                    "type": "string",
+                    "example": "/9j/4AAQSkZJRgABAQEAAAAAAAD."
+                },
+                "extension": {
+                    "description": "Extensión del archivo de miniatura\nExample: jpg",
+                    "type": "string",
+                    "example": ".jpeg"
+                },
+                "id": {
+                    "description": "Identificador de la miniatura\nExample: 64a1f8b8e4b0c10d3c5b2e75",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                },
+                "imageID": {
+                    "description": "Identificador de la imagen\nExample: 64a1f8b8e4b0c20d3c5b2e90",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c20d3c5b2e90"
+                },
+                "name": {
+                    "description": "Nombre del archivo de la miniatura\nExample: prueba",
+                    "type": "string",
+                    "example": "prueba"
+                },
+                "owner": {
+                    "description": "Usuario propietario de la miniatura\nExample: usuario123",
+                    "type": "string",
+                    "example": "usuario123"
+                },
+                "size": {
+                    "description": "Tamaño de la miniatura en bytes\nExample: 204800",
+                    "type": "string",
+                    "example": "2.3 kB"
+                }
+            }
+        },
+        "userDTO.LoginRequestDTO": {
             "description": "Datos requeridos para realizar autentificación del usuario",
             "type": "object",
             "properties": {
@@ -651,13 +782,13 @@ const docTemplate = `{
                     "example": "MiContraseñaSegura."
                 },
                 "username": {
-                    "description": "Nombre de usuario\nexample \"usuario\"",
+                    "description": "Nombre de usuario\nexample \"usuario123\"",
                     "type": "string",
-                    "example": "usuario"
+                    "example": "usuario123"
                 }
             }
         },
-        "dto.DTOLoginResponse": {
+        "userDTO.LoginResponseDTO": {
             "description": "Respuesta al iniciar sesión correctamente",
             "type": "object",
             "properties": {
@@ -683,65 +814,7 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.DTOMessageResponse": {
-            "description": "Respuesta con un mensaje para informar al usuario que ha ocurrido",
-            "type": "object",
-            "properties": {
-                "message": {
-                    "description": "Mensaje de respuesta\nexample \"Operación realizada con éxito\"",
-                    "type": "string",
-                    "example": "Ha funcionado correctamente"
-                }
-            }
-        },
-        "dto.DTORegisterResponse": {
-            "description": "Respuesta generada después de crear un nuevo usuario",
-            "type": "object",
-            "properties": {
-                "firstname": {
-                    "description": "Nombre\nexample \"Juan\"",
-                    "type": "string",
-                    "example": "Juan"
-                },
-                "message": {
-                    "description": "Mensaje de confirmación\nexample \"Se ha creado el usuario correctamente\"",
-                    "type": "string",
-                    "example": "Se ha creado el usuario correctamente"
-                },
-                "username": {
-                    "description": "Nombre de usuario\nexample \"usuario123\"",
-                    "type": "string",
-                    "example": "usuario123"
-                }
-            }
-        },
-        "dto.DTOUpdateUser": {
-            "description": "Datos que pueden ser actualizados del usuario existente",
-            "type": "object",
-            "properties": {
-                "email": {
-                    "description": "Correo electrónico\nexample \"nuevo.email@example.com\"",
-                    "type": "string",
-                    "example": "nuevo.email@example.com"
-                },
-                "firstname": {
-                    "description": "Nombre\nexample \"Carlos\"",
-                    "type": "string",
-                    "example": "Carlos"
-                },
-                "lastname": {
-                    "description": "Apellido\nexample \"Gómez\"",
-                    "type": "string",
-                    "example": "Gómez"
-                },
-                "password": {
-                    "description": "Contraseña\nexample \"NuevaContraseñaSegura.\"",
-                    "type": "string",
-                    "example": "NuevaContraseñaSegura."
-                }
-            }
-        },
-        "dto.DTOUser": {
+        "userDTO.UserDTO": {
             "description": "Estructura que define los datos del usuario",
             "type": "object",
             "properties": {
@@ -772,19 +845,77 @@ const docTemplate = `{
                 }
             }
         },
-        "exception.ApiException": {
-            "description": "Estructura para manejar excepciones con un código de estado y un mensaje de error",
+        "userDTO.UserDeleteDTO": {
+            "description": "Datos necesarios para proceder con la eliminación del usuario",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "Código de verificación para la eliminación\nexample \"123456\"",
+                    "type": "string",
+                    "example": "123456"
+                },
+                "password": {
+                    "description": "Contraseña del usuario para confirmar la eliminación\nexample \"MiContraseñaSegura\"",
+                    "type": "string",
+                    "example": "MiContraseñaSegura"
+                }
+            }
+        },
+        "userDTO.UserMessageResponseDTO": {
+            "description": "Respuesta con un mensaje para informar al usuario que ha ocurrido",
             "type": "object",
             "properties": {
                 "message": {
-                    "description": "Mensaje de error\nexample \"Solicitud incorrecta\"",
+                    "description": "Mensaje de respuesta\nexample \"Operación realizada con éxito\"",
                     "type": "string",
-                    "example": "Solicitud incorrecta"
+                    "example": "Ha funcionado correctamente"
+                }
+            }
+        },
+        "userDTO.UserRegisterResponseDTO": {
+            "description": "Respuesta generada después de crear un nuevo usuario",
+            "type": "object",
+            "properties": {
+                "firstname": {
+                    "description": "Nombre\nexample \"Juan\"",
+                    "type": "string",
+                    "example": "Juan"
                 },
-                "status": {
-                    "description": "Código de estado HTTP\nexample 400",
-                    "type": "integer",
-                    "example": 400
+                "message": {
+                    "description": "Mensaje de confirmación\nexample \"Se ha creado el usuario correctamente\"",
+                    "type": "string",
+                    "example": "Se ha creado el usuario correctamente"
+                },
+                "username": {
+                    "description": "Nombre de usuario\nexample \"usuario123\"",
+                    "type": "string",
+                    "example": "usuario123"
+                }
+            }
+        },
+        "userDTO.UserUpdateDTO": {
+            "description": "Datos que pueden ser actualizados del usuario existente",
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "Correo electrónico\nexample \"nuevo.email@example.com\"",
+                    "type": "string",
+                    "example": "nuevo.email@example.com"
+                },
+                "firstname": {
+                    "description": "Nombre\nexample \"Carlos\"",
+                    "type": "string",
+                    "example": "Carlos"
+                },
+                "lastname": {
+                    "description": "Apellido\nexample \"Gómez\"",
+                    "type": "string",
+                    "example": "Gómez"
+                },
+                "password": {
+                    "description": "Contraseña\nexample \"NuevaContraseñaSegura.\"",
+                    "type": "string",
+                    "example": "NuevaContraseñaSegura."
                 }
             }
         }
@@ -805,7 +936,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api",
 	Schemes:          []string{},
 	Title:            "GoGallery",
-	Description:      "API para la gestión de subida de fotos, con una autentificación",
+	Description:      "API for managing photo uploads, with authentication",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",
