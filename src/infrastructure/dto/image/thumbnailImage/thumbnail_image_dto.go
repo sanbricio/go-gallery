@@ -5,12 +5,16 @@ import thumbnailImageEntity "go-gallery/src/domain/entities/image/thumbnailImage
 // ThumbnailImageDTO representa la estructura de la imagen en miniatura
 // @Description Contiene la información de la miniatura de una imagen, incluyendo su identificador, nombre, extensión, contenido en base64 y propietario (usuario)
 type ThumbnailImageDTO struct {
-	// ID de la miniatura
+	// Identificador de la miniatura
 	// Example: 64a1f8b8e4b0c10d3c5b2e75
 	Id *string `json:"id" bson:"_id,omitempty" example:"64a1f8b8e4b0c10d3c5b2e75"`
 
+	// Identificador de la imagen
+	// Example: 64a1f8b8e4b0c20d3c5b2e90
+	ImageID *string `json:"imageID" bson:"imageID,omitempty" example:"64a1f8b8e4b0c20d3c5b2e90"`
+
 	// Nombre del archivo de la miniatura
-	// Example: foto_perfil
+	// Example: prueba
 	Name string `json:"name" bson:"name" example:"prueba"`
 
 	// Extensión del archivo de miniatura
@@ -31,13 +35,13 @@ type ThumbnailImageDTO struct {
 }
 
 func FromThumbnailImage(thumbnailImage *thumbnailImageEntity.ThumbnailImage) *ThumbnailImageDTO {
-	id := thumbnailImage.GetId()
 	return &ThumbnailImageDTO{
-		Id:          id,
+		Id:          thumbnailImage.GetId(),
 		Name:        thumbnailImage.GetName(),
 		Extension:   thumbnailImage.GetExtension(),
 		ContentFile: thumbnailImage.GetContentFile(),
 		Owner:       thumbnailImage.GetOwner(),
 		Size:        thumbnailImage.GetSize(),
+		ImageID:     thumbnailImage.GetImageID(),
 	}
 }

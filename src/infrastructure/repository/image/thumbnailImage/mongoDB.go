@@ -133,7 +133,7 @@ func (r *ThumbnailImageMongoDBRepository) find(filter bson.M, findOptions *optio
 	return results, nil
 }
 
-func (r *ThumbnailImageMongoDBRepository) Insert(dto *imageDTO.ImageUploadRequestDTO) (string, *exception.ApiException) {
+func (r *ThumbnailImageMongoDBRepository) Insert(dto *imageDTO.ImageDTO, rawContentFile []byte) (*imageDTO.ImageUploadResponseDTO, *exception.ApiException) {
 	// Validamos que la miniatura no esta insertada en base de datos
 	filter := bson.M{
 		"name":      strings.TrimSpace(dto.Name),
@@ -145,26 +145,30 @@ func (r *ThumbnailImageMongoDBRepository) Insert(dto *imageDTO.ImageUploadReques
 	// Si la miniatura ya existe, no la insertamos
 	results, err := r.find(filter, nil)
 	if err != nil && err.Status != 404 {
-		return "", err
+		return nil, err
 	}
 
 	if err == nil && len(results) > 0 {
 		logger.Warning("Thumbnail already exists and will not be inserted")
-		return "", exception.NewApiException(409, "Thumbnail already exists")
+		return nil, exception.NewApiException(409, "Thumbnail already exists")
 	}
 
-	resizedBytes, errResize := utilsImage.ResizeImage(dto.RawContentFile, constants.THUMBNAIL_WIDTH, constants.THUMBNAIL_HEIGHT)
+	resizedBytes, errResize := utilsImage.ResizeImage(rawContentFile, constants.THUMBNAIL_WIDTH, constants.THUMBNAIL_HEIGHT)
 	if errResize != nil {
 		errorMessage := fmt.Sprintf("Error generating thumbnail: %s", errResize.Error())
 		logger.Error(errorMessage)
-		return "", exception.NewApiException(500, errorMessage)
+		return nil, exception.NewApiException(500, errorMessage)
 	}
 
 	sizeInBytes := len(resizedBytes)
+	//TODO MIRAR ESTO ME DA MAS BYTES QUE LA ORIGINAL
 	size := utilsImage.HumanizeBytes(uint64(sizeInBytes))
 
 	thumbnailImage, errBuilder := thumbnailImageBuilder.NewThumbnailImageBuilder().
-		FromImageUploadRequestDTO(dto).
+		SetImageID(dto.Id).
+		SetName(dto.Name).
+		SetOwner(dto.Owner).
+		SetExtension(dto.Extension).
 		SetContentFile(utilsImage.EncondeImageToBase64(resizedBytes)).
 		SetSize(size).
 		BuildNew()
@@ -172,7 +176,7 @@ func (r *ThumbnailImageMongoDBRepository) Insert(dto *imageDTO.ImageUploadReques
 	if errBuilder != nil {
 		errorMessage := fmt.Sprintf("Error building thumbnail: %s", errBuilder.Error())
 		logger.Error(errorMessage)
-		return "", exception.NewApiException(404, errorMessage)
+		return nil, exception.NewApiException(404, errorMessage)
 	}
 
 	dtoThumbnailImage := thumbnailImageDTO.FromThumbnailImage(thumbnailImage)
@@ -180,10 +184,17 @@ func (r *ThumbnailImageMongoDBRepository) Insert(dto *imageDTO.ImageUploadReques
 	thumbnailId, errInsert := r.mongoThumbnailImage.InsertOne(context.Background(), dtoThumbnailImage)
 	if errInsert != nil {
 		logger.Error(fmt.Sprintf("Error inserting thumbnail: %s", errInsert.Error()))
-		return "", exception.NewApiException(500, "Error inserting document")
+		return nil, exception.NewApiException(500, "Error inserting document")
 	}
 
 	idHex := thumbnailId.InsertedID.(primitive.ObjectID).Hex()
 	logger.Info(fmt.Sprintf("Thumbnail successfully inserted with ID: %s", idHex))
-	return idHex, nil
+
+	return &imageDTO.ImageUploadResponseDTO{
+		Id:          *dto.Id,
+		ThumbnailId: idHex,
+		Name:        dto.Name,
+		Extension:   dto.Extension,
+		Size:        dto.Size, 
+	}, nil
 }

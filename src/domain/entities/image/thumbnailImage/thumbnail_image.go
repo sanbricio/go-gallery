@@ -2,6 +2,7 @@ package thumbnailImageEntity
 
 type ThumbnailImage struct {
 	id          *string
+	imageID     *string
 	name        string
 	extension   string
 	contentFile string
@@ -9,9 +10,10 @@ type ThumbnailImage struct {
 	owner       string
 }
 
-func NewThumbnailImage(id *string, name, extension, contentFile, size, owner string) *ThumbnailImage {
+func NewThumbnailImage(id, imageID *string, name, extension, contentFile, size, owner string) *ThumbnailImage {
 	return &ThumbnailImage{
 		id:          id,
+		imageID:     imageID,
 		name:        name,
 		extension:   extension,
 		contentFile: contentFile,
@@ -42,4 +44,8 @@ func (img *ThumbnailImage) GetSize() string {
 
 func (img *ThumbnailImage) GetOwner() string {
 	return img.owner
+}
+
+func (img *ThumbnailImage) GetImageID() *string {
+	return img.imageID
 }

@@ -8,10 +8,19 @@ import (
 	userHandler "go-gallery/src/infrastructure/controller/user/handler"
 	userMiddleware "go-gallery/src/infrastructure/controller/user/middlewares"
 	userDTO "go-gallery/src/infrastructure/dto/user"
+	log "go-gallery/src/infrastructure/logger"
 	emailService "go-gallery/src/service/email"
 	userService "go-gallery/src/service/user"
 
 	"github.com/gofiber/fiber/v2"
+)
+
+var logger log.Logger
+
+const (
+	INVALID_LOGIN_REQUEST_MSG    string = "Invalid JSON in the request body"
+	INVALID_AUTHENTIFICATION_MSG string = "User not authenticated"
+	CLAIMS_NOT_FOUND_MSG         string = "Unauthorized: no user claims found"
 )
 
 type AuthController struct {
@@ -21,6 +30,7 @@ type AuthController struct {
 }
 
 func NewAuthController(userService *userService.UserService, emailSenderService *emailService.EmailSenderService, jwtMiddleware *userMiddleware.JWTMiddleware) *AuthController {
+	logger = log.Instance()
 	return &AuthController{
 		userService:        userService,
 		emailSenderService: emailSenderService,
@@ -51,29 +61,35 @@ func (c *AuthController) SetUpRoutes(router fiber.Router) {
 // @Failure		500		{object}	exception.ApiException		"Ha ocurrido un error inesperado"
 // @Router			/auth/login [post]
 func (c *AuthController) login(ctx *fiber.Ctx) error {
+	logger.Info("POST /login called")
+
 	loginRequestDTO := new(userDTO.LoginRequestDTO)
 	err := ctx.BodyParser(loginRequestDTO)
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erróneo"))
+		logger.Error("Invalid JSON in login request")
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, INVALID_LOGIN_REQUEST_MSG))
 	}
 
 	user, errFind := c.userService.Find(loginRequestDTO)
 	if errFind != nil {
+		logger.Error(fmt.Sprintf("Error finding user: %s", errFind.Message))
 		return ctx.Status(errFind.Status).JSON(errFind)
 	}
 
 	errJWT := c.jwtMiddleware.CreateJWTToken(ctx, user.Username, user.Email)
 	if errJWT != nil {
+		logger.Error(fmt.Sprintf("Error creating JWT token: %s", errJWT.Message))
 		return ctx.Status(errJWT.Status).JSON(errJWT.Status)
 	}
 
 	responseDTO := userDTO.LoginResponseDTO{
-		Message:  "Se ha iniciado sesión correctamente",
+		Message:  "Login successful",
 		Username: user.Username,
 		Email:    user.Email,
 		Name:     user.Firstname,
 	}
 
+	logger.Info(fmt.Sprintf("User %s logged in successfully", user.Username))
 	return ctx.Status(fiber.StatusOK).JSON(responseDTO)
 }
 
@@ -88,27 +104,34 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 // @Failure		500		{object}	exception.ApiException			"Ha ocurrido un error inesperado"
 // @Router			/auth/register [post]
 func (c *AuthController) register(ctx *fiber.Ctx) error {
+	logger.Info("POST /register called")
+
 	registerRequestDTO := new(userDTO.UserDTO)
 	err := ctx.BodyParser(registerRequestDTO)
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erróneo"))
+		logger.Error("Invalid JSON in register request")
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, INVALID_LOGIN_REQUEST_MSG))
 	}
 
 	errHandler := userHandler.ProcessUser(registerRequestDTO.Password, registerRequestDTO.Email)
 	if errHandler != nil {
+		logger.Error(fmt.Sprintf("Error processing user data: %s", errHandler.Message))
 		return ctx.Status(errHandler.Status).JSON(errHandler)
 	}
 
 	user, errInsert := c.userService.Insert(registerRequestDTO)
 	if errInsert != nil {
+		logger.Error(fmt.Sprintf("Error inserting new user: %s", errInsert.Message))
 		return ctx.Status(errInsert.Status).JSON(errInsert)
 	}
 
 	dto := userDTO.UserRegisterResponseDTO{
 		Username:  user.Username,
 		Firstname: user.Firstname,
-		Message:   "Se ha creado el usuario correctamente",
+		Message:   "User registered successfully",
 	}
+
+	logger.Info(fmt.Sprintf("User %s registered successfully", user.Username))
 	return ctx.Status(fiber.StatusCreated).JSON(dto)
 }
 
@@ -116,28 +139,25 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 // @Description	Cierra la sesión del usuario autenticado, elimina la cookie auth_token
 // @Tags			auth
 // @Security		CookieAuth
-// @Success		200	{object}	userDTO.UserRegisterResponseDTO	"Se ha cerrado sesión correctamente"
+// @Success		200	{object}	userDTO.UserMessageResponseDTO	"Se ha cerrado sesión correctamente"
 // @Failure		401	{object}	exception.ApiException			"Usuario no autenticado"
 // @Failure		403	{object}	exception.ApiException			"Los datos proporcionados no coinciden con el usuario autenticado"
 // @Failure		404	{object}	exception.ApiException			"Usuario no encontrado"
 // @Failure		500	{object}	exception.ApiException			"Ha ocurrido un error inesperado"
 // @Router			/auth/logout [post]
 func (c *AuthController) logout(ctx *fiber.Ctx) error {
+	logger.Info("POST /logout called")
+
 	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
 	if !ok {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
-	}
-	// Comprobamos que el usuario existe
-	_, errUser := c.userService.FindAndCheckJWT(claims)
-	if errUser != nil {
-		return ctx.Status(errUser.Status).JSON(errUser)
+		logger.Error(CLAIMS_NOT_FOUND_MSG)
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, INVALID_AUTHENTIFICATION_MSG))
 	}
 
-	// Eliminamos la cookie
 	c.jwtMiddleware.DeleteAuthCookie(ctx)
+	logger.Info(fmt.Sprintf("User %s logged out successfully", claims.Username))
 
-	// Respuesta con el nombre del usuario
-	return ctx.Status(fiber.StatusOK).JSON(&userDTO.UserRegisterResponseDTO{
+	return ctx.Status(fiber.StatusOK).JSON(&userDTO.UserMessageResponseDTO{
 		Message: fmt.Sprintf("Se ha cerrado sesión correctamente, %s", claims.Username),
 	})
 }
@@ -157,25 +177,21 @@ func (c *AuthController) logout(ctx *fiber.Ctx) error {
 // @Failure		500		{object}	exception.ApiException			"Ha ocurrido un error inesperado"
 // @Router			/auth/update [put]
 func (c *AuthController) update(ctx *fiber.Ctx) error {
+	logger.Info("PUT /update called")
+
 	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
 	if !ok {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
+		logger.Error(CLAIMS_NOT_FOUND_MSG)
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, INVALID_AUTHENTIFICATION_MSG))
 	}
 
-	// Comprobamos que el usuario existe
-	_, errUser := c.userService.FindAndCheckJWT(claims)
-	if errUser != nil {
-		return ctx.Status(errUser.Status).JSON(errUser)
-	}
-
-	// Obtenemos los datos que quiere cambiar el usuario
 	user := new(userDTO.UserUpdateDTO)
 	err := ctx.BodyParser(user)
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erróneo"))
+		logger.Error("Invalid JSON in update request")
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, INVALID_LOGIN_REQUEST_MSG))
 	}
 
-	// Creamos la entidad para proceder a la actualización del usuario
 	dtoUser := &userDTO.UserDTO{
 		Username:  claims.Username,
 		Email:     user.Email,
@@ -184,32 +200,32 @@ func (c *AuthController) update(ctx *fiber.Ctx) error {
 		Firstname: user.Firstname,
 	}
 
-	// Si el usuario quiere cambiar el email y la contraseña lo validamos
-	errUser = userHandler.ProcessUser(dtoUser.Password, dtoUser.Email)
+	errUser := userHandler.ProcessUser(dtoUser.Password, dtoUser.Email)
 	if errUser != nil {
+		logger.Error(fmt.Sprintf("Error processing user data: %s", errUser.Message))
 		return ctx.Status(errUser.Status).JSON(errUser)
 	}
 
-	// Flag que nos permitira saber si necesitamos crear otro token JWT
 	emailChanged := user.Email != "" && user.Email != claims.Email
 
-	// Actualizamos el usuario
 	_, errUpdate := c.userService.Update(dtoUser)
 	if errUpdate != nil {
+		logger.Error(fmt.Sprintf("Error updating user: %s", errUpdate.Message))
 		return ctx.Status(errUpdate.Status).JSON(errUpdate)
 	}
 
-	// Si el email ha cambiado, generamos un nuevo token JWT (debido a que el email es parte de la información del token)
 	if emailChanged {
 		errJWT := c.jwtMiddleware.CreateJWTToken(ctx, dtoUser.Username, dtoUser.Email)
 		if errJWT != nil {
+			logger.Error(fmt.Sprintf("Error creating new JWT token: %s", errJWT.Message))
 			return ctx.Status(errJWT.Status).JSON(errJWT.Status)
 		}
+		logger.Info(fmt.Sprintf("User %s email updated, new JWT token created", dtoUser.Username))
 	}
 
-	// Respuesta con el nombre del usuario
+	logger.Info(fmt.Sprintf("User %s updated successfully", dtoUser.Username))
 	return ctx.Status(fiber.StatusOK).JSON(&userDTO.UserMessageResponseDTO{
-		Message: fmt.Sprintf("Se han actualizado los datos del usuario %s correctamente.", dtoUser.Username),
+		Message: fmt.Sprintf("User %s updated successfully.", dtoUser.Username),
 	})
 }
 
@@ -224,31 +240,29 @@ func (c *AuthController) update(ctx *fiber.Ctx) error {
 // @Failure		500	{object}	exception.ApiException			"Ha ocurrido un error inesperado"
 // @Router			/auth/request-delete [post]
 func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
+	logger.Info("POST /request-delete called")
+
 	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
 	if !ok {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
+		logger.Error(CLAIMS_NOT_FOUND_MSG)
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, INVALID_AUTHENTIFICATION_MSG))
 	}
 
-	// Comprobamos que el usuario existe
-	_, errUser := c.userService.FindAndCheckJWT(claims)
-	if errUser != nil {
-		return ctx.Status(errUser.Status).JSON(errUser)
-	}
-
-	// Generamos el código único temporal
 	code, err := codeGeneratorHandler.GenerateCode(claims.Username)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(exception.NewApiException(fiber.StatusInternalServerError, "Ha ocurrido un error al generar el código para la eliminación de la cuenta"))
+		logger.Error(fmt.Sprintf("Error generating delete code: %v", err))
+		return ctx.Status(fiber.StatusInternalServerError).JSON(exception.NewApiException(fiber.StatusInternalServerError, "Error generating delete code"))
 	}
 
-	// Enviamos al usuario un correo electrónico con el código
 	errEmail := c.emailSenderService.SendEmail(code, claims.Email)
 	if errEmail != nil {
+		logger.Error(fmt.Sprintf("Failed to send delete code email to %s", claims.Email))
 		return ctx.Status(fiber.StatusInternalServerError).JSON(&userDTO.UserMessageResponseDTO{
-			Message: "No se ha podido enviar un código de confirmación al correo electrónico debido a un fallo interno del sistema.",
+			Message: "Failed to send confirmation code email due to an internal system error.",
 		})
 	}
 
+	logger.Info(fmt.Sprintf("Delete code sent successfully to email: %s", claims.Email))
 	return ctx.Status(fiber.StatusOK).JSON(&userDTO.UserMessageResponseDTO{
 		Message: fmt.Sprintf("Se ha enviado un código de confirmación al correo electrónico %s .", claims.Email),
 	})
@@ -269,51 +283,44 @@ func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
 // @Failure		500		{object}	exception.ApiException			"Ha ocurrido un error inesperado"
 // @Router			/auth/delete [delete]
 func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
+	logger.Info("DELETE /delete called")
+
 	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
 	if !ok {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
+		logger.Error(CLAIMS_NOT_FOUND_MSG)
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, INVALID_AUTHENTIFICATION_MSG))
 	}
 
-	// Comprobamos que el usuario existe
-	_, errUser := c.userService.FindAndCheckJWT(claims)
-	if errUser != nil {
-		return ctx.Status(errUser.Status).JSON(errUser)
-	}
-
-	// Obtenemos los datos de el usuario
 	dtoDeleteUser := new(userDTO.UserDeleteDTO)
 	err := ctx.BodyParser(dtoDeleteUser)
 	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "El JSON enviado en la petición es erróneo"))
+		logger.Error("Invalid JSON in delete request")
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, INVALID_LOGIN_REQUEST_MSG))
 	}
 
-	// Comprobamos que el código sea correcto
 	ok = codeGeneratorHandler.VerifyCode(claims.Username, dtoDeleteUser.Code)
 	if !ok {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "El código de verificación es incorrecto"))
+		logger.Error("Invalid verification code")
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Invalid verification code"))
 	}
 
-	// Creamos la entidad para proceder a la eliminacion del usuario
 	dtoUser := &userDTO.UserDTO{
 		Username: claims.Username,
 		Email:    claims.Email,
 		Password: dtoDeleteUser.Password,
 	}
 
-	// Eliminamos el usuario
 	_, errDelete := c.userService.Delete(dtoUser)
 	if errDelete != nil {
+		logger.Error(fmt.Sprintf("Error deleting user: %s", errDelete.Message))
 		return ctx.Status(errDelete.Status).JSON(errDelete)
 	}
 
-	// Eliminamos el codigo unico del usuario del mapa
 	codeGeneratorHandler.RemoveCode(dtoUser.Username)
-
-	// Eliminamos la cookie de autenticación
 	c.jwtMiddleware.DeleteAuthCookie(ctx)
 
-	// Respuesta con el nombre del usuario
+	logger.Info(fmt.Sprintf("User %s deleted successfully", dtoUser.Username))
 	return ctx.Status(fiber.StatusOK).JSON(&userDTO.UserMessageResponseDTO{
-		Message: fmt.Sprintf("Se han eliminado los datos del usuario %s correctamente.", dtoUser.Username),
+		Message: fmt.Sprintf("User %s deleted successfully.", dtoUser.Username),
 	})
 }

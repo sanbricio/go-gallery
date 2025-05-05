@@ -10,7 +10,6 @@ import (
 
 type ImageBuilder struct {
 	id          *string
-	thumbnailId string
 	name        string
 	extension   string
 	contentFile string
@@ -35,7 +34,6 @@ func (b *ImageBuilder) FromImageUploadRequestDTO(dto *imageDTO.ImageUploadReques
 func (b *ImageBuilder) FromDTO(dto *imageDTO.ImageDTO) *ImageBuilder {
 	id := dto.Id
 	b.id = id
-	b.thumbnailId = dto.ThumbnailId
 	b.name = dto.Name
 	b.extension = dto.Extension
 	b.contentFile = dto.ContentFile
@@ -51,7 +49,7 @@ func (b *ImageBuilder) BuildNew() (*imageEntity.Image, *exception.BuilderExcepti
 		return nil, err
 	}
 
-	return imageEntity.NewImage(nil, b.thumbnailId, b.name, b.extension, b.contentFile, b.owner, b.size), nil
+	return imageEntity.NewImage(nil, b.name, b.extension, b.contentFile, b.owner, b.size), nil
 }
 
 func (b *ImageBuilder) Build() (*imageEntity.Image, *exception.BuilderException) {
@@ -60,7 +58,7 @@ func (b *ImageBuilder) Build() (*imageEntity.Image, *exception.BuilderException)
 		return nil, err
 	}
 
-	return imageEntity.NewImage(b.id, b.thumbnailId, b.name, b.extension, b.contentFile, b.owner, b.size), nil
+	return imageEntity.NewImage(b.id, b.name, b.extension, b.contentFile, b.owner, b.size), nil
 }
 
 func (b *ImageBuilder) validateAll() *exception.BuilderException {
@@ -78,9 +76,6 @@ func (b *ImageBuilder) validateAll() *exception.BuilderException {
 }
 
 func (b *ImageBuilder) validateCommons() *exception.BuilderException {
-	if err := validators.ValidateNonEmptyStringField("thumbnailId", b.thumbnailId); err != nil {
-		return exception.NewBuilderException("thumbnailId", err.Error())
-	}
 
 	if err := validators.ValidateNonEmptyStringField("name", b.name); err != nil {
 		return exception.NewBuilderException("name", err.Error())
@@ -106,11 +101,6 @@ func (b *ImageBuilder) validateCommons() *exception.BuilderException {
 
 func (b *ImageBuilder) SetId(id *string) *ImageBuilder {
 	b.id = id
-	return b
-}
-
-func (b *ImageBuilder) SetThumbnailId(thumbnailId string) *ImageBuilder {
-	b.thumbnailId = thumbnailId
 	return b
 }
 

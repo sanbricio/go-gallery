@@ -11,13 +11,14 @@ import (
 	log "go-gallery/src/infrastructure/logger"
 
 	imageHandler "go-gallery/src/infrastructure/controller/image/handler"
-	userMiddleware "go-gallery/src/infrastructure/controller/user/middlewares"
+	userDTO "go-gallery/src/infrastructure/dto/user"
 
 	"github.com/gofiber/fiber/v2"
 )
 
 const (
-	AUTHENTIFICATION_MSG_ERROR string = "Authentication failed: "
+	INVALID_AUTHENTIFICATION_MSG string = "User not authenticated"
+	DEFAULT_PAGE_SIZE            int64  = 10
 )
 
 var logger log.Logger
@@ -61,10 +62,10 @@ func (c *ImageController) getImage(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	logger.Info("GET /getImage called with id: " + id)
 
-	claims, err := userMiddleware.ValidateUserClaims(ctx, c.userService)
-	if err != nil {
-		logger.Warning(AUTHENTIFICATION_MSG_ERROR + err.Message)
-		return ctx.Status(err.Status).JSON(err)
+	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
+	if !ok {
+		logger.Error(INVALID_AUTHENTIFICATION_MSG)
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, INVALID_AUTHENTIFICATION_MSG))
 	}
 
 	dtoFindImage := &imageDTO.ImageDTO{
@@ -100,10 +101,10 @@ func (c *ImageController) getImage(ctx *fiber.Ctx) error {
 func (c *ImageController) uploadImage(ctx *fiber.Ctx) error {
 	logger.Info("POST /uploadImage called")
 
-	claims, err := userMiddleware.ValidateUserClaims(ctx, c.userService)
-	if err != nil {
-		logger.Warning(AUTHENTIFICATION_MSG_ERROR + err.Message)
-		return ctx.Status(err.Status).JSON(err)
+	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
+	if !ok {
+		logger.Error(INVALID_AUTHENTIFICATION_MSG)
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, INVALID_AUTHENTIFICATION_MSG))
 	}
 
 	fileInput, errForm := ctx.FormFile("file")
@@ -146,10 +147,10 @@ func (c *ImageController) deleteImage(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	logger.Info("DELETE /deleteImage called with id: " + id)
 
-	claims, err := userMiddleware.ValidateUserClaims(ctx, c.userService)
-	if err != nil {
-		logger.Warning(AUTHENTIFICATION_MSG_ERROR + err.Message)
-		return ctx.Status(err.Status).JSON(err)
+	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
+	if !ok {
+		logger.Error(INVALID_AUTHENTIFICATION_MSG)
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, INVALID_AUTHENTIFICATION_MSG))
 	}
 
 	dtoFindImage := &imageDTO.ImageDTO{
@@ -165,6 +166,35 @@ func (c *ImageController) deleteImage(ctx *fiber.Ctx) error {
 	logger.Info("Image successfully deleted with id: " + id)
 	return ctx.Status(fiber.StatusOK).JSON(image)
 }
+
+// @Summary		Actualiza el nombre de una imagen
+// @Description	Actualiza una imagen específica del usuario autentificado
+// @Tags			image
+// @Accept			json
+// @Produce		json
+// @Param			id	path	string	true	"Identificador de la imagen"
+// @Security		CookieAuth
+// @Success		200	{object}	imageDTO.ImageUpdateRequestDTO	"Imagen actualizada correctamente"
+// @Failure		401	{object}	exception.ApiException			"Usuario no autenticado"
+// @Failure		403	{object}	exception.ApiException			"Los datos proporcionados no coinciden con el usuario autenticado"
+// @Failure		404	{object}	exception.ApiException			"Usuario/Imagen no encontrada"
+// @Failure		500	{object}	exception.ApiException			"Ha ocurrido un error inesperado"
+// @Router			/image/updateImage/{id} [update]
+// func (c *ImageController) updateImage(ctx *fiber.Ctx) error {
+// 	id := ctx.Params("id")
+// 	logger.Info("UPDATE /updateImage called with id: " + id)
+
+// 	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
+// 	if !ok {
+// 		logger.Error(INVALID_AUTHENTIFICATION_MSG)
+// 		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, INVALID_AUTHENTIFICATION_MSG))
+// 	}
+
+// 	dto := &imageDTO.ImageUpdateRequestDTO{
+// 		Id: id,
+// 		Owner: claims.Username,
+// 	}
+// }
 
 // @Summary		Listar imágenes en miniatura (thumbnails)
 // @Description	Obtiene una lista paginada de imágenes en miniatura del usuario autenticado, usando paginación por cursor (lastId y pageSize).
@@ -186,14 +216,14 @@ func (c *ImageController) getThumbnailImages(ctx *fiber.Ctx) error {
 
 	logger.Info("GET /getThumbnailImages called with lastID: " + lastID + ", pageSize: " + pageSizeParam)
 
-	claims, err := userMiddleware.ValidateUserClaims(ctx, c.userService)
-	if err != nil {
-		logger.Warning(AUTHENTIFICATION_MSG_ERROR + err.Message)
-		return ctx.Status(err.Status).JSON(err)
+	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
+	if !ok {
+		logger.Error(INVALID_AUTHENTIFICATION_MSG)
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, INVALID_AUTHENTIFICATION_MSG))
 	}
 
-	// Validamos el pageSize (debe ser un entero positivo, default 10)
-	pageSize := int64(10)
+	// PagesSize validation (it must be positive by default 10)
+	pageSize := int64(DEFAULT_PAGE_SIZE)
 	if pageSizeParam != "" {
 		if parsedPageSize, err := strconv.ParseInt(pageSizeParam, 10, 64); err == nil && parsedPageSize > 0 {
 			pageSize = parsedPageSize

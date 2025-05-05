@@ -160,7 +160,7 @@
                     "200": {
                         "description": "Se ha cerrado sesión correctamente",
                         "schema": {
-                            "$ref": "#/definitions/userDTO.UserRegisterResponseDTO"
+                            "$ref": "#/definitions/userDTO.UserMessageResponseDTO"
                         }
                     },
                     "401": {
@@ -703,11 +703,6 @@
                     "description": "Tamaño de la imagen en bytes\nExample: 204800",
                     "type": "string",
                     "example": "2.3 kB"
-                },
-                "thumbnail_id": {
-                    "description": "ID de la imagen miniatura asociada.\nExample: 64a1f8b8e4b0c10d3c5b2e75",
-                    "type": "string",
-                    "example": "64a1f8b8e4b0c10d3c5b2e75"
                 }
             }
         },
@@ -744,12 +739,17 @@
                     "example": ".jpeg"
                 },
                 "id": {
-                    "description": "ID de la miniatura\nExample: 64a1f8b8e4b0c10d3c5b2e75",
+                    "description": "Identificador de la miniatura\nExample: 64a1f8b8e4b0c10d3c5b2e75",
                     "type": "string",
                     "example": "64a1f8b8e4b0c10d3c5b2e75"
                 },
+                "imageID": {
+                    "description": "Identificador de la imagen\nExample: 64a1f8b8e4b0c20d3c5b2e90",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c20d3c5b2e90"
+                },
                 "name": {
-                    "description": "Nombre del archivo de la miniatura\nExample: foto_perfil",
+                    "description": "Nombre del archivo de la miniatura\nExample: prueba",
                     "type": "string",
                     "example": "prueba"
                 },
@@ -851,6 +851,17 @@
                     "description": "Contraseña del usuario para confirmar la eliminación\nexample \"MiContraseñaSegura\"",
                     "type": "string",
                     "example": "MiContraseñaSegura"
+                }
+            }
+        },
+        "userDTO.UserMessageResponseDTO": {
+            "description": "Respuesta con un mensaje para informar al usuario que ha ocurrido",
+            "type": "object",
+            "properties": {
+                "message": {
+                    "description": "Mensaje de respuesta\nexample \"Operación realizada con éxito\"",
+                    "type": "string",
+                    "example": "Ha funcionado correctamente"
                 }
             }
         },

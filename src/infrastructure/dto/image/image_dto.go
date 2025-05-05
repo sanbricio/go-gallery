@@ -11,10 +11,6 @@ type ImageDTO struct {
 	// Example: 64a1f8b8e4b0c10d3c5b2e75
 	Id *string `json:"id" bson:"_id,omitempty" example:"64a1f8b8e4b0c10d3c5b2e75"`
 
-	// ID de la imagen miniatura asociada.
-	// Example: 64a1f8b8e4b0c10d3c5b2e75
-	ThumbnailId string `json:"thumbnail_id" bson:"thumbnail_id" example:"64a1f8b8e4b0c10d3c5b2e75"`
-
 	// Nombre del archivo de la imagen
 	// Example: foto_perfil
 	Name string `json:"name" bson:"name" example:"prueba"`
@@ -40,7 +36,6 @@ func FromImage(image *imageEntity.Image) *ImageDTO {
 	id := image.GetId()
 	return &ImageDTO{
 		Id:          id,
-		ThumbnailId: image.GetThumbnailId(),
 		Name:        image.GetName(),
 		Extension:   image.GetExtension(),
 		ContentFile: image.GetContentFile(),

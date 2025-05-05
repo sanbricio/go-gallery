@@ -2,7 +2,6 @@ package imageEntity
 
 type Image struct {
 	id          *string
-	thumbnailID string
 	name        string
 	extension   string
 	contentFile string
@@ -10,10 +9,9 @@ type Image struct {
 	size        string
 }
 
-func NewImage(id *string, thumbnailID, name, extension, contentFile, owner, size string) *Image {
+func NewImage(id *string, name, extension, contentFile, owner, size string) *Image {
 	return &Image{
 		id:          id,
-		thumbnailID: thumbnailID,
 		name:        name,
 		extension:   extension,
 		contentFile: contentFile,
@@ -24,10 +22,6 @@ func NewImage(id *string, thumbnailID, name, extension, contentFile, owner, size
 
 func (img *Image) GetId() *string {
 	return img.id
-}
-
-func (img *Image) GetThumbnailId() string {
-	return img.thumbnailID
 }
 
 func (img *Image) GetName() string {

@@ -7,6 +7,6 @@ import (
 )
 
 type ThumbnailImageRepository interface {
-	Insert(dto *imageDTO.ImageUploadRequestDTO) (string, *exception.ApiException)
+	Insert(dto *imageDTO.ImageDTO, rawContentFile []byte) (*imageDTO.ImageUploadResponseDTO, *exception.ApiException)
 	FindAll(owner, lastIDHex string, pageSize int64) (*thumbnailImageDTO.ThumbnailImageCursorDTO, *exception.ApiException)
 }

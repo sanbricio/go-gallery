@@ -26,15 +26,21 @@ func (s *ImageService) Find(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *except
 }
 
 func (s *ImageService) Insert(dto *imageDTO.ImageUploadRequestDTO) (*imageDTO.ImageUploadResponseDTO, *exception.ApiException) {
-	thumbnailId, err := s.thumbnailImageRepository.Insert(dto)
+	imageDTO, err := s.imageRepository.Insert(dto)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.imageRepository.Insert(dto, thumbnailId)
+	return s.thumbnailImageRepository.Insert(imageDTO, dto.RawContentFile)
+}
+
+func (s *ImageService) Update(dto *imageDTO.ImageUpdateRequestDTO) (*imageDTO.ImageUpdateResponseDTO, *exception.ApiException) {
+	//TODO Añadir update del thumbnail
+	return s.imageRepository.Update(dto)
 }
 
 func (s *ImageService) Delete(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException) {
+	//TODO Añadir delete del thumbnail
 	return s.imageRepository.Delete(dto)
 }
 

@@ -69,7 +69,6 @@ func TestImageBuilderEmptyFields(t *testing.T) {
 
 func TestImageBuilderNew(t *testing.T) {
 	image, err := NewImageBuilder().
-		SetThumbnailId(baseDTO.ThumbnailId).
 		SetName(baseDTO.Name).
 		SetExtension(baseDTO.Extension).
 		SetOwner(baseDTO.Owner).
@@ -102,7 +101,6 @@ func TestImageBuilderFromImageUploadRequestDTO(t *testing.T) {
 	}
 
 	image, err := NewImageBuilder().FromImageUploadRequestDTO(dto).
-		SetThumbnailId(baseDTO.ThumbnailId).
 		SetContentFile(baseDTO.ContentFile).
 		BuildNew()
 
@@ -113,7 +111,6 @@ func TestImageBuilderFromImageUploadRequestDTO(t *testing.T) {
 func TestImageBuilderWithSetValues(t *testing.T) {
 	image, err := NewImageBuilder().
 		SetId(baseDTO.Id).
-		SetThumbnailId(baseDTO.ThumbnailId).
 		SetName(baseDTO.Name).
 		SetExtension(baseDTO.Extension).
 		SetOwner(baseDTO.Owner).
@@ -131,7 +128,6 @@ func compareAllFieldsImages(t *testing.T, expected *imageDTO.ImageDTO, actual *i
 }
 
 func compareCommonFieldsImages(t *testing.T, expected *imageDTO.ImageDTO, actual *imageEntity.Image) {
-	assert.Equal(t, expected.ThumbnailId, actual.GetThumbnailId(), "expected thumbnailId does not match")
 	assert.Equal(t, expected.Name, actual.GetName(), "expected name does not match")
 	assert.Equal(t, expected.Extension, actual.GetExtension(), "expected extension does not match")
 	assert.Equal(t, expected.Owner, actual.GetOwner(), "expected owner does not match")

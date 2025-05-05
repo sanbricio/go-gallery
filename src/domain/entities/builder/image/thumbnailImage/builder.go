@@ -10,6 +10,7 @@ import (
 
 type ThumbnailImageBuilder struct {
 	id          *string
+	imageID     *string
 	name        string
 	extension   string
 	contentFile string
@@ -32,7 +33,9 @@ func (b *ThumbnailImageBuilder) FromImageUploadRequestDTO(dto *imageDTO.ImageUpl
 
 func (b *ThumbnailImageBuilder) FromDTO(dto *thumbnailImageDTO.ThumbnailImageDTO) *ThumbnailImageBuilder {
 	id := dto.Id
+	imageID := dto.ImageID
 	b.id = id
+	b.imageID = imageID
 	b.name = dto.Name
 	b.extension = dto.Extension
 	b.contentFile = dto.ContentFile
@@ -71,13 +74,18 @@ func (b *ThumbnailImageBuilder) SetSize(size string) *ThumbnailImageBuilder {
 	return b
 }
 
+func (b *ThumbnailImageBuilder) SetImageID(imageID *string) *ThumbnailImageBuilder {
+	b.imageID = imageID
+	return b
+}
+
 func (b *ThumbnailImageBuilder) BuildNew() (*thumbnailImageEntity.ThumbnailImage, *exception.BuilderException) {
 	err := b.validateCommons()
 	if err != nil {
 		return nil, err
 	}
 
-	return thumbnailImageEntity.NewThumbnailImage(nil, b.name, b.extension, b.contentFile, b.size, b.owner), nil
+	return thumbnailImageEntity.NewThumbnailImage(nil, b.imageID, b.name, b.extension, b.contentFile, b.size, b.owner), nil
 }
 
 func (b *ThumbnailImageBuilder) Build() (*thumbnailImageEntity.ThumbnailImage, *exception.BuilderException) {
@@ -86,7 +94,7 @@ func (b *ThumbnailImageBuilder) Build() (*thumbnailImageEntity.ThumbnailImage, *
 		return nil, err
 	}
 
-	return thumbnailImageEntity.NewThumbnailImage(b.id, b.name, b.extension, b.contentFile, b.size, b.owner), nil
+	return thumbnailImageEntity.NewThumbnailImage(b.id, b.imageID, b.name, b.extension, b.contentFile, b.size, b.owner), nil
 }
 
 func (b *ThumbnailImageBuilder) validateAll() *exception.BuilderException {
@@ -104,6 +112,9 @@ func (b *ThumbnailImageBuilder) validateAll() *exception.BuilderException {
 }
 
 func (b *ThumbnailImageBuilder) validateCommons() *exception.BuilderException {
+	if err := validators.ValidateNonEmptyStringField("imageID", b.imageID); err != nil {
+		return exception.NewBuilderException("imageID", err.Error())
+	}
 	if err := validators.ValidateNonEmptyStringField("name", b.name); err != nil {
 		return exception.NewBuilderException("name", err.Error())
 	}

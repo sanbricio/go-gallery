@@ -57,12 +57,6 @@ definitions:
           Example: 204800
         example: 2.3 kB
         type: string
-      thumbnail_id:
-        description: |-
-          ID de la imagen miniatura asociada.
-          Example: 64a1f8b8e4b0c10d3c5b2e75
-        example: 64a1f8b8e4b0c10d3c5b2e75
-        type: string
     type: object
   thumbnailImageDTO.ThumbnailImageCursorDTO:
     description: Contiene una lista de miniaturas y el identificador del último elemento
@@ -96,14 +90,20 @@ definitions:
         type: string
       id:
         description: |-
-          ID de la miniatura
+          Identificador de la miniatura
           Example: 64a1f8b8e4b0c10d3c5b2e75
         example: 64a1f8b8e4b0c10d3c5b2e75
+        type: string
+      imageID:
+        description: |-
+          Identificador de la imagen
+          Example: 64a1f8b8e4b0c20d3c5b2e90
+        example: 64a1f8b8e4b0c20d3c5b2e90
         type: string
       name:
         description: |-
           Nombre del archivo de la miniatura
-          Example: foto_perfil
+          Example: prueba
         example: prueba
         type: string
       owner:
@@ -211,6 +211,16 @@ definitions:
           Contraseña del usuario para confirmar la eliminación
           example "MiContraseñaSegura"
         example: MiContraseñaSegura
+        type: string
+    type: object
+  userDTO.UserMessageResponseDTO:
+    description: Respuesta con un mensaje para informar al usuario que ha ocurrido
+    properties:
+      message:
+        description: |-
+          Mensaje de respuesta
+          example "Operación realizada con éxito"
+        example: Ha funcionado correctamente
         type: string
     type: object
   userDTO.UserRegisterResponseDTO:
@@ -365,7 +375,7 @@ paths:
         "200":
           description: Se ha cerrado sesión correctamente
           schema:
-            $ref: '#/definitions/userDTO.UserRegisterResponseDTO'
+            $ref: '#/definitions/userDTO.UserMessageResponseDTO'
         "401":
           description: Usuario no autenticado
           schema:

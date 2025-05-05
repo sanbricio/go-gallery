@@ -116,7 +116,7 @@ func (r *ImageMongoDBRepository) find(filter bson.M) ([]imageDTO.ImageDTO, *exce
 	return results, nil
 }
 
-func (r *ImageMongoDBRepository) Insert(dtoInsertImage *imageDTO.ImageUploadRequestDTO, thumbnailImageID string) (*imageDTO.ImageUploadResponseDTO, *exception.ApiException) {
+func (r *ImageMongoDBRepository) Insert(dtoInsertImage *imageDTO.ImageUploadRequestDTO) (*imageDTO.ImageDTO, *exception.ApiException) {
 	filter := bson.M{
 		"name":      dtoInsertImage.Name,
 		"owner":     dtoInsertImage.Owner,
@@ -140,7 +140,6 @@ func (r *ImageMongoDBRepository) Insert(dtoInsertImage *imageDTO.ImageUploadRequ
 
 	image, errBuilder := imageBuilder.NewImageBuilder().
 		FromImageUploadRequestDTO(dtoInsertImage).
-		SetThumbnailId(thumbnailImageID).
 		BuildNew()
 
 	if errBuilder != nil {
@@ -160,14 +159,9 @@ func (r *ImageMongoDBRepository) Insert(dtoInsertImage *imageDTO.ImageUploadRequ
 	}
 	imageID := result.InsertedID.(primitive.ObjectID).Hex()
 	logger.Info(fmt.Sprintf("Image successfully inserted with ID: %s", imageID))
+	dto.Id = &imageID
 
-	return &imageDTO.ImageUploadResponseDTO{
-		Id:          imageID,
-		ThumbnailId: thumbnailImageID,
-		Name:        dto.Name,
-		Extension:   dto.Extension,
-		Size:        dto.Size,
-	}, nil
+	return dto, nil
 }
 
 func (r *ImageMongoDBRepository) Delete(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException) {
@@ -197,6 +191,51 @@ func (r *ImageMongoDBRepository) Delete(dto *imageDTO.ImageDTO) (*imageDTO.Image
 
 	logger.Info(fmt.Sprintf("Image successfully deleted: %+v", *foundImages[0].Id))
 	return &foundImages[0], nil
+}
+//TODO Pendiende de revisar
+func (r *ImageMongoDBRepository) Update(dto *imageDTO.ImageUpdateRequestDTO) (*imageDTO.ImageUpdateResponseDTO, *exception.ApiException) {
+	filter := bson.M{
+		ID:    dto.Id,
+		OWNER: dto.Owner,
+	}
+
+	updateFields := bson.M{}
+	if dto.ThumbnailId != "" {
+		updateFields["thumbnail_id"] = dto.ThumbnailId
+	}
+	if dto.Name != "" {
+		updateFields["name"] = dto.Name
+	}
+
+	if len(updateFields) == 0 {
+		logger.Warning(fmt.Sprintf("No fields to update for image with Id '%s' and Owner '%s'", dto.Id, dto.Owner))
+		return nil, exception.NewApiException(400, "No fields to update")
+	}
+
+	update := bson.M{
+		"$set": updateFields,
+	}
+
+	logger.Info(fmt.Sprintf("Updating image with filter: %+v and update: %+v", filter, update))
+
+	result, errUpdate := r.mongoImage.UpdateOne(context.Background(), filter, update)
+	if errUpdate != nil {
+		logger.Error(fmt.Sprintf("Error updating image: %s", errUpdate.Error()))
+		return nil, exception.NewApiException(500, "Error updating the image")
+	}
+
+	if result.MatchedCount == 0 {
+		logger.Warning(fmt.Sprintf("No image found to update with Id '%s' and Owner '%s'", dto.Id, dto.Owner))
+		return nil, exception.NewApiException(404, "Image not found")
+	}
+
+	logger.Info(fmt.Sprintf("Image successfully updated: %s", dto.Id))
+
+	return &imageDTO.ImageUpdateResponseDTO{
+		Id:            dto.Id,
+		Owner:         dto.Owner,
+		UpdatedFields: updateFields,
+	}, nil
 }
 
 func getObjectID(id *string) (primitive.ObjectID, *exception.ApiException) {

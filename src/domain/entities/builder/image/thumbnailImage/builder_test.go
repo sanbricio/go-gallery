@@ -21,6 +21,7 @@ func init() {
 	id := "valid-id"
 	baseThumbnailDTO = &thumbnailImageDTO.ThumbnailImageDTO{
 		Id:          &id,
+		ImageID:     &id,
 		Name:        "valid-name",
 		Extension:   "jpg",
 		ContentFile: "base64content",
@@ -63,6 +64,7 @@ func TestThumbnailImageBuilderEmptyFields(t *testing.T) {
 
 func TestThumbnailImageBuilderNew(t *testing.T) {
 	image, err := NewThumbnailImageBuilder().
+		SetImageID(baseThumbnailDTO.ImageID).
 		SetName(baseThumbnailDTO.Name).
 		SetExtension(baseThumbnailDTO.Extension).
 		SetOwner(baseThumbnailDTO.Owner).
@@ -93,6 +95,7 @@ func TestThumbnailImageBuilderFromImageUploadRequestDTO(t *testing.T) {
 	}
 
 	image, err := NewThumbnailImageBuilder().
+		SetImageID(baseThumbnailDTO.ImageID).
 		SetContentFile(baseThumbnailDTO.ContentFile).
 		FromImageUploadRequestDTO(dto).
 		BuildNew()
@@ -104,6 +107,7 @@ func TestThumbnailImageBuilderFromImageUploadRequestDTO(t *testing.T) {
 func TestThumbnailImageBuilderWithSetValues(t *testing.T) {
 	image, err := NewThumbnailImageBuilder().
 		SetId(baseThumbnailDTO.Id).
+		SetImageID(baseThumbnailDTO.ImageID).
 		SetName(baseThumbnailDTO.Name).
 		SetExtension(baseThumbnailDTO.Extension).
 		SetOwner(baseThumbnailDTO.Owner).
@@ -147,6 +151,7 @@ func assertThumbnailBuilderException(t *testing.T, dto *thumbnailImageDTO.Thumbn
 func copyThumbnailDTO() *thumbnailImageDTO.ThumbnailImageDTO {
 	return &thumbnailImageDTO.ThumbnailImageDTO{
 		Id:          baseThumbnailDTO.Id,
+		ImageID:     baseThumbnailDTO.ImageID,
 		Name:        baseThumbnailDTO.Name,
 		Extension:   baseThumbnailDTO.Extension,
 		ContentFile: baseThumbnailDTO.ContentFile,

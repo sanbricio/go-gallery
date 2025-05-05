@@ -67,7 +67,7 @@ func main() {
 	// Initialize JWT authentication middleware
 	logger.Info("Initializing JWT middleware...")
 	tokenManager := auth.NewJWTTokenManager(configuration.GetJWTSecret())
-	jwtMiddleware := userMiddleware.NewJWTMiddleware(tokenManager)
+	jwtMiddleware := userMiddleware.NewJWTMiddleware(tokenManager, userService)
 
 	// Configure user authentication routes
 	logger.Info("Setting up user authentication routes...")

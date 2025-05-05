@@ -20,11 +20,12 @@ const (
 
 type JWTMiddleware struct {
 	tokenManager auth.TokenManager
+	userService  *userService.UserService
 }
 
-func NewJWTMiddleware(tokenManager auth.TokenManager) *JWTMiddleware {
+func NewJWTMiddleware(tokenManager auth.TokenManager, userService *userService.UserService) *JWTMiddleware {
 	logger = log.Instance()
-	return &JWTMiddleware{tokenManager: tokenManager}
+	return &JWTMiddleware{tokenManager: tokenManager, userService: userService}
 }
 
 // Middleware to validate the JWT cookie
@@ -43,6 +44,8 @@ func (auth *JWTMiddleware) Handler() fiber.Handler {
 			logger.Error("Failed to parse JWT claims: " + err.Message)
 			return ctx.Status(err.Status).JSON(err)
 		}
+		// Validate that claims are a correct in user database
+		auth.validateUserClaims(claims)
 
 		// Check expiration and renew the token if there are less than 10 minutes remaining
 		if claims.Expiration-time.Now().Unix() < 600 {
@@ -86,14 +89,8 @@ func (auth *JWTMiddleware) DeleteAuthCookie(ctx *fiber.Ctx) {
 	logger.Info("Auth cookie deleted successfully")
 }
 
-func ValidateUserClaims(ctx *fiber.Ctx, userService *userService.UserService) (*userDTO.JwtClaimsDTO, *exception.ApiException) {
-	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
-	if !ok {
-		logger.Error("User not authenticated")
-		return nil, exception.NewApiException(fiber.StatusUnauthorized, "User not authenticated")
-	}
-
-	_, errUser := userService.FindAndCheckJWT(claims)
+func (auth *JWTMiddleware) validateUserClaims(claims *userDTO.JwtClaimsDTO) (*userDTO.JwtClaimsDTO, *exception.ApiException) {
+	_, errUser := auth.userService.FindAndCheckJWT(claims)
 	if errUser != nil {
 		logger.Error("User validation failed: " + errUser.Message)
 		return nil, errUser
