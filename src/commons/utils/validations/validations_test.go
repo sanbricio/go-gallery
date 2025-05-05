@@ -3,6 +3,8 @@ package validators
 import (
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidateNonEmptyStringField(t *testing.T) {
@@ -10,11 +12,12 @@ func TestValidateNonEmptyStringField(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidateNonEmptyStringField(tt.fieldName, tt.fieldValue)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Expected error: %v, got: %v", tt.wantErr, err != nil)
-			}
-			if tt.wantErr && err.Error() != tt.wantMsg {
-				t.Errorf("Expected message: '%s', got: '%s'", tt.wantMsg, err.Error())
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.EqualError(t, err, tt.wantMsg)
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}

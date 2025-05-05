@@ -2,6 +2,7 @@ package main
 
 import (
 	"go-gallery/src/commons/configurator"
+	"go-gallery/src/infrastructure/auth"
 	imageController "go-gallery/src/infrastructure/controller/image"
 	swaggerController "go-gallery/src/infrastructure/controller/swagger"
 	userController "go-gallery/src/infrastructure/controller/user"
@@ -65,7 +66,8 @@ func main() {
 
 	// Initialize JWT authentication middleware
 	logger.Info("Initializing JWT middleware...")
-	jwtMiddleware := userMiddleware.NewJWTMiddleware(configuration.GetJWTSecret())
+	tokenManager := auth.NewJWTTokenManager(configuration.GetJWTSecret())
+	jwtMiddleware := userMiddleware.NewJWTMiddleware(tokenManager)
 
 	// Configure user authentication routes
 	logger.Info("Setting up user authentication routes...")

@@ -1,8 +1,11 @@
 package userHandler
 
 import (
-	userDTO "go-gallery/src/infrastructure/dto/user"
 	"testing"
+
+	userDTO "go-gallery/src/infrastructure/dto/user"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type testCaseUserHandler struct {
@@ -17,16 +20,15 @@ func TestProcessUser(t *testing.T) {
 	for _, testCase := range cases {
 		t.Run(testCase.desc, func(t *testing.T) {
 			err := ProcessUser(testCase.dto.Password, testCase.dto.Email)
-			if err != nil {
-				if err.Message != testCase.expects {
-					t.Errorf("%s: expected error %s, got %s", testCase.desc, testCase.expects, err.Message)
-				}
-			} else if testCase.expects != "" {
-				t.Errorf("%s: expected error %s, got nil", testCase.desc, testCase.expects)
+
+			if testCase.expects == "" {
+				assert.Nil(t, err, testCase.desc)
+			} else {
+				assert.NotNil(t, err, testCase.desc)
+				assert.Equal(t, testCase.expects, err.Message, testCase.desc)
 			}
 		})
 	}
-
 }
 
 func loadTestCasesUserHandler() []testCaseUserHandler {

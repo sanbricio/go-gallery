@@ -7,6 +7,7 @@ import (
 	"go-gallery/src/commons/constants"
 	"go-gallery/src/commons/exception"
 	imageDTO "go-gallery/src/infrastructure/dto/image"
+	"go-gallery/src/infrastructure/logger"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -31,7 +32,12 @@ var tests = []struct {
 	{"Invalid TXT", "../../../../test/resources/images/landscape.txt", "landscape", "", true},
 }
 
+func beforeAll() {
+	logger.Init(logger.NewConsoleLogger())
+}
+
 func TestProcessImageFile(t *testing.T) {
+	beforeAll()
 	app := loadFiberApp()
 
 	for _, tt := range tests {
@@ -41,12 +47,12 @@ func TestProcessImageFile(t *testing.T) {
 
 			resp, err := app.Test(req)
 			if err != nil {
-				t.Fatalf("Error en la solicitud de prueba: %v", err)
+				t.Fatalf("Error in test request: %v", err)
 			}
 
 			body, err := io.ReadAll(resp.Body)
 			if err != nil {
-				t.Fatalf("Error al leer la respuesta: %v", err)
+				t.Fatalf("Error reading the response: %v", err)
 			}
 
 			if tt.expectError {
@@ -61,6 +67,7 @@ func TestProcessImageFile(t *testing.T) {
 }
 
 func TestProcessImageFileFailToOpen(t *testing.T) {
+	beforeAll()
 	fileHeader := &multipart.FileHeader{
 		Filename: "nonexistent.jpg",
 	}
@@ -68,46 +75,48 @@ func TestProcessImageFileFailToOpen(t *testing.T) {
 	result, apiErr := ProcessImageFile(fileHeader, "testOwner")
 
 	if result != nil {
-		t.Errorf("Esperaba que result fuera nil, pero obtuve: %+v", result)
+		t.Errorf("Expected result to be nil, but got: %+v", result)
 	}
-	if apiErr == nil || apiErr.Message != "Error al abrir el archivo de imagen" {
-		t.Errorf("Esperaba error al abrir el archivo, pero obtuve: %v", apiErr)
+	if apiErr == nil || apiErr.Message != "Error opening the image file" {
+		t.Errorf("Expected error when opening the file, but got: %v", apiErr)
 	}
 }
 
 func TestEncodeToRawBytes(t *testing.T) {
+	beforeAll()
 	fileHeader := &multipart.FileHeader{
 		Filename: "nonexistent.jpg",
 	}
 	_, apiErr := encodeToRawBytes(fileHeader)
 
-	if apiErr == nil || apiErr.Message != "Error al abrir el archivo de imagen" {
-		t.Errorf("Esperaba error al abrir el archivo, pero obtuve: %v", apiErr)
+	if apiErr == nil || apiErr.Message != "Error opening the image file" {
+		t.Errorf("Expected error opening the file, but got: %v", apiErr)
 	}
 }
 
 func TestReadAllFile(t *testing.T) {
+	beforeAll()
 	reader := &failingFile{}
 
 	_, apiErr := readAllFile(reader)
-	if apiErr == nil || apiErr.Message != "Error al leer el archivo de imagen" {
-		t.Errorf("Esperaba error al leer el archivo, pero obtuve: %v", apiErr)
+	if apiErr == nil || apiErr.Message != "Error reading the image file" {
+		t.Errorf("Expected error reading the file, but got: %v", apiErr)
 	}
 }
 
 func loadFiberApp() *fiber.App {
-	// Inicializar Fiber
+	// Initialize Fiber
 	app := fiber.New()
 
-	// Definir la ruta de prueba
+	// Define test route
 	app.Post("/test", func(c *fiber.Ctx) error {
-		// Obtener el archivo desde el formulario
+		// Get the file from the form
 		file, err := c.FormFile("file")
 		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "No se pudo leer el archivo"})
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Could not read the file"})
 		}
 
-		// Procesar la imagen con la función que estamos probando
+		// Process the image with the function we are testing
 		result, apiErr := ProcessImageFile(file, "testOwner")
 		if apiErr != nil {
 			return c.Status(apiErr.Status).JSON(apiErr)
@@ -119,53 +128,51 @@ func loadFiberApp() *fiber.App {
 }
 
 func evaluateImage(t *testing.T, body []byte, expectedName, expectedExt string) {
-	// Verificar respuesta esperada
+	// Verify expected response
 	var result imageDTO.ImageUploadRequestDTO
 	if err := json.Unmarshal(body, &result); err != nil {
-		t.Fatalf("Error al parsear la respuesta JSON: %v", err)
+		t.Fatalf("Error parsing the JSON response: %v", err)
 	}
 
-	// Validar que los datos sean correctos
+	// Validate correct data
 	if result.Name != expectedName {
-		t.Errorf("Se esperaba el nombre '%s', pero se obtuvo '%s'", expectedName, result.Name)
+		t.Errorf("Expected name '%s', but got '%s'", expectedName, result.Name)
 	}
 	if result.Extension != expectedExt {
-		t.Errorf("Se esperaba la extensión '%s', pero se obtuvo '%s'", expectedExt, result.Extension)
+		t.Errorf("Expected extension '%s', but got '%s'", expectedExt, result.Extension)
 	}
 	if result.Owner != "testOwner" {
-		t.Errorf("Se esperaba el Owner 'testOwner', pero se obtuvo '%s'", result.Owner)
+		t.Errorf("Expected Owner 'testOwner', but got '%s'", result.Owner)
 	}
 	if result.Size == "" {
-		t.Errorf("El campo 'Size' está vacío")
+		t.Errorf("The 'Size' field is empty")
 	}
 	if len(result.RawContentFile) == 0 {
-		t.Errorf("El campo 'RawContentFile' está vacío")
+		t.Errorf("The 'RawContentFile' field is empty")
 	}
-
 }
 
 func evaluateWrongImage(t *testing.T, resp *http.Response, body []byte) {
-	// Verificar que se devuelva un error esperado
+	// Verify that the expected error is returned
 	if resp.StatusCode != http.StatusBadRequest {
-		t.Errorf("Se esperaba código 400, pero se obtuvo %d", resp.StatusCode)
+		t.Errorf("Expected status code 400, but got %d", resp.StatusCode)
 	}
 
 	var apiErr exception.ApiException
 	if err := json.Unmarshal(body, &apiErr); err != nil {
-		t.Fatalf("Error al parsear la respuesta de error JSON: %v", err)
+		t.Fatalf("Error parsing the error JSON response: %v", err)
 	}
 
-	expectedMsg := "Formato de archivo no soportado. Solo se aceptan imágenes jpg, jpeg, png y webp"
+	expectedMsg := "Unsupported file format. Only jpg, jpeg, png, and webp images are accepted."
 	if apiErr.Message != expectedMsg {
-		t.Errorf("Mensaje de error incorrecto: %s", apiErr.Message)
+		t.Errorf("Incorrect error message: %s", apiErr.Message)
 	}
-
 }
 
 func createRequest(t *testing.T, imagePath string) *http.Request {
 	file, err := os.Open(imagePath)
 	if err != nil {
-		t.Fatalf("No se pudo abrir la imagen de prueba '%s': %v", imagePath, err)
+		t.Fatalf("Failed to open test image '%s': %v", imagePath, err)
 	}
 	defer file.Close()
 
@@ -174,12 +181,12 @@ func createRequest(t *testing.T, imagePath string) *http.Request {
 
 	part, err := writer.CreateFormFile("file", file.Name())
 	if err != nil {
-		t.Fatalf("Error al crear la parte del archivo en el formulario: %v", err)
+		t.Fatalf("Error creating form file part: %v", err)
 	}
 
 	_, err = io.Copy(part, file)
 	if err != nil {
-		t.Fatalf("Error al copiar el archivo en el formulario: %v", err)
+		t.Fatalf("Error copying file into form: %v", err)
 	}
 
 	writer.Close()
@@ -189,7 +196,7 @@ func createRequest(t *testing.T, imagePath string) *http.Request {
 	return req
 }
 
-//Mock para probar que cuando lee un fichero saca el error especifico
+// Mock to simulate error when reading file
 
 type failingFile struct{}
 
@@ -201,7 +208,7 @@ func (f *failingFile) Close() error {
 	return nil
 }
 
-// Métodos adicionales para implementar multipart.File pero no los usamos en este test
+// Additional methods to implement multipart.File but not used in this test
 func (f *failingFile) Seek(offset int64, whence int) (int64, error) {
 	return 0, nil
 }

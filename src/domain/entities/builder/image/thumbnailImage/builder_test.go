@@ -1,10 +1,13 @@
 package thumbnailImageBuilder
 
 import (
+	"testing"
+
 	thumbnailImageEntity "go-gallery/src/domain/entities/image/thumbnailImage"
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 	thumbnailImageDTO "go-gallery/src/infrastructure/dto/image/thumbnailImage"
-	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -67,11 +70,7 @@ func TestThumbnailImageBuilderNew(t *testing.T) {
 		SetContentFile(baseThumbnailDTO.ContentFile).
 		BuildNew()
 
-	if err != nil {
-		t.Errorf(UNEXPECTED_ERROR, err.Error())
-		t.FailNow()
-	}
-
+	assert.Error(t, err, UNEXPECTED_ERROR, err)
 	compareCommonFieldsThumbnailImage(t, baseThumbnailDTO, image)
 
 	// Error: falta 'name'
@@ -82,14 +81,10 @@ func TestThumbnailImageBuilderNew(t *testing.T) {
 		SetContentFile(baseThumbnailDTO.ContentFile).
 		BuildNew()
 
-	if err == nil {
-		t.Errorf("Se esperaba un error al construir la miniatura debido a que faltaba 'name'")
-		t.FailNow()
-	}
+	assert.Error(t, err, "Se esperaba un error al construir la miniatura debido a que faltaba 'name'")
 }
 
 func TestThumbnailImageBuilderFromImageUploadRequestDTO(t *testing.T) {
-
 	dto := &imageDTO.ImageUploadRequestDTO{
 		Name:      baseThumbnailDTO.Name,
 		Extension: baseThumbnailDTO.Extension,
@@ -102,11 +97,7 @@ func TestThumbnailImageBuilderFromImageUploadRequestDTO(t *testing.T) {
 		FromImageUploadRequestDTO(dto).
 		BuildNew()
 
-	if err != nil {
-		t.Errorf(UNEXPECTED_ERROR, err.Error())
-		t.FailNow()
-	}
-
+	assert.Error(t, err, UNEXPECTED_ERROR, err)
 	compareCommonFieldsThumbnailImage(t, baseThumbnailDTO, image)
 }
 
@@ -120,58 +111,36 @@ func TestThumbnailImageBuilderWithSetValues(t *testing.T) {
 		SetContentFile(baseThumbnailDTO.ContentFile).
 		Build()
 
-	if err != nil {
-		t.Errorf(UNEXPECTED_ERROR, err.Error())
-		t.FailNow()
-	}
-
+	assert.Error(t, err, UNEXPECTED_ERROR, err)
 	compareAllFieldsThumbnailImage(t, baseThumbnailDTO, image)
 }
 
 func compareAllFieldsThumbnailImage(t *testing.T, expected *thumbnailImageDTO.ThumbnailImageDTO, actual *thumbnailImageEntity.ThumbnailImage) {
-	if expected.Id == nil && actual.GetId() != nil {
-		t.Errorf("expected id nil, but got %v", actual.GetId())
-	}
-	if expected.Id != nil && actual.GetId() == nil {
-		t.Errorf("expected id %v, but got nil", *expected.Id)
-	} else if expected.Id != nil && *expected.Id != *actual.GetId() {
-		t.Errorf("expected id %v, but got %v", *expected.Id, *actual.GetId())
+	if expected.Id == nil {
+		assert.Nil(t, actual.GetId(), "expected id nil, but got %v", actual.GetId())
+	} else {
+		assert.NotNil(t, actual.GetId(), "expected id %v, but got nil", *expected.Id)
+		assert.Equal(t, *expected.Id, *actual.GetId(), "expected id %v, but got %v", *expected.Id, *actual.GetId())
 	}
 
 	compareCommonFieldsThumbnailImage(t, expected, actual)
 }
 
 func compareCommonFieldsThumbnailImage(t *testing.T, expected *thumbnailImageDTO.ThumbnailImageDTO, actual *thumbnailImageEntity.ThumbnailImage) {
-	if expected.Name != actual.GetName() {
-		t.Errorf("expected name %v, but got %v", expected.Name, actual.GetName())
-	}
-	if expected.Extension != actual.GetExtension() {
-		t.Errorf("expected extension %v, but got %v", expected.Extension, actual.GetExtension())
-	}
-	if expected.Owner != actual.GetOwner() {
-		t.Errorf("expected owner %v, but got %v", expected.Owner, actual.GetOwner())
-	}
-	if expected.Size != actual.GetSize() {
-		t.Errorf("expected size %v, but got %v", expected.Size, actual.GetSize())
-	}
-	if expected.ContentFile != actual.GetContentFile() {
-		t.Errorf("expected contentFile %v, but got %v", expected.ContentFile, actual.GetContentFile())
-	}
+	assert.Equal(t, expected.Name, actual.GetName(), "expected name %v, but got %v", expected.Name, actual.GetName())
+	assert.Equal(t, expected.Extension, actual.GetExtension(), "expected extension %v, but got %v", expected.Extension, actual.GetExtension())
+	assert.Equal(t, expected.Owner, actual.GetOwner(), "expected owner %v, but got %v", expected.Owner, actual.GetOwner())
+	assert.Equal(t, expected.Size, actual.GetSize(), "expected size %v, but got %v", expected.Size, actual.GetSize())
+	assert.Equal(t, expected.ContentFile, actual.GetContentFile(), "expected contentFile %v, but got %v", expected.ContentFile, actual.GetContentFile())
 }
 
 func assertThumbnailBuilderException(t *testing.T, dto *thumbnailImageDTO.ThumbnailImageDTO, field string) {
 	_, err := NewThumbnailImageBuilder().
 		FromDTO(dto).
 		Build()
-	if err == nil {
-		t.Errorf("Se esperaba un error al intentar crear una ThumbnailImage con el campo '%v' vacío", field)
-		t.FailNow()
-	}
 
-	if err.Field != field {
-		t.Errorf("Se esperaba un error del campo '%v', pero se obtuvo: %v", field, err.Field)
-		t.FailNow()
-	}
+	assert.Error(t, err, "Se esperaba un error al intentar crear una ThumbnailImage con el campo '%v' vacío", field)
+	assert.Equal(t, field, err.Field, "Se esperaba un error del campo '%v', pero se obtuvo: %v", field, err.Field)
 }
 
 // Función para copiar el DTO base para cada caso de prueba

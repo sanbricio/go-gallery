@@ -1,28 +1,37 @@
 package imageController
 
 import (
+	"fmt"
 	"go-gallery/src/commons/exception"
 	imageService "go-gallery/src/service/image"
 	userService "go-gallery/src/service/user"
 	"strconv"
 
 	imageDTO "go-gallery/src/infrastructure/dto/image"
-	userDTO "go-gallery/src/infrastructure/dto/user"
+	log "go-gallery/src/infrastructure/logger"
 
 	imageHandler "go-gallery/src/infrastructure/controller/image/handler"
+	userMiddleware "go-gallery/src/infrastructure/controller/user/middlewares"
 
 	"github.com/gofiber/fiber/v2"
 )
 
+const (
+	AUTHENTIFICATION_MSG_ERROR string = "Authentication failed: "
+)
+
+var logger log.Logger
+
 type ImageController struct {
-	serviceImage *imageService.ImageService
-	serviceUser  *userService.UserService
+	imageService *imageService.ImageService
+	userService  *userService.UserService
 }
 
-func NewImageController(serviceImage *imageService.ImageService, serviceUser *userService.UserService) *ImageController {
+func NewImageController(imageService *imageService.ImageService, userService *userService.UserService) *ImageController {
+	logger = log.Instance()
 	return &ImageController{
-		serviceImage: serviceImage,
-		serviceUser:  serviceUser,
+		imageService: imageService,
+		userService:  userService,
 	}
 }
 
@@ -49,27 +58,27 @@ func (c *ImageController) SetUpRoutes(router fiber.Router) {
 // @Failure		500	{object}	exception.ApiException	"Ha ocurrido un error inesperado"
 // @Router			/image/getImage/{id} [get]
 func (c *ImageController) getImage(ctx *fiber.Ctx) error {
-	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
-	if !ok {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
-	}
-
-	_, errUser := c.serviceUser.FindAndCheckJWT(claims)
-	if errUser != nil {
-		return ctx.Status(errUser.Status).JSON(errUser)
-	}
-
 	id := ctx.Params("id")
+	logger.Info("GET /getImage called with id: " + id)
+
+	claims, err := userMiddleware.ValidateUserClaims(ctx, c.userService)
+	if err != nil {
+		logger.Warning(AUTHENTIFICATION_MSG_ERROR + err.Message)
+		return ctx.Status(err.Status).JSON(err)
+	}
+
 	dtoFindImage := &imageDTO.ImageDTO{
 		Id:    &id,
 		Owner: claims.Username,
 	}
 
-	image, err := c.serviceImage.Find(dtoFindImage)
+	image, err := c.imageService.Find(dtoFindImage)
 	if err != nil {
+		logger.Error(fmt.Sprintf("Error finding image with id %s : %s", id, err.Message))
 		return ctx.Status(err.Status).JSON(err)
 	}
 
+	logger.Info("Image successfully retrieved with id: " + id)
 	return ctx.Status(fiber.StatusOK).JSON(image)
 }
 
@@ -89,31 +98,34 @@ func (c *ImageController) getImage(ctx *fiber.Ctx) error {
 // @Failure		500	{object}	exception.ApiException	"Ha ocurrido un error inesperado"
 // @Router			/image/uploadImage [post]
 func (c *ImageController) uploadImage(ctx *fiber.Ctx) error {
-	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
-	if !ok {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
-	}
+	logger.Info("POST /uploadImage called")
 
-	_, errUser := c.serviceUser.FindAndCheckJWT(claims)
-	if errUser != nil {
-		return ctx.Status(errUser.Status).JSON(errUser)
-	}
-
-	fileInput, err := ctx.FormFile("file")
+	claims, err := userMiddleware.ValidateUserClaims(ctx, c.userService)
 	if err != nil {
-		return ctx.Status(fiber.StatusNotFound).JSON(exception.NewApiException(fiber.StatusNotFound, "Error al obtener la imagen del formulario"))
+		logger.Warning(AUTHENTIFICATION_MSG_ERROR + err.Message)
+		return ctx.Status(err.Status).JSON(err)
 	}
 
+	fileInput, errForm := ctx.FormFile("file")
+	if errForm != nil {
+		logger.Error("Failed to get file from form data caused by:" + errForm.Error())
+		return ctx.Status(fiber.StatusNotFound).JSON(exception.NewApiException(fiber.StatusNotFound, "Error getting image from form"))
+	}
+
+	logger.Info("Processing image upload for user: " + claims.Username)
 	dtoInsertImage, errFile := imageHandler.ProcessImageFile(fileInput, claims.Username)
 	if errFile != nil {
+		logger.Error("Error processing image file: " + errFile.Message)
 		return ctx.Status(errFile.Status).JSON(errFile)
 	}
 
-	dto, errInsert := c.serviceImage.Insert(dtoInsertImage)
+	dto, errInsert := c.imageService.Insert(dtoInsertImage)
 	if errInsert != nil {
+		logger.Error("Error inserting image: " + errInsert.Message)
 		return ctx.Status(errInsert.Status).JSON(errInsert)
 	}
 
+	logger.Info("Image successfully uploaded by user: " + claims.Username)
 	return ctx.Status(fiber.StatusOK).JSON(dto)
 }
 
@@ -131,26 +143,26 @@ func (c *ImageController) uploadImage(ctx *fiber.Ctx) error {
 // @Failure		500	{object}	exception.ApiException	"Ha ocurrido un error inesperado"
 // @Router			/image/deleteImage/{id} [delete]
 func (c *ImageController) deleteImage(ctx *fiber.Ctx) error {
-	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
-	if !ok {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
-	}
-
-	_, errUser := c.serviceUser.FindAndCheckJWT(claims)
-	if errUser != nil {
-		return ctx.Status(errUser.Status).JSON(errUser)
-	}
-
 	id := ctx.Params("id")
+	logger.Info("DELETE /deleteImage called with id: " + id)
+
+	claims, err := userMiddleware.ValidateUserClaims(ctx, c.userService)
+	if err != nil {
+		logger.Warning(AUTHENTIFICATION_MSG_ERROR + err.Message)
+		return ctx.Status(err.Status).JSON(err)
+	}
+
 	dtoFindImage := &imageDTO.ImageDTO{
 		Id:    &id,
 		Owner: claims.Username,
 	}
-	image, err := c.serviceImage.Delete(dtoFindImage)
+	image, err := c.imageService.Delete(dtoFindImage)
 	if err != nil {
+		logger.Error("Error deleting image with id " + id + ": " + err.Message)
 		return ctx.Status(err.Status).JSON(err)
 	}
 
+	logger.Info("Image successfully deleted with id: " + id)
 	return ctx.Status(fiber.StatusOK).JSON(image)
 }
 
@@ -169,19 +181,16 @@ func (c *ImageController) deleteImage(ctx *fiber.Ctx) error {
 // @Failure		500	{object}	exception.ApiException						"Error inesperado"
 // @Router			/image/getThumbnailImages [get]
 func (c *ImageController) getThumbnailImages(ctx *fiber.Ctx) error {
-	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
-	if !ok {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Usuario no autenticado"))
-	}
-
-	_, errUser := c.serviceUser.FindAndCheckJWT(claims)
-	if errUser != nil {
-		return ctx.Status(errUser.Status).JSON(errUser)
-	}
-
-	// Obtener parámetros de consulta
 	lastID := ctx.Query("lastID")
 	pageSizeParam := ctx.Query("pageSize")
+
+	logger.Info("GET /getThumbnailImages called with lastID: " + lastID + ", pageSize: " + pageSizeParam)
+
+	claims, err := userMiddleware.ValidateUserClaims(ctx, c.userService)
+	if err != nil {
+		logger.Warning(AUTHENTIFICATION_MSG_ERROR + err.Message)
+		return ctx.Status(err.Status).JSON(err)
+	}
 
 	// Validamos el pageSize (debe ser un entero positivo, default 10)
 	pageSize := int64(10)
@@ -191,10 +200,12 @@ func (c *ImageController) getThumbnailImages(ctx *fiber.Ctx) error {
 		}
 	}
 
-	thumbnails, errThumb := c.serviceImage.FindAllThumbnails(claims.Username, lastID, pageSize)
+	thumbnails, errThumb := c.imageService.FindAllThumbnails(claims.Username, lastID, pageSize)
 	if errThumb != nil {
+		logger.Error("Error retrieving thumbnails: " + errThumb.Message)
 		return ctx.Status(errThumb.Status).JSON(errThumb)
 	}
 
+	logger.Info("Thumbnails successfully retrieved for user: " + claims.Username)
 	return ctx.Status(fiber.StatusOK).JSON(thumbnails)
 }

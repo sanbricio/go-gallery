@@ -2,6 +2,8 @@ package loggerEntity
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestName(t *testing.T) {
@@ -19,11 +21,9 @@ func TestName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
-			t.Parallel() 
+			t.Parallel()
 			actual := Name(tt.level)
-			if actual != tt.expected {
-				t.Errorf("expected %s, got %s", tt.expected, actual)
-			}
+			assert.Equal(t, tt.expected, actual, "they should be equal")
 		})
 	}
 }
@@ -43,9 +43,7 @@ func TestString(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.expected, func(t *testing.T) {
 			actual := tt.level.String()
-			if actual != tt.expected {
-				t.Errorf("expected %s, got %s", tt.expected, actual)
-			}
+			assert.Equal(t, tt.expected, actual, "they should be equal")
 		})
 	}
 }
