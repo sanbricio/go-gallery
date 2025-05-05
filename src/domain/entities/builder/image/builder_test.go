@@ -21,7 +21,6 @@ func init() {
 	id := "valid-id"
 	baseDTO = &imageDTO.ImageDTO{
 		Id:          &id,
-		ThumbnailId: "valid-thumbnail-id",
 		Name:        "valid-name",
 		Extension:   "jpg",
 		ContentFile: "base64content",
@@ -35,11 +34,6 @@ func TestImageBuilderEmptyFields(t *testing.T) {
 	dto := copyDTO()
 	dto.Id = nil
 	assertBuilderException(t, dto, "id")
-
-	// Case: 'thumbnailId' is empty
-	dto = copyDTO()
-	dto.ThumbnailId = ""
-	assertBuilderException(t, dto, "thumbnailId")
 
 	// Case: 'name' is empty
 	dto = copyDTO()
@@ -150,7 +144,6 @@ func assertBuilderException(t *testing.T, dto *imageDTO.ImageDTO, field string) 
 func copyDTO() *imageDTO.ImageDTO {
 	return &imageDTO.ImageDTO{
 		Id:          baseDTO.Id,
-		ThumbnailId: baseDTO.ThumbnailId,
 		Name:        baseDTO.Name,
 		Extension:   baseDTO.Extension,
 		ContentFile: baseDTO.ContentFile,
