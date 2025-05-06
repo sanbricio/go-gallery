@@ -48,7 +48,7 @@ func loadTestCases() []struct {
 			fieldName:  "nombre",
 			fieldValue: "",
 			wantErr:    true,
-			wantMsg:    fmt.Sprintf(MESSAGE_ERROR, "nombre"),
+			wantMsg:    fmt.Sprintf(ERROR_MESSAGE, "nombre"),
 		},
 		{
 			name:       "Valid *string",
@@ -61,14 +61,14 @@ func loadTestCases() []struct {
 			fieldName:  "nombre",
 			fieldValue: func() *string { s := ""; return &s }(),
 			wantErr:    true,
-			wantMsg:    fmt.Sprintf(MESSAGE_ERROR, "nombre"),
+			wantMsg:    fmt.Sprintf(ERROR_MESSAGE, "nombre"),
 		},
 		{
 			name:       "Nil *string",
 			fieldName:  "nombre",
 			fieldValue: (*string)(nil),
 			wantErr:    true,
-			wantMsg:    fmt.Sprintf(MESSAGE_ERROR, "nombre"),
+			wantMsg:    fmt.Sprintf(ERROR_MESSAGE, "nombre"),
 		},
 		{
 			name:       "Unsupported type",

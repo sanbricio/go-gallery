@@ -3,6 +3,7 @@ package imageController
 import (
 	"fmt"
 	"go-gallery/src/commons/exception"
+	validators "go-gallery/src/commons/utils/validations"
 	imageService "go-gallery/src/service/image"
 	userService "go-gallery/src/service/user"
 	"strconv"
@@ -18,6 +19,7 @@ import (
 
 const (
 	INVALID_AUTHENTIFICATION_MSG string = "User not authenticated"
+	IMAGE_ID_REQUIRED_MSG        string = "Image ID is required"
 	DEFAULT_PAGE_SIZE            int64  = 10
 )
 
@@ -39,6 +41,7 @@ func NewImageController(imageService *imageService.ImageService, userService *us
 func (c *ImageController) SetUpRoutes(router fiber.Router) {
 	router.Get("/getImage/:id", c.getImage)
 	router.Post("/uploadImage", c.uploadImage)
+	router.Put("/updateImage", c.updateImage)
 	router.Delete("/deleteImage/:id", c.deleteImage)
 
 	// Thumbnails
@@ -60,6 +63,10 @@ func (c *ImageController) SetUpRoutes(router fiber.Router) {
 // @Router			/image/getImage/{id} [get]
 func (c *ImageController) getImage(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
+	if id == "" {
+		logger.Error(IMAGE_ID_REQUIRED_MSG)
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, IMAGE_ID_REQUIRED_MSG))
+	}
 	logger.Info("GET /getImage called with id: " + id)
 
 	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
@@ -145,6 +152,10 @@ func (c *ImageController) uploadImage(ctx *fiber.Ctx) error {
 // @Router			/image/deleteImage/{id} [delete]
 func (c *ImageController) deleteImage(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
+	if id == "" {
+		logger.Error("Image ID is required for deletion")
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, IMAGE_ID_REQUIRED_MSG))
+	}
 	logger.Info("DELETE /deleteImage called with id: " + id)
 
 	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
@@ -172,29 +183,58 @@ func (c *ImageController) deleteImage(ctx *fiber.Ctx) error {
 // @Tags			image
 // @Accept			json
 // @Produce		json
-// @Param			id	path	string	true	"Identificador de la imagen"
+// @Param			request	body	imageDTO.ImageUpdateRequestDTO	true	"Datos de actualización para la imagen"
 // @Security		CookieAuth
-// @Success		200	{object}	imageDTO.ImageUpdateRequestDTO	"Imagen actualizada correctamente"
+// @Success		200	{object}	imageDTO.ImageUpdateResponseDTO	"Imagen actualizada correctamente"
+// @Failure		400	{object}	exception.ApiException			"JSON invalido"
 // @Failure		401	{object}	exception.ApiException			"Usuario no autenticado"
 // @Failure		403	{object}	exception.ApiException			"Los datos proporcionados no coinciden con el usuario autenticado"
 // @Failure		404	{object}	exception.ApiException			"Usuario/Imagen no encontrada"
 // @Failure		500	{object}	exception.ApiException			"Ha ocurrido un error inesperado"
-// @Router			/image/updateImage/{id} [update]
-// func (c *ImageController) updateImage(ctx *fiber.Ctx) error {
-// 	id := ctx.Params("id")
-// 	logger.Info("UPDATE /updateImage called with id: " + id)
+// @Router			/image/updateImage [put]
+func (c *ImageController) updateImage(ctx *fiber.Ctx) error {
+	logger.Info("UPDATE /updateImage called")
 
-// 	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
-// 	if !ok {
-// 		logger.Error(INVALID_AUTHENTIFICATION_MSG)
-// 		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, INVALID_AUTHENTIFICATION_MSG))
-// 	}
+	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
+	if !ok {
+		logger.Error(INVALID_AUTHENTIFICATION_MSG)
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, INVALID_AUTHENTIFICATION_MSG))
+	}
 
-// 	dto := &imageDTO.ImageUpdateRequestDTO{
-// 		Id: id,
-// 		Owner: claims.Username,
-// 	}
-// }
+	request := new(imageDTO.ImageUpdateRequestDTO)
+	err := ctx.BodyParser(request)
+	if err != nil {
+		errorMessage := "Invalid JSON in update request"
+		logger.Error(errorMessage)
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, errorMessage))
+	}
+	// Validate required fields
+	if err := validators.ValidateNonEmptyStringField("id", request.Id); err != nil {
+		logger.Error("Image ID is required for update")
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, err.Error()))
+	}
+
+	if err := validators.ValidateNonEmptyStringField("name", request.Name); err != nil {
+		logger.Error("Image name is required for update")
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, err.Error()))
+	}
+
+	if err := validators.ValidateNonEmptyStringField("thumbnail_id", request.ThumbnailID); err != nil {
+		logger.Error("Thumbnail ID is required for update")
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, err.Error()))
+	}
+
+	request.Owner = claims.Username
+
+	result, errUpdate := c.imageService.Update(request)
+	if errUpdate != nil {
+		logger.Error("Error updating image with id " + request.Id + ": " + errUpdate.Message)
+		return ctx.Status(errUpdate.Status).JSON(errUpdate)
+	}
+
+	logger.Info("Image successfully updated with id: " + request.Id)
+	return ctx.Status(fiber.StatusOK).JSON(result)
+}
 
 // @Summary		Listar imágenes en miniatura (thumbnails)
 // @Description	Obtiene una lista paginada de imágenes en miniatura del usuario autenticado, usando paginación por cursor (lastId y pageSize).

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"go-gallery/src/commons/configurator"
 	"go-gallery/src/infrastructure/auth"
 	imageController "go-gallery/src/infrastructure/controller/image"
@@ -8,6 +9,7 @@ import (
 	userController "go-gallery/src/infrastructure/controller/user"
 	userMiddleware "go-gallery/src/infrastructure/controller/user/middlewares"
 	log "go-gallery/src/infrastructure/logger"
+	"runtime/debug"
 
 	emailService "go-gallery/src/service/email"
 	imageService "go-gallery/src/service/image"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
 var logger log.Logger
@@ -55,6 +58,21 @@ func main() {
 		AllowCredentials: true,
 		AllowOriginsFunc: func(origin string) bool {
 			return true
+		},
+	}))
+
+	// Add Recover middleware to handle panics and provide custom stack trace handler
+	app.Use(recover.New(recover.Config{
+		EnableStackTrace: true,
+		StackTraceHandler: func(c *fiber.Ctx, e any) {
+			// Log the panic with stack trace
+			stackTrace := string(debug.Stack())
+			logger.Panic(fmt.Sprintf("Recovered from panic: %v\nStack Trace: %s", e, stackTrace))
+
+			// Respond with a generic error message
+			c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Internal Server Error. Please try again later.",
+			})
 		},
 	}))
 

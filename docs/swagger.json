@@ -579,6 +579,75 @@
                 }
             }
         },
+        "/image/updateImage": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Actualiza una imagen específica del usuario autentificado",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "image"
+                ],
+                "summary": "Actualiza el nombre de una imagen",
+                "parameters": [
+                    {
+                        "description": "Datos de actualización para la imagen",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/imageDTO.ImageUpdateRequestDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Imagen actualizada correctamente",
+                        "schema": {
+                            "$ref": "#/definitions/imageDTO.ImageUpdateResponseDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "JSON invalido",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "401": {
+                        "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "403": {
+                        "description": "Los datos proporcionados no coinciden con el usuario autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario/Imagen no encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    }
+                }
+            }
+        },
         "/image/uploadImage": {
             "post": {
                 "security": [
@@ -703,6 +772,51 @@
                     "description": "Tamaño de la imagen en bytes\nExample: 204800",
                     "type": "string",
                     "example": "2.3 kB"
+                }
+            }
+        },
+        "imageDTO.ImageUpdateRequestDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "ID de la imagen que queremos actualizar .",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                },
+                "name": {
+                    "description": "Nombre del archivo de imagen.",
+                    "type": "string",
+                    "example": "foto_perfil"
+                },
+                "owner": {
+                    "description": "Usuario propietario de la imagen.",
+                    "type": "string",
+                    "example": "usuario123"
+                },
+                "thumbnail_id": {
+                    "description": "ID de la imagen miniatura asociada.s",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                }
+            }
+        },
+        "imageDTO.ImageUpdateResponseDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "ID de la imagen actualizada.",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                },
+                "owner": {
+                    "description": "Usuario propietario de la imagen.",
+                    "type": "string",
+                    "example": "usuario123"
+                },
+                "updated_fields": {
+                    "description": "Campos que han sido actualizados en la imagen, representados como un mapa clave-valor.\nLas claves son los nombres de los campos y los valores corresponden a los nuevos valores establecidos.",
+                    "type": "object",
+                    "additionalProperties": {}
                 }
             }
         },

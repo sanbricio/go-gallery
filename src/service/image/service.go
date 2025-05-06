@@ -35,8 +35,16 @@ func (s *ImageService) Insert(dto *imageDTO.ImageUploadRequestDTO) (*imageDTO.Im
 }
 
 func (s *ImageService) Update(dto *imageDTO.ImageUpdateRequestDTO) (*imageDTO.ImageUpdateResponseDTO, *exception.ApiException) {
-	//TODO Añadir update del thumbnail
-	return s.imageRepository.Update(dto)
+	imageDTO, err := s.imageRepository.Update(dto)
+	if err != nil {
+		return nil, err
+	}
+	_, err = s.thumbnailImageRepository.Update(dto)
+	if err != nil {
+		return nil, err
+	}
+
+	return imageDTO, nil
 }
 
 func (s *ImageService) Delete(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException) {

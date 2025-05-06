@@ -5,19 +5,19 @@ import (
 )
 
 const (
-	MESSAGE_ERROR string = "el campo '%s' no debe estar vacío"
-	UNKNOWN_ERROR string = "tipo de campo '%s' no soportado para validación de requerido"
+	ERROR_MESSAGE   string = "the field '%s' must not be empty"
+	UNKNOWN_ERROR   string = "field type '%s' is not supported for required validation"
 )
 
-func ValidateNonEmptyStringField(fieldName string, fieldValue interface{}) error {
+func ValidateNonEmptyStringField(fieldName string, fieldValue any) error {
 	switch v := fieldValue.(type) {
 	case string:
 		if v == "" {
-			return fmt.Errorf(MESSAGE_ERROR, fieldName)
+			return fmt.Errorf(ERROR_MESSAGE, fieldName)
 		}
 	case *string:
 		if v == nil || *v == "" {
-			return fmt.Errorf(MESSAGE_ERROR, fieldName)
+			return fmt.Errorf(ERROR_MESSAGE, fieldName)
 		}
 	default:
 		return fmt.Errorf(UNKNOWN_ERROR, fieldName)

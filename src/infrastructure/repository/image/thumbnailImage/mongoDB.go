@@ -74,7 +74,6 @@ func connect(urlConnection string, databaseName string) *mongo.Database {
 }
 
 func (r *ThumbnailImageMongoDBRepository) FindAll(owner, lastID string, pageSize int64) (*thumbnailImageDTO.ThumbnailImageCursorDTO, *exception.ApiException) {
-
 	filter := bson.M{
 		"owner": strings.TrimSpace(owner),
 	}
@@ -161,7 +160,6 @@ func (r *ThumbnailImageMongoDBRepository) Insert(dto *imageDTO.ImageDTO, rawCont
 	}
 
 	sizeInBytes := len(resizedBytes)
-	//TODO MIRAR ESTO ME DA MAS BYTES QUE LA ORIGINAL
 	size := utilsImage.HumanizeBytes(uint64(sizeInBytes))
 
 	thumbnailImage, errBuilder := thumbnailImageBuilder.NewThumbnailImageBuilder().
@@ -195,6 +193,61 @@ func (r *ThumbnailImageMongoDBRepository) Insert(dto *imageDTO.ImageDTO, rawCont
 		ThumbnailId: idHex,
 		Name:        dto.Name,
 		Extension:   dto.Extension,
-		Size:        dto.Size, 
+		Size:        dto.Size,
 	}, nil
+}
+
+func (r *ThumbnailImageMongoDBRepository) Update(dto *imageDTO.ImageUpdateRequestDTO) (*imageDTO.ImageUpdateResponseDTO, *exception.ApiException) {
+	objectID, errObjectID := getObjectID(&dto.ThumbnailID)
+	if errObjectID != nil {
+		return nil, errObjectID
+	}
+	filter := bson.M{
+		ID:    objectID,
+		OWNER: dto.Owner,
+	}
+
+	updateFields := bson.M{}
+	if dto.Name != "" {
+		updateFields["name"] = dto.Name
+	}
+
+	if len(updateFields) == 0 {
+		logger.Warning(fmt.Sprintf("No fields to update for thumbnail with Id '%s' and Owner '%s'", dto.Id, dto.Owner))
+		return nil, exception.NewApiException(400, "No fields to update")
+	}
+
+	update := bson.M{
+		"$set": updateFields,
+	}
+
+	logger.Info(fmt.Sprintf("Updating thumbnail with filter: %+v and update: %+v", filter, update))
+
+	result, errUpdate := r.mongoThumbnailImage.UpdateOne(context.Background(), filter, update)
+	if errUpdate != nil {
+		logger.Error(fmt.Sprintf("Error updating thumbnail: %s", errUpdate.Error()))
+		return nil, exception.NewApiException(500, "Error updating the thumbnail")
+	}
+
+	if result.MatchedCount == 0 {
+		logger.Warning(fmt.Sprintf("No thumbnail found to update with Id '%s' and Owner '%s'", dto.Id, dto.Owner))
+		return nil, exception.NewApiException(404, "Thumbnail not found")
+	}
+
+	logger.Info(fmt.Sprintf("Thumbnail successfully updated: %s", dto.Id))
+
+	return &imageDTO.ImageUpdateResponseDTO{
+		Id:            dto.Id,
+		Owner:         dto.Owner,
+		UpdatedFields: updateFields,
+	}, nil
+}
+
+func getObjectID(id *string) (primitive.ObjectID, *exception.ApiException) {
+	objectID, errObjectID := primitive.ObjectIDFromHex(*id)
+	if errObjectID != nil {
+		logger.Error(fmt.Sprintf("Invalid ObjectID: %v", *id))
+		return primitive.NilObjectID, exception.NewApiException(400, "Invalid image ID format")
+	}
+	return objectID, nil
 }

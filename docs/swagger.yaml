@@ -58,6 +58,42 @@ definitions:
         example: 2.3 kB
         type: string
     type: object
+  imageDTO.ImageUpdateRequestDTO:
+    properties:
+      id:
+        description: ID de la imagen que queremos actualizar .
+        example: 64a1f8b8e4b0c10d3c5b2e75
+        type: string
+      name:
+        description: Nombre del archivo de imagen.
+        example: foto_perfil
+        type: string
+      owner:
+        description: Usuario propietario de la imagen.
+        example: usuario123
+        type: string
+      thumbnail_id:
+        description: ID de la imagen miniatura asociada.s
+        example: 64a1f8b8e4b0c10d3c5b2e75
+        type: string
+    type: object
+  imageDTO.ImageUpdateResponseDTO:
+    properties:
+      id:
+        description: ID de la imagen actualizada.
+        example: 64a1f8b8e4b0c10d3c5b2e75
+        type: string
+      owner:
+        description: Usuario propietario de la imagen.
+        example: usuario123
+        type: string
+      updated_fields:
+        additionalProperties: {}
+        description: |-
+          Campos que han sido actualizados en la imagen, representados como un mapa clave-valor.
+          Las claves son los nombres de los campos y los valores corresponden a los nuevos valores establecidos.
+        type: object
+    type: object
   thumbnailImageDTO.ThumbnailImageCursorDTO:
     description: Contiene una lista de miniaturas y el identificador del último elemento
       para la paginación.
@@ -648,6 +684,50 @@ paths:
       summary: Listar imágenes en miniatura (thumbnails)
       tags:
       - thumbnail
+  /image/updateImage:
+    put:
+      consumes:
+      - application/json
+      description: Actualiza una imagen específica del usuario autentificado
+      parameters:
+      - description: Datos de actualización para la imagen
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/imageDTO.ImageUpdateRequestDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Imagen actualizada correctamente
+          schema:
+            $ref: '#/definitions/imageDTO.ImageUpdateResponseDTO'
+        "400":
+          description: JSON invalido
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "401":
+          description: Usuario no autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "403":
+          description: Los datos proporcionados no coinciden con el usuario autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "404":
+          description: Usuario/Imagen no encontrada
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "500":
+          description: Ha ocurrido un error inesperado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      security:
+      - CookieAuth: []
+      summary: Actualiza el nombre de una imagen
+      tags:
+      - image
   /image/uploadImage:
     post:
       consumes:

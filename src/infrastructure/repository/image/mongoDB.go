@@ -192,17 +192,18 @@ func (r *ImageMongoDBRepository) Delete(dto *imageDTO.ImageDTO) (*imageDTO.Image
 	logger.Info(fmt.Sprintf("Image successfully deleted: %+v", *foundImages[0].Id))
 	return &foundImages[0], nil
 }
-//TODO Pendiende de revisar
+
 func (r *ImageMongoDBRepository) Update(dto *imageDTO.ImageUpdateRequestDTO) (*imageDTO.ImageUpdateResponseDTO, *exception.ApiException) {
+	objectID, errObjectID := getObjectID(&dto.Id)
+	if errObjectID != nil {
+		return nil, errObjectID
+	}
 	filter := bson.M{
-		ID:    dto.Id,
+		ID:    objectID,
 		OWNER: dto.Owner,
 	}
 
 	updateFields := bson.M{}
-	if dto.ThumbnailId != "" {
-		updateFields["thumbnail_id"] = dto.ThumbnailId
-	}
 	if dto.Name != "" {
 		updateFields["name"] = dto.Name
 	}
