@@ -11,7 +11,7 @@ type ImageUpdateRequestDTO struct {
 	// Usuario propietario de la imagen.
 	Owner string `json:"owner" example:"usuario123"`
 
-	// ID de la imagen miniatura asociada.s
+	// ID de la imagen miniatura asociada
 	ThumbnailID string `json:"thumbnail_id" bson:"thumbnail_id" example:"64a1f8b8e4b0c10d3c5b2e75"`
 }
 

@@ -1,5 +1,15 @@
 basePath: /api
 definitions:
+  dto.MessageResponseDTO:
+    description: Respuesta con un mensaje para informar al usuario que ha ocurrido
+    properties:
+      message:
+        description: |-
+          Mensaje de respuesta
+          example "Operación realizada con éxito"
+        example: Ha funcionado correctamente
+        type: string
+    type: object
   exception.ApiException:
     description: Estructura para manejar excepciones con un código de estado y un
       mensaje de error
@@ -58,6 +68,21 @@ definitions:
         example: 2.3 kB
         type: string
     type: object
+  imageDTO.ImageDeleteRequestDTO:
+    properties:
+      id:
+        description: ID de la imagen que queremos actualizar .
+        example: 64a1f8b8e4b0c10d3c5b2e75
+        type: string
+      owner:
+        description: Usuario propietario de la imagen.
+        example: usuario123
+        type: string
+      thumbnail_id:
+        description: ID de la imagen miniatura asociadas
+        example: 64a1f8b8e4b0c10d3c5b2e75
+        type: string
+    type: object
   imageDTO.ImageUpdateRequestDTO:
     properties:
       id:
@@ -73,7 +98,7 @@ definitions:
         example: usuario123
         type: string
       thumbnail_id:
-        description: ID de la imagen miniatura asociada.s
+        description: ID de la imagen miniatura asociada
         example: 64a1f8b8e4b0c10d3c5b2e75
         type: string
     type: object
@@ -562,24 +587,25 @@ paths:
       summary: Obtiene la documentación de la API en formato YAML
       tags:
       - docs
-  /image/deleteImage/{id}:
+  /image/deleteImage:
     delete:
       consumes:
       - application/json
       description: Borra una imagen específica del usuario autentificado
       parameters:
-      - description: Identificador de la imagen
-        in: path
-        name: id
+      - description: Datos para eliminar la imagen
+        in: body
+        name: request
         required: true
-        type: string
+        schema:
+          $ref: '#/definitions/imageDTO.ImageDeleteRequestDTO'
       produces:
       - application/json
       responses:
         "200":
           description: Imagen eliminada correctamente
           schema:
-            $ref: '#/definitions/imageDTO.ImageDTO'
+            $ref: '#/definitions/dto.MessageResponseDTO'
         "401":
           description: Usuario no autenticado
           schema:

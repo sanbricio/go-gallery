@@ -39,12 +39,13 @@ func NewImageController(imageService *imageService.ImageService, userService *us
 }
 
 func (c *ImageController) SetUpRoutes(router fiber.Router) {
+	//Image
 	router.Get("/getImage/:id", c.getImage)
 	router.Post("/uploadImage", c.uploadImage)
 	router.Put("/updateImage", c.updateImage)
-	router.Delete("/deleteImage/:id", c.deleteImage)
+	router.Delete("/deleteImage/", c.deleteImage)
 
-	// Thumbnails
+	// Thumbnail
 	router.Get("/getThumbnailImages", c.getThumbnailImages)
 }
 
@@ -142,40 +143,52 @@ func (c *ImageController) uploadImage(ctx *fiber.Ctx) error {
 // @Tags			image
 // @Accept			json
 // @Produce		json
-// @Param			id	path	string	true	"Identificador de la imagen"
+// @Param			request	body	imageDTO.ImageDeleteRequestDTO	true	"Datos para eliminar la imagen"
 // @Security		CookieAuth
-// @Success		200	{object}	imageDTO.ImageDTO		"Imagen eliminada correctamente"
+// @Success		200	{object}	dto.MessageResponseDTO		"Imagen eliminada correctamente"
 // @Failure		401	{object}	exception.ApiException	"Usuario no autenticado"
 // @Failure		403	{object}	exception.ApiException	"Los datos proporcionados no coinciden con el usuario autenticado"
 // @Failure		404	{object}	exception.ApiException	"Usuario/Imagen no encontrada"
 // @Failure		500	{object}	exception.ApiException	"Ha ocurrido un error inesperado"
-// @Router			/image/deleteImage/{id} [delete]
+// @Router			/image/deleteImage [delete]
 func (c *ImageController) deleteImage(ctx *fiber.Ctx) error {
-	id := ctx.Params("id")
-	if id == "" {
-		logger.Error("Image ID is required for deletion")
-		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, IMAGE_ID_REQUIRED_MSG))
-	}
-	logger.Info("DELETE /deleteImage called with id: " + id)
-
 	claims, ok := ctx.Locals("user").(*userDTO.JwtClaimsDTO)
 	if !ok {
 		logger.Error(INVALID_AUTHENTIFICATION_MSG)
 		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, INVALID_AUTHENTIFICATION_MSG))
 	}
 
-	dtoFindImage := &imageDTO.ImageDTO{
-		Id:    &id,
-		Owner: claims.Username,
-	}
-	image, err := c.imageService.Delete(dtoFindImage)
+	request := new(imageDTO.ImageDeleteRequestDTO)
+	err := ctx.BodyParser(request)
 	if err != nil {
-		logger.Error("Error deleting image with id " + id + ": " + err.Message)
-		return ctx.Status(err.Status).JSON(err)
+		errorMessage := "Invalid JSON in update request"
+		logger.Error(errorMessage)
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, errorMessage))
 	}
 
-	logger.Info("Image successfully deleted with id: " + id)
-	return ctx.Status(fiber.StatusOK).JSON(image)
+	// Validate required fields
+	if err := validators.ValidateNonEmptyStringField("id", request.Id); err != nil {
+		logger.Error("Image ID is required for update")
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, err.Error()))
+	}
+
+	if err := validators.ValidateNonEmptyStringField("thumbnail_id", request.ThumbnailID); err != nil {
+		logger.Error("Thumbnail ID is required for update")
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, err.Error()))
+	}
+
+	request.Owner = claims.Username
+
+	logger.Info("DELETE /deleteImage called with id: " + request.Id)
+
+	response, errDelete := c.imageService.Delete(request)
+	if errDelete != nil {
+		logger.Error("Error deleting image with id " + request.Id + ": " + errDelete.Message)
+		return ctx.Status(errDelete.Status).JSON(err)
+	}
+
+	logger.Info(fmt.Sprintf("Image and thumbnail successfully deleted with image id: %s and thumbnail id: %s", request.Id, request.ThumbnailID))
+	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
 // @Summary		Actualiza el nombre de una imagen
@@ -232,7 +245,7 @@ func (c *ImageController) updateImage(ctx *fiber.Ctx) error {
 		return ctx.Status(errUpdate.Status).JSON(errUpdate)
 	}
 
-	logger.Info("Image successfully updated with id: " + request.Id)
+	logger.Info(fmt.Sprintf("Image and thumbnail successfully updated with image id: %s and thumbnail id: %s", request.Id, request.ThumbnailID))
 	return ctx.Status(fiber.StatusOK).JSON(result)
 }
 

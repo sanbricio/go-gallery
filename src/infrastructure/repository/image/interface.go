@@ -9,5 +9,5 @@ type ImageRepository interface {
 	Find(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException)
 	Insert(dto *imageDTO.ImageUploadRequestDTO) (*imageDTO.ImageDTO, *exception.ApiException)
 	Update(dto *imageDTO.ImageUpdateRequestDTO) (*imageDTO.ImageUpdateResponseDTO, *exception.ApiException)
-	Delete(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException)
+	Delete(dto *imageDTO.ImageDeleteRequestDTO) (*imageDTO.ImageDTO, *exception.ApiException)
 }

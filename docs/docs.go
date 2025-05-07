@@ -398,7 +398,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/image/deleteImage/{id}": {
+        "/image/deleteImage": {
             "delete": {
                 "security": [
                     {
@@ -418,18 +418,20 @@ const docTemplate = `{
                 "summary": "Elimina una imagen",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Identificador de la imagen",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
+                        "description": "Datos para eliminar la imagen",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/imageDTO.ImageDeleteRequestDTO"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Imagen eliminada correctamente",
                         "schema": {
-                            "$ref": "#/definitions/imageDTO.ImageDTO"
+                            "$ref": "#/definitions/dto.MessageResponseDTO"
                         }
                     },
                     "401": {
@@ -730,6 +732,17 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.MessageResponseDTO": {
+            "description": "Respuesta con un mensaje para informar al usuario que ha ocurrido",
+            "type": "object",
+            "properties": {
+                "message": {
+                    "description": "Mensaje de respuesta\nexample \"Operación realizada con éxito\"",
+                    "type": "string",
+                    "example": "Ha funcionado correctamente"
+                }
+            }
+        },
         "exception.ApiException": {
             "description": "Estructura para manejar excepciones con un código de estado y un mensaje de error",
             "type": "object",
@@ -782,6 +795,26 @@ const docTemplate = `{
                 }
             }
         },
+        "imageDTO.ImageDeleteRequestDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "ID de la imagen que queremos actualizar .",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                },
+                "owner": {
+                    "description": "Usuario propietario de la imagen.",
+                    "type": "string",
+                    "example": "usuario123"
+                },
+                "thumbnail_id": {
+                    "description": "ID de la imagen miniatura asociadas",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                }
+            }
+        },
         "imageDTO.ImageUpdateRequestDTO": {
             "type": "object",
             "properties": {
@@ -801,7 +834,7 @@ const docTemplate = `{
                     "example": "usuario123"
                 },
                 "thumbnail_id": {
-                    "description": "ID de la imagen miniatura asociada.s",
+                    "description": "ID de la imagen miniatura asociada",
                     "type": "string",
                     "example": "64a1f8b8e4b0c10d3c5b2e75"
                 }

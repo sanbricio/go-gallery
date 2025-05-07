@@ -9,6 +9,7 @@ import (
 	thumbnailImageBuilder "go-gallery/src/domain/entities/builder/image/thumbnailImage"
 	"strings"
 
+	"go-gallery/src/infrastructure/dto"
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 	thumbnailImageDTO "go-gallery/src/infrastructure/dto/image/thumbnailImage"
 	log "go-gallery/src/infrastructure/logger"
@@ -240,6 +241,38 @@ func (r *ThumbnailImageMongoDBRepository) Update(dto *imageDTO.ImageUpdateReques
 		Id:            dto.Id,
 		Owner:         dto.Owner,
 		UpdatedFields: updateFields,
+	}, nil
+}
+
+func (r *ThumbnailImageMongoDBRepository) Delete(dtoR *imageDTO.ImageDeleteRequestDTO) (*dto.MessageResponseDTO, *exception.ApiException) {
+	objectID, errObjectID := getObjectID(&dtoR.ThumbnailID)
+	if errObjectID != nil {
+		return nil, errObjectID
+	}
+
+	filter := bson.M{
+		ID:    objectID,
+		OWNER: dtoR.Owner,
+	}
+
+	logger.Info(fmt.Sprintf("Attempting to delete thumbnail with filter: %+v", filter))
+
+	foundThumbnails, err := r.find(filter, nil)
+	if err != nil {
+		logger.Warning(fmt.Sprintf("Thumbnail not found for deletion with Id '%v' and Owner '%v'", dtoR.Id, dtoR.Owner))
+		return nil, err
+	}
+
+	_, errDelete := r.mongoThumbnailImage.DeleteOne(context.Background(), filter)
+	if errDelete != nil {
+		logger.Error(fmt.Sprintf("Error deleting thumbnail: %s", errDelete.Error()))
+		return nil, exception.NewApiException(500, "Error deleting the thumbnail")
+	}
+
+	logger.Info(fmt.Sprintf("Thumbnail successfully deleted: %+v", *foundThumbnails[0].Id))
+
+	return &dto.MessageResponseDTO{
+		Message: fmt.Sprintf("Se ha eliminado la imagen %s correctamente.", foundThumbnails[0].Name),
 	}, nil
 }
 

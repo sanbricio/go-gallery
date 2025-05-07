@@ -164,8 +164,8 @@ func (r *ImageMongoDBRepository) Insert(dtoInsertImage *imageDTO.ImageUploadRequ
 	return dto, nil
 }
 
-func (r *ImageMongoDBRepository) Delete(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException) {
-	objectID, errObjectID := getObjectID(dto.Id)
+func (r *ImageMongoDBRepository) Delete(dto *imageDTO.ImageDeleteRequestDTO) (*imageDTO.ImageDTO, *exception.ApiException) {
+	objectID, errObjectID := getObjectID(&dto.Id)
 	if errObjectID != nil {
 		return nil, errObjectID
 	}
@@ -179,7 +179,7 @@ func (r *ImageMongoDBRepository) Delete(dto *imageDTO.ImageDTO) (*imageDTO.Image
 
 	foundImages, err := r.find(filter)
 	if err != nil {
-		logger.Warning(fmt.Sprintf("Image not found for deletion with Id '%v' and Owner '%v'", *dto.Id, dto.Owner))
+		logger.Warning(fmt.Sprintf("Image not found for deletion with Id '%v' and Owner '%v'", dto.Id, dto.Owner))
 		return nil, err
 	}
 

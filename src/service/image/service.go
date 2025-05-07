@@ -3,6 +3,7 @@ package imageService
 import (
 	"go-gallery/src/commons/exception"
 
+	"go-gallery/src/infrastructure/dto"
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 	thumbnailImageDTO "go-gallery/src/infrastructure/dto/image/thumbnailImage"
 	imageRepository "go-gallery/src/infrastructure/repository/image"
@@ -47,9 +48,13 @@ func (s *ImageService) Update(dto *imageDTO.ImageUpdateRequestDTO) (*imageDTO.Im
 	return imageDTO, nil
 }
 
-func (s *ImageService) Delete(dto *imageDTO.ImageDTO) (*imageDTO.ImageDTO, *exception.ApiException) {
-	//TODO Añadir delete del thumbnail
-	return s.imageRepository.Delete(dto)
+func (s *ImageService) Delete(dto *imageDTO.ImageDeleteRequestDTO) (*dto.MessageResponseDTO, *exception.ApiException) {
+	_, err := s.imageRepository.Delete(dto)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.thumbnailImageRepository.Delete(dto)
 }
 
 func (s *ImageService) FindAllThumbnails(owner, lastID string, pageSize int64) (*thumbnailImageDTO.ThumbnailImageCursorDTO, *exception.ApiException) {
