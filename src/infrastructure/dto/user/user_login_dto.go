@@ -28,6 +28,10 @@ type LoginResponseDTO struct {
 	Email string `json:"email" example:"usuario@example.com"`
 
 	// Nombre del usuario
-	// example "Juan Pérez"
-	Name string `json:"name" example:"Juan Pérez"`
+	// example "Juan"
+	Firstname string `json:"firstname" example:"Juan"`
+
+	// Apellido del usuario
+	// example "Bricio"
+	Lastname string `json:"lastname" example:"Bricio"`
 }

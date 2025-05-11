@@ -937,15 +937,20 @@
                     "type": "string",
                     "example": "usuario@example.com"
                 },
+                "firstname": {
+                    "description": "Nombre del usuario\nexample \"Juan\"",
+                    "type": "string",
+                    "example": "Juan"
+                },
+                "lastname": {
+                    "description": "Apellido del usuario\nexample \"Bricio\"",
+                    "type": "string",
+                    "example": "Bricio"
+                },
                 "message": {
                     "description": "Mensaje de confirmación\nexample \"Se ha iniciado sesión correctamente\"",
                     "type": "string",
                     "example": "Se ha iniciado sesión correctamente"
-                },
-                "name": {
-                    "description": "Nombre del usuario\nexample \"Juan Pérez\"",
-                    "type": "string",
-                    "example": "Juan Pérez"
                 },
                 "username": {
                     "description": "Nombre de usuario autenticado\nexample \"usuario123\"",

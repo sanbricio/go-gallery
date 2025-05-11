@@ -205,17 +205,23 @@ definitions:
           example "usuario@example.com"
         example: usuario@example.com
         type: string
+      firstname:
+        description: |-
+          Nombre del usuario
+          example "Juan"
+        example: Juan
+        type: string
+      lastname:
+        description: |-
+          Apellido del usuario
+          example "Bricio"
+        example: Bricio
+        type: string
       message:
         description: |-
           Mensaje de confirmación
           example "Se ha iniciado sesión correctamente"
         example: Se ha iniciado sesión correctamente
-        type: string
-      name:
-        description: |-
-          Nombre del usuario
-          example "Juan Pérez"
-        example: Juan Pérez
         type: string
       username:
         description: |-

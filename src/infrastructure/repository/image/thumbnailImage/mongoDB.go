@@ -272,7 +272,7 @@ func (r *ThumbnailImageMongoDBRepository) Delete(dtoR *imageDTO.ImageDeleteReque
 	logger.Info(fmt.Sprintf("Thumbnail successfully deleted: %+v", *foundThumbnails[0].Id))
 
 	return &dto.MessageResponseDTO{
-		Message: fmt.Sprintf("Se ha eliminado la imagen %s correctamente.", foundThumbnails[0].Name),
+		Message: fmt.Sprintf("The image %s has been successfully deleted.", foundThumbnails[0].Name),
 	}, nil
 }
 

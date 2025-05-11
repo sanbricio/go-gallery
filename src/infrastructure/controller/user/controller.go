@@ -83,10 +83,11 @@ func (c *AuthController) login(ctx *fiber.Ctx) error {
 	}
 
 	responseDTO := userDTO.LoginResponseDTO{
-		Message:  "Login successful",
-		Username: user.Username,
-		Email:    user.Email,
-		Name:     user.Firstname,
+		Message:   "Login successful",
+		Username:  user.Username,
+		Email:     user.Email,
+		Firstname: user.Firstname,
+		Lastname:  user.Lastname,
 	}
 
 	logger.Info(fmt.Sprintf("User %s logged in successfully", user.Username))
