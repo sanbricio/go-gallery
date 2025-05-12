@@ -53,7 +53,7 @@ func loadTestCasesUserHandler() []testCaseUserHandler {
 				Lastname:  "Doe",
 				Firstname: "John",
 			},
-			expects: "La contraseña tiene que tener al menos 8 carácteres",
+			expects: "The password must be at least 8 characters long",
 		},
 		{
 			desc: "Password missing uppercase",
@@ -64,7 +64,7 @@ func loadTestCasesUserHandler() []testCaseUserHandler {
 				Lastname:  "Doe",
 				Firstname: "John",
 			},
-			expects: "La contraseña tiene que tener al menos una mayúscula",
+			expects: "The password must contain at least one uppercase letter",
 		},
 		{
 			desc: "Password missing special character",
@@ -75,7 +75,7 @@ func loadTestCasesUserHandler() []testCaseUserHandler {
 				Lastname:  "Doe",
 				Firstname: "John",
 			},
-			expects: "La contraseña tiene que tener al menos un carácter especial",
+			expects: "The password must contain at least one special character",
 		},
 		{
 			desc: "Invalid email",
@@ -86,7 +86,7 @@ func loadTestCasesUserHandler() []testCaseUserHandler {
 				Lastname:  "Doe",
 				Firstname: "John",
 			},
-			expects: "El email no es correcto",
+			expects: "The email is not valid",
 		},
 	}
 }

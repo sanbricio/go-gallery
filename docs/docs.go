@@ -167,7 +167,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Se ha cerrado sesión correctamente",
                         "schema": {
-                            "$ref": "#/definitions/userDTO.UserMessageResponseDTO"
+                            "$ref": "#/definitions/dto.MessageResponseDTO"
                         }
                     },
                     "401": {
@@ -184,6 +184,64 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Usuario no encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/recover": {
+            "post": {
+                "description": "Confirma el código de la recuperación de la contraseña del usuario y la restablece por la que se indica en la petición",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Confirma el código para la recuperación de contraseña",
+                "parameters": [
+                    {
+                        "description": "Datos para restablecer contraseña",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userDTO.PasswordRecoveryConfirmDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Se ha realizado la recuperación de la contraseña correctamente",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponseDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Petición no válida",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "401": {
+                        "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "No se ha encontrado el usuario",
                         "schema": {
                             "$ref": "#/definitions/exception.ApiException"
                         }
@@ -254,7 +312,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Solicitar eliminación de cuenta",
+                "summary": "Solicita la eliminación de cuenta",
                 "responses": {
                     "200": {
                         "description": "Se ha enviado un código de confirmación al correo electrónico",
@@ -272,6 +330,52 @@ const docTemplate = `{
                         "description": "Los datos proporcionados no coinciden con el usuario autenticado",
                         "schema": {
                             "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/request-recover": {
+            "post": {
+                "description": "Envía un código de verificación al correo electrónico para restablecer la contraseña del usuario",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Solicita la recuperación de contraseña del usuario",
+                "parameters": [
+                    {
+                        "description": "Correo para recuperar contraseña",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userDTO.PasswordRecoveryRequestDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Se ha enviado un correo electrónico para recuperar la contraseña",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponseDTO"
                         }
                     },
                     "404": {
@@ -966,6 +1070,38 @@ const docTemplate = `{
                 }
             }
         },
+        "userDTO.PasswordRecoveryConfirmDTO": {
+            "description": "Datos requeridos para realizar la recuperación de la contraseña",
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "Código de verificación para la eliminación",
+                    "type": "string",
+                    "example": "123456"
+                },
+                "email": {
+                    "description": "Correo electrónico del usuario",
+                    "type": "string",
+                    "example": "usuario@example.com"
+                },
+                "newPassword": {
+                    "description": "Nueva contraseña del usuario",
+                    "type": "string",
+                    "example": "NuevaContraseñaSegura."
+                }
+            }
+        },
+        "userDTO.PasswordRecoveryRequestDTO": {
+            "description": "Datos requeridos para realizar la recuperación de la contraseña",
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "Correo electrónico del usuario",
+                    "type": "string",
+                    "example": "usuario@example.com"
+                }
+            }
+        },
         "userDTO.UserDTO": {
             "description": "Estructura que define los datos del usuario",
             "type": "object",
@@ -1002,25 +1138,14 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "code": {
-                    "description": "Código de verificación para la eliminación\nexample \"123456\"",
+                    "description": "Código de verificación para la eliminación",
                     "type": "string",
                     "example": "123456"
                 },
                 "password": {
-                    "description": "Contraseña del usuario para confirmar la eliminación\nexample \"MiContraseñaSegura\"",
+                    "description": "Contraseña del usuario para confirmar la eliminación",
                     "type": "string",
                     "example": "MiContraseñaSegura"
-                }
-            }
-        },
-        "userDTO.UserMessageResponseDTO": {
-            "description": "Respuesta con un mensaje para informar al usuario que ha ocurrido",
-            "type": "object",
-            "properties": {
-                "message": {
-                    "description": "Mensaje de respuesta\nexample \"Operación realizada con éxito\"",
-                    "type": "string",
-                    "example": "Ha funcionado correctamente"
                 }
             }
         },

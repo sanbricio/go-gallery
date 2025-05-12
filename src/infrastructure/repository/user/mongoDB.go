@@ -81,6 +81,10 @@ func (r *UserMongoDBRepository) Find(dtoUserFind *userDTO.LoginRequestDTO) (*use
 	return dto, nil
 }
 
+func (r *UserMongoDBRepository) FindByEmail(email string) (*userDTO.UserDTO, *exception.ApiException) {
+	panic("method not implemented FindByEmail in UserMongoDBRepository")
+}
+
 func (r *UserMongoDBRepository) FindAndCheckJWT(claims *userDTO.JwtClaimsDTO) (*userDTO.UserDTO, *exception.ApiException) {
 	logger.Info(fmt.Sprintf("Verifying JWT for user: %s", claims.Username))
 
@@ -212,7 +216,6 @@ func (r *UserMongoDBRepository) Delete(dtoDeleteUser *userDTO.UserDTO) (int64, *
 
 	return deleteCount, nil
 }
-
 
 func (r *UserMongoDBRepository) checkUserIsCreated(dtoInsertUser *userDTO.UserDTO) *exception.ApiException {
 	filter := bson.M{

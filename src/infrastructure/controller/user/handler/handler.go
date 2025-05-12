@@ -8,14 +8,14 @@ import (
 
 func ProcessUser(password, email string) *exception.ApiException {
 	if password != "" {
-		err := validatePassword(password)
+		err := ValidatePassword(password)
 		if err != nil {
 			return err
 		}
 	}
 
 	if email != "" {
-		err := validateEmail(email)
+		err := ValidateEmail(email)
 		if err != nil {
 			return err
 		}
@@ -24,29 +24,29 @@ func ProcessUser(password, email string) *exception.ApiException {
 	return nil
 }
 
-func validatePassword(password string) *exception.ApiException {
+func ValidatePassword(password string) *exception.ApiException {
 	if len(password) < 8 {
-		return exception.NewApiException(http.StatusBadRequest, "La contraseña tiene que tener al menos 8 carácteres")
+		return exception.NewApiException(http.StatusBadRequest, "The password must be at least 8 characters long")
 	}
 
 	hasUppercase := regexp.MustCompile(`[A-Z]`).MatchString(password)
 	if !hasUppercase {
-		return exception.NewApiException(http.StatusBadRequest, "La contraseña tiene que tener al menos una mayúscula")
+		return exception.NewApiException(http.StatusBadRequest, "The password must contain at least one uppercase letter")
 	}
 
 	hasSpecialChar := regexp.MustCompile(`[!@#$%^&*(),.?":{}|<>]`).MatchString(password)
 	if !hasSpecialChar {
-		return exception.NewApiException(http.StatusBadRequest, "La contraseña tiene que tener al menos un carácter especial")
+		return exception.NewApiException(http.StatusBadRequest, "The password must contain at least one special character")
 	}
 
 	return nil
 }
 
-func validateEmail(email string) *exception.ApiException {
+func ValidateEmail(email string) *exception.ApiException {
 	const emailPattern = `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 	re := regexp.MustCompile(emailPattern)
 	if !re.MatchString(email) {
-		return exception.NewApiException(http.StatusBadRequest, "El email no es correcto")
+		return exception.NewApiException(http.StatusBadRequest, "The email is not valid")
 	}
 	return nil
 }

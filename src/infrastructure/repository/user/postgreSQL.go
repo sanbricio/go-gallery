@@ -98,15 +98,40 @@ func (u *UserPostgreSQLRepository) Find(dtoLoginRequest *userDTO.LoginRequestDTO
 }
 
 func (u *UserPostgreSQLRepository) find(username, password string) (*userEntity.User, *exception.ApiException) {
-	query := "SELECT username, email, firstname, lastname, password FROM users WHERE username = $1"
-	row := u.db.QueryRow(query, username)
+	user, err := u.findBy("username", username)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := user.CheckPasswordIntegrity(password); err != nil {
+		return nil, exception.NewApiException(400, "Incorrect password")
+	}
+
+	return user, nil
+}
+
+func (u *UserPostgreSQLRepository) FindByEmail(email string) (*userDTO.UserDTO, *exception.ApiException) {
+	logger.Info(fmt.Sprintf("Searching for user by email: %s", email))
+
+	user, err := u.findBy("email", email)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Error searching for user with email %s: %s", email, err.Message))
+		return nil, err
+	}
+
+	return userDTO.FromUser(user), nil
+}
+
+func (u *UserPostgreSQLRepository) findBy(field, value string) (*userEntity.User, *exception.ApiException) {
+	query := fmt.Sprintf("SELECT username, email, firstname, lastname, password FROM users WHERE %s = $1", field)
+	row := u.db.QueryRow(query, value)
 
 	userDTO := new(userDTO.UserDTO)
 	if err := row.Scan(&userDTO.Username, &userDTO.Email, &userDTO.Firstname, &userDTO.Lastname, &userDTO.Password); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, exception.NewApiException(404, "User not found")
 		}
-		return nil, exception.NewApiException(500, "Error searching for user")
+		return nil, exception.NewApiException(500, "Error retrieving user")
 	}
 
 	user, errBuilder := userBuilder.NewUserBuilder().
@@ -115,10 +140,6 @@ func (u *UserPostgreSQLRepository) find(username, password string) (*userEntity.
 
 	if errBuilder != nil {
 		return nil, exception.NewApiException(500, errBuilder.Error())
-	}
-
-	if err := user.CheckPasswordIntegrity(password); err != nil {
-		return nil, exception.NewApiException(400, "Incorrect password")
 	}
 
 	return user, nil
@@ -183,7 +204,7 @@ func (u *UserPostgreSQLRepository) Update(dtoUpdateUser *userDTO.UserDTO) (int64
 	query := "UPDATE users SET "
 	args := []any{}
 	count := 1
-	// Construimos la query y los argumentos para la actualización de manera dinámica
+	// Dynamically construct the query and arguments for the update
 	if dtoUpdateUser.Email != "" {
 		query += "email = $" + fmt.Sprint(count) + ", "
 		args = append(args, dtoUpdateUser.Email)
@@ -205,13 +226,13 @@ func (u *UserPostgreSQLRepository) Update(dtoUpdateUser *userDTO.UserDTO) (int64
 		count++
 	}
 
-	// Eliminar la última coma y agregar condición WHERE
+	// Remove the trailing comma and add the WHERE condition
 	if len(args) == 0 {
 		logger.Warning(fmt.Sprintf("No data to update for user: %s", dtoUpdateUser.Username))
 		return 0, exception.NewApiException(400, "No data to update")
 	}
 
-	// Con el query[:len(query)-2] eliminamos la última coma y espacio, despues de eso añadimos la condición WHERE
+	// Using query[:len(query)-2], we remove the last comma and space, then add the WHERE condition
 	query = query[:len(query)-2] + " WHERE username = $" + fmt.Sprint(count)
 	args = append(args, dtoUpdateUser.Username)
 

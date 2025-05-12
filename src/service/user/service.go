@@ -25,6 +25,10 @@ func (s *UserService) Find(loginRequestDTO *userDTO.LoginRequestDTO) (*userDTO.U
 	return s.repository.Find(loginRequestDTO)
 }
 
+func (s *UserService) FindByEmail(email string) (*userDTO.UserDTO, *exception.ApiException) {
+	return s.repository.FindByEmail(email)
+}
+
 func (s *UserService) FindAndCheckJWT(claimsDTO *userDTO.JwtClaimsDTO) (*userDTO.UserDTO, *exception.ApiException) {
 	return s.repository.FindAndCheckJWT(claimsDTO)
 }

@@ -6,9 +6,11 @@ import (
 
 	userHandler "go-gallery/src/infrastructure/controller/user/handler"
 	userMiddleware "go-gallery/src/infrastructure/controller/user/middlewares"
+	"go-gallery/src/infrastructure/dto"
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 	userDTO "go-gallery/src/infrastructure/dto/user"
 	log "go-gallery/src/infrastructure/logger"
+	emailTemplate "go-gallery/src/infrastructure/repository/emailSender/template"
 	codeGeneratorService "go-gallery/src/service/codeGenerator"
 	emailService "go-gallery/src/service/email"
 	imageService "go-gallery/src/service/image"
@@ -20,10 +22,11 @@ import (
 var logger log.Logger
 
 const (
-	INVALID_LOGIN_REQUEST_MSG    string = "Invalid JSON in the request body"
-	INVALID_AUTHENTIFICATION_MSG string = "User not authenticated"
-	CLAIMS_NOT_FOUND_MSG         string = "Unauthorized: no user claims found"
-	PREFIX_DELETE_CODE_GENERATOR string = "delete"
+	INVALID_LOGIN_REQUEST_MSG     string = "Invalid JSON in the request body"
+	INVALID_AUTHENTIFICATION_MSG  string = "User not authenticated"
+	CLAIMS_NOT_FOUND_MSG          string = "Unauthorized: no user claims found"
+	PREFIX_DELETE_CODE_GENERATOR  string = "delete"
+	PREFIX_RECOVER_CODE_GENERATOR string = "recover"
 )
 
 type AuthController struct {
@@ -54,6 +57,8 @@ func (c *AuthController) SetUpRoutes(router fiber.Router) {
 	router.Put("/update", c.jwtMiddleware.Handler(), c.update)
 	router.Post("/request-delete", c.jwtMiddleware.Handler(), c.requestDelete)
 	router.Delete("/delete", c.jwtMiddleware.Handler(), c.confirmDelete)
+	router.Post("/request-recover", c.requestRecover)
+	router.Post("/recover", c.recover)
 }
 
 // @Summary		Iniciar sesión
@@ -149,11 +154,11 @@ func (c *AuthController) register(ctx *fiber.Ctx) error {
 // @Description	Cierra la sesión del usuario autenticado, elimina la cookie auth_token
 // @Tags			auth
 // @Security		CookieAuth
-// @Success		200	{object}	userDTO.UserMessageResponseDTO	"Se ha cerrado sesión correctamente"
-// @Failure		401	{object}	exception.ApiException			"Usuario no autenticado"
-// @Failure		403	{object}	exception.ApiException			"Los datos proporcionados no coinciden con el usuario autenticado"
-// @Failure		404	{object}	exception.ApiException			"Usuario no encontrado"
-// @Failure		500	{object}	exception.ApiException			"Ha ocurrido un error inesperado"
+// @Success		200	{object}	dto.MessageResponseDTO	"Se ha cerrado sesión correctamente"
+// @Failure		401	{object}	exception.ApiException	"Usuario no autenticado"
+// @Failure		403	{object}	exception.ApiException	"Los datos proporcionados no coinciden con el usuario autenticado"
+// @Failure		404	{object}	exception.ApiException	"Usuario no encontrado"
+// @Failure		500	{object}	exception.ApiException	"Ha ocurrido un error inesperado"
 // @Router			/auth/logout [post]
 func (c *AuthController) logout(ctx *fiber.Ctx) error {
 	logger.Info("POST /logout called")
@@ -167,7 +172,7 @@ func (c *AuthController) logout(ctx *fiber.Ctx) error {
 	c.jwtMiddleware.DeleteAuthCookie(ctx)
 	logger.Info(fmt.Sprintf("User %s logged out successfully", claims.Username))
 
-	return ctx.Status(fiber.StatusOK).JSON(&userDTO.UserMessageResponseDTO{
+	return ctx.Status(fiber.StatusOK).JSON(&dto.MessageResponseDTO{
 		Message: fmt.Sprintf("Se ha cerrado sesión correctamente, %s", claims.Username),
 	})
 }
@@ -234,12 +239,12 @@ func (c *AuthController) update(ctx *fiber.Ctx) error {
 	}
 
 	logger.Info(fmt.Sprintf("User %s updated successfully", dtoUser.Username))
-	return ctx.Status(fiber.StatusOK).JSON(&userDTO.UserMessageResponseDTO{
+	return ctx.Status(fiber.StatusOK).JSON(&dto.MessageResponseDTO{
 		Message: fmt.Sprintf("User %s updated successfully.", dtoUser.Username),
 	})
 }
 
-// @Summary		Solicitar eliminación de cuenta
+// @Summary		Solicita la eliminación de cuenta
 // @Description	Envía un código de verificación al correo para eliminar la cuenta
 // @Tags			auth
 // @Security		CookieAuth
@@ -263,18 +268,18 @@ func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
 		logger.Error(fmt.Sprintf("Error generating delete code: %v", err))
 		return ctx.Status(fiber.StatusInternalServerError).JSON(exception.NewApiException(fiber.StatusInternalServerError, "Error generating delete code"))
 	}
-
-	errEmail := c.emailSenderService.SendEmail(code, claims.Email)
+	template := emailTemplate.DeleteAccountTemplate{}
+	errEmail := c.emailSenderService.SendEmail(code, claims.Email, template)
 	if errEmail != nil {
 		logger.Error(fmt.Sprintf("Failed to send delete code email to %s", claims.Email))
-		return ctx.Status(fiber.StatusInternalServerError).JSON(&userDTO.UserMessageResponseDTO{
+		return ctx.Status(fiber.StatusInternalServerError).JSON(&dto.MessageResponseDTO{
 			Message: "Failed to send confirmation code email due to an internal system error.",
 		})
 	}
 
 	logger.Info(fmt.Sprintf("Delete code sent successfully to email: %s", claims.Email))
-	return ctx.Status(fiber.StatusOK).JSON(&userDTO.UserMessageResponseDTO{
-		Message: fmt.Sprintf("Se ha enviado un código de confirmación al correo electrónico %s .", claims.Email),
+	return ctx.Status(fiber.StatusOK).JSON(&dto.MessageResponseDTO{
+		Message: fmt.Sprintf("A confirmation code for account deletion has been sent to the email address %s.", claims.Email),
 	})
 }
 
@@ -340,7 +345,87 @@ func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
 	c.jwtMiddleware.DeleteAuthCookie(ctx)
 
 	logger.Info(fmt.Sprintf("User %s deleted successfully", dtoUser.Username))
-	return ctx.Status(fiber.StatusOK).JSON(&userDTO.UserMessageResponseDTO{
+	return ctx.Status(fiber.StatusOK).JSON(&dto.MessageResponseDTO{
 		Message: fmt.Sprintf("User %s deleted successfully.", dtoUser.Username),
+	})
+}
+
+// @Summary		Solicita la recuperación de contraseña del usuario
+// @Description	Envía un código de verificación al correo electrónico para restablecer la contraseña del usuario
+// @Tags			auth
+// @Accept			json
+// @Produce		json
+// @Param			request	body		userDTO.PasswordRecoveryRequestDTO	true	"Correo para recuperar contraseña"
+// @Success		200		{object}	dto.MessageResponseDTO  "Se ha enviado un correo electrónico para recuperar la contraseña"
+// @Failure		404		{object}	exception.ApiException	"Usuario no encontrado"
+// @Failure		500		{object}	exception.ApiException	"Ha ocurrido un error inesperado"
+// @Router			/auth/request-recover [post]
+func (c *AuthController) requestRecover(ctx *fiber.Ctx) error {
+	logger.Info("POST /request-recover called")
+
+	req := new(userDTO.PasswordRecoveryRequestDTO)
+	if err := ctx.BodyParser(req); err != nil || req.Email == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "Invalid request"))
+	}
+
+	user, errFind := c.userService.FindByEmail(req.Email)
+	if errFind != nil {
+		return ctx.Status(fiber.StatusNotFound).JSON(errFind)
+	}
+
+	code, err := c.codeGeneratorService.GenerateCode(PREFIX_RECOVER_CODE_GENERATOR, user.Username)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(exception.NewApiException(fiber.StatusInternalServerError, "Error generating recovery code"))
+	}
+
+	template := emailTemplate.RecoveryTemplate{}
+	if err := c.emailSenderService.SendEmail(code, user.Email, template); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(exception.NewApiException(fiber.StatusInternalServerError, "Error sending recovery email"))
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(&dto.MessageResponseDTO{
+		Message: fmt.Sprintf("A recovery code has been successfully sent to the email address: %s", user.Email),
+	})
+}
+
+// @Summary		Confirma el código para la recuperación de contraseña
+// @Description	Confirma el código de la recuperación de la contraseña del usuario y la restablece por la que se indica en la petición
+// @Tags			auth
+// @Accept			json
+// @Produce		json
+// @Param			request	body		userDTO.PasswordRecoveryConfirmDTO	true	"Datos para restablecer contraseña"
+// @Success		200		{object}	dto.MessageResponseDTO  "Se ha realizado la recuperación de la contraseña correctamente"
+// @Failure		400		{object}	exception.ApiException	"Petición no válida"
+// @Failure		401		{object}	exception.ApiException	"Usuario no autenticado"
+// @Failure		404		{object}	exception.ApiException	"No se ha encontrado el usuario"
+// @Failure		500		{object}	exception.ApiException	"Ha ocurrido un error inesperado"
+// @Router			/auth/recover [post]
+func (c *AuthController) recover(ctx *fiber.Ctx) error {
+	logger.Info("POST /recover called")
+
+	req := new(userDTO.PasswordRecoveryConfirmDTO)
+	if err := ctx.BodyParser(req); err != nil || req.Email == "" || req.Code == "" || req.NewPassword == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, "Invalid request"))
+	}
+
+	userDTO, errFind := c.userService.FindByEmail(req.Email)
+	if errFind != nil {
+		return ctx.Status(fiber.StatusNotFound).JSON(errFind)
+	}
+
+	if !c.codeGeneratorService.VerifyCode(PREFIX_RECOVER_CODE_GENERATOR, userDTO.Username, req.Code) {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Invalid code"))
+	}
+
+	// Verify new password
+	userHandler.ValidatePassword(req.NewPassword)
+	userDTO.Password = req.NewPassword
+
+	if _, err := c.userService.Update(userDTO); err != nil {
+		return ctx.Status(err.Status).JSON(err)
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(&dto.MessageResponseDTO{
+		Message: "Password has been reset successfully.",
 	})
 }

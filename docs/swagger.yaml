@@ -230,6 +230,30 @@ definitions:
         example: usuario123
         type: string
     type: object
+  userDTO.PasswordRecoveryConfirmDTO:
+    description: Datos requeridos para realizar la recuperación de la contraseña
+    properties:
+      code:
+        description: Código de verificación para la eliminación
+        example: "123456"
+        type: string
+      email:
+        description: Correo electrónico del usuario
+        example: usuario@example.com
+        type: string
+      newPassword:
+        description: Nueva contraseña del usuario
+        example: NuevaContraseñaSegura.
+        type: string
+    type: object
+  userDTO.PasswordRecoveryRequestDTO:
+    description: Datos requeridos para realizar la recuperación de la contraseña
+    properties:
+      email:
+        description: Correo electrónico del usuario
+        example: usuario@example.com
+        type: string
+    type: object
   userDTO.UserDTO:
     description: Estructura que define los datos del usuario
     properties:
@@ -268,26 +292,12 @@ definitions:
     description: Datos necesarios para proceder con la eliminación del usuario
     properties:
       code:
-        description: |-
-          Código de verificación para la eliminación
-          example "123456"
+        description: Código de verificación para la eliminación
         example: "123456"
         type: string
       password:
-        description: |-
-          Contraseña del usuario para confirmar la eliminación
-          example "MiContraseñaSegura"
+        description: Contraseña del usuario para confirmar la eliminación
         example: MiContraseñaSegura
-        type: string
-    type: object
-  userDTO.UserMessageResponseDTO:
-    description: Respuesta con un mensaje para informar al usuario que ha ocurrido
-    properties:
-      message:
-        description: |-
-          Mensaje de respuesta
-          example "Operación realizada con éxito"
-        example: Ha funcionado correctamente
         type: string
     type: object
   userDTO.UserRegisterResponseDTO:
@@ -442,7 +452,7 @@ paths:
         "200":
           description: Se ha cerrado sesión correctamente
           schema:
-            $ref: '#/definitions/userDTO.UserMessageResponseDTO'
+            $ref: '#/definitions/dto.MessageResponseDTO'
         "401":
           description: Usuario no autenticado
           schema:
@@ -462,6 +472,45 @@ paths:
       security:
       - CookieAuth: []
       summary: Cerrar sesión
+      tags:
+      - auth
+  /auth/recover:
+    post:
+      consumes:
+      - application/json
+      description: Confirma el código de la recuperación de la contraseña del usuario
+        y la restablece por la que se indica en la petición
+      parameters:
+      - description: Datos para restablecer contraseña
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userDTO.PasswordRecoveryConfirmDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Se ha realizado la recuperación de la contraseña correctamente
+          schema:
+            $ref: '#/definitions/dto.MessageResponseDTO'
+        "400":
+          description: Petición no válida
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "401":
+          description: Usuario no autenticado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "404":
+          description: No se ha encontrado el usuario
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "500":
+          description: Ha ocurrido un error inesperado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      summary: Confirma el código para la recuperación de contraseña
       tags:
       - auth
   /auth/register:
@@ -520,7 +569,38 @@ paths:
             $ref: '#/definitions/exception.ApiException'
       security:
       - CookieAuth: []
-      summary: Solicitar eliminación de cuenta
+      summary: Solicita la eliminación de cuenta
+      tags:
+      - auth
+  /auth/request-recover:
+    post:
+      consumes:
+      - application/json
+      description: Envía un código de verificación al correo electrónico para restablecer
+        la contraseña del usuario
+      parameters:
+      - description: Correo para recuperar contraseña
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/userDTO.PasswordRecoveryRequestDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Se ha enviado un correo electrónico para recuperar la contraseña
+          schema:
+            $ref: '#/definitions/dto.MessageResponseDTO'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+        "500":
+          description: Ha ocurrido un error inesperado
+          schema:
+            $ref: '#/definitions/exception.ApiException'
+      summary: Solicita la recuperación de contraseña del usuario
       tags:
       - auth
   /auth/update:
