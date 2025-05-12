@@ -11,6 +11,7 @@ import (
 	log "go-gallery/src/infrastructure/logger"
 	"runtime/debug"
 
+	codeGeneratorService "go-gallery/src/service/codeGenerator"
 	emailService "go-gallery/src/service/email"
 	imageService "go-gallery/src/service/image"
 	userService "go-gallery/src/service/user"
@@ -46,6 +47,9 @@ func main() {
 
 	logger.Info("Initializing User service...")
 	userService := userService.NewUserService(dependencyContainer.GetUserRepository())
+
+	logger.Info("Initializing Code Generator service...")
+	codeGeneratorService := codeGeneratorService.NewCodeGeneratorService(dependencyContainer.GetCodeGeneratorRepository())
 
 	logger.Info("Initializing Image service...")
 	imageService := imageService.NewImageService(dependencyContainer.GetImageRepository(), dependencyContainer.GetThumbnailImageRepository())
@@ -89,7 +93,7 @@ func main() {
 
 	// Configure user authentication routes
 	logger.Info("Setting up user authentication routes...")
-	authController := userController.NewAuthController(userService, emailSenderService, imageService, jwtMiddleware)
+	authController := userController.NewAuthController(userService, emailSenderService, imageService, codeGeneratorService, jwtMiddleware)
 	authGroup := app.Group("/api/auth")
 	authController.SetUpRoutes(authGroup)
 

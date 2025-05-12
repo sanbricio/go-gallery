@@ -27,6 +27,10 @@ USER_REPOSITORY=UserPostgreSQLRepository
 IMAGE_REPOSITORY=ImageMongoDBRepository
 THUMBNAIL_IMAGE_REPOSITORY=ThumnbailImageMongoDBRepository
 EMAIL_SENDER_REPOSITORY=EmailSenderGoMailRepository
+CODE_GENERATOR_REPOSITORY=CodeGeneratorMemoryRepository
+
+CODE_GENERATOR_EXPIRATION_CODE=5
+CODE_GENERATOR_CLEANUP_INTERVAL=1
 
 EMAIL_SENDER_HOST=smtp.gmail.com
 EMAIL_SENDER_PORT=587
@@ -54,6 +58,11 @@ EMAIL_SENDER_PASSWORD=
   - EMAIL_SENDER_PORT: Port for sending emails. 
   - EMAIL_SENDER_USERNAME: Email address used to send emails.  
   - EMAIL_SENDER_PASSWORD: Password for the email account used to send emails.  
+
+- Code Generator Configuration:
+  - CODE_GENERATOR_REPOSITORY: Specifies the implementation of the code generator.
+  - CODE_GENERATOR_EXPIRATION_CODE: Time in minutes that a generated code remains valid.
+  - CODE_GENERATOR_CLEANUP_INTERVAL: Interval in minutes for cleaning up expired codes.
 
 - Security & Authentication:  
   - JWT_SECRET: Secret key used for JWT authentication.  

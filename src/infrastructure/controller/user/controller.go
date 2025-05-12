@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"go-gallery/src/commons/exception"
 
-	codeGeneratorHandler "go-gallery/src/infrastructure/controller/handler/codeGenerator"
 	userHandler "go-gallery/src/infrastructure/controller/user/handler"
 	userMiddleware "go-gallery/src/infrastructure/controller/user/middlewares"
 	imageDTO "go-gallery/src/infrastructure/dto/image"
 	userDTO "go-gallery/src/infrastructure/dto/user"
 	log "go-gallery/src/infrastructure/logger"
+	codeGeneratorService "go-gallery/src/service/codeGenerator"
 	emailService "go-gallery/src/service/email"
 	imageService "go-gallery/src/service/image"
 	userService "go-gallery/src/service/user"
@@ -23,23 +23,27 @@ const (
 	INVALID_LOGIN_REQUEST_MSG    string = "Invalid JSON in the request body"
 	INVALID_AUTHENTIFICATION_MSG string = "User not authenticated"
 	CLAIMS_NOT_FOUND_MSG         string = "Unauthorized: no user claims found"
+	PREFIX_DELETE_CODE_GENERATOR string = "delete"
 )
 
 type AuthController struct {
-	userService        *userService.UserService
-	emailSenderService *emailService.EmailSenderService
-	imageService       *imageService.ImageService
-	jwtMiddleware      *userMiddleware.JWTMiddleware
+	userService          *userService.UserService
+	emailSenderService   *emailService.EmailSenderService
+	imageService         *imageService.ImageService
+	codeGeneratorService *codeGeneratorService.CodeGeneratorService
+	jwtMiddleware        *userMiddleware.JWTMiddleware
 }
 
-func NewAuthController(userService *userService.UserService, emailSenderService *emailService.EmailSenderService, imageService *imageService.ImageService,
+func NewAuthController(userService *userService.UserService, emailSenderService *emailService.EmailSenderService,
+	imageService *imageService.ImageService, codeGeneratorService *codeGeneratorService.CodeGeneratorService,
 	jwtMiddleware *userMiddleware.JWTMiddleware) *AuthController {
 	logger = log.Instance()
 	return &AuthController{
-		userService:        userService,
-		emailSenderService: emailSenderService,
-		imageService:       imageService,
-		jwtMiddleware:      jwtMiddleware,
+		userService:          userService,
+		emailSenderService:   emailSenderService,
+		imageService:         imageService,
+		codeGeneratorService: codeGeneratorService,
+		jwtMiddleware:        jwtMiddleware,
 	}
 }
 
@@ -254,7 +258,7 @@ func (c *AuthController) requestDelete(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, INVALID_AUTHENTIFICATION_MSG))
 	}
 
-	code, err := codeGeneratorHandler.GenerateCode(claims.Username)
+	code, err := c.codeGeneratorService.GenerateCode("delete", claims.Username)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Error generating delete code: %v", err))
 		return ctx.Status(fiber.StatusInternalServerError).JSON(exception.NewApiException(fiber.StatusInternalServerError, "Error generating delete code"))
@@ -304,7 +308,7 @@ func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(exception.NewApiException(fiber.StatusBadRequest, INVALID_LOGIN_REQUEST_MSG))
 	}
 
-	ok = codeGeneratorHandler.VerifyCode(claims.Username, dtoDeleteUser.Code)
+	ok = c.codeGeneratorService.VerifyCode("delete", claims.Username, dtoDeleteUser.Code)
 	if !ok {
 		logger.Error("Invalid verification code")
 		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Invalid verification code"))
@@ -333,7 +337,6 @@ func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
 		return ctx.Status(errDelete.Status).JSON(errDelete)
 	}
 
-	codeGeneratorHandler.RemoveCode(dtoUser.Username)
 	c.jwtMiddleware.DeleteAuthCookie(ctx)
 
 	logger.Info(fmt.Sprintf("User %s deleted successfully", dtoUser.Username))

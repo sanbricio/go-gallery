@@ -80,5 +80,9 @@ func buildDependencyContainer(conf *configuration.Configuration) *dependency_con
 	thumbnailImageRepositoryDependency := dependency_dictionary.FindThumbnailImageDependency(thumbnailImageRepositoryKey, args)
 	dp.SetThumbnailImageRepository(thumbnailImageRepositoryDependency)
 
+	codeGeneratorRepositoryKey := conf.GetArg("CODE_GENERATOR_REPOSITORY")
+	codeGeneratorRepositoryDependency := dependency_dictionary.FindCodeGeneratorDependency(codeGeneratorRepositoryKey, args)
+	dp.SetCodeGeneratorRepository(codeGeneratorRepositoryDependency)
+
 	return dp
 }

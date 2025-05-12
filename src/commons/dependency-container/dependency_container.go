@@ -3,6 +3,7 @@ package dependency_container
 import (
 	"fmt"
 	log "go-gallery/src/infrastructure/logger"
+	codeGeneratorRepository "go-gallery/src/infrastructure/repository/codeGenerator"
 	emailSenderRepository "go-gallery/src/infrastructure/repository/emailSender"
 	imageRepository "go-gallery/src/infrastructure/repository/image"
 	thumbnailImageRepository "go-gallery/src/infrastructure/repository/image/thumbnailImage"
@@ -13,6 +14,7 @@ type DependencyContainer struct {
 	imageRepository          imageRepository.ImageRepository
 	userRepository           userRepository.UserRepository
 	thumbnailImageRepository thumbnailImageRepository.ThumbnailImageRepository
+	codeGeneratorRepository  codeGeneratorRepository.CodeGeneratorRepository
 	emailSenderRepository    emailSenderRepository.EmailSenderRepository
 }
 
@@ -38,7 +40,7 @@ func (dp *DependencyContainer) GetUserRepository() userRepository.UserRepository
 
 func (dp *DependencyContainer) SetUserRepository(userDependency userRepository.UserRepository) {
 	dp.userRepository = userDependency
-	logger.Info(fmt.Sprintf("Dependency UserRepository has been set. Implementation: %T\n", userDependency))
+	logger.Info(fmt.Sprintf("Dependency UserRepository has been set. Implementation: %T", userDependency))
 }
 
 func (dp *DependencyContainer) GetImageRepository() imageRepository.ImageRepository {
@@ -50,7 +52,7 @@ func (dp *DependencyContainer) GetImageRepository() imageRepository.ImageReposit
 
 func (dp *DependencyContainer) SetImageRepository(imageDependency imageRepository.ImageRepository) {
 	dp.imageRepository = imageDependency
-	logger.Info(fmt.Sprintf("Dependency ImageRepository has been set. Implementation: %T\n", imageDependency))
+	logger.Info(fmt.Sprintf("Dependency ImageRepository has been set. Implementation: %T", imageDependency))
 }
 
 func (dp *DependencyContainer) GetEmailSenderRepository() emailSenderRepository.EmailSenderRepository {
@@ -62,17 +64,29 @@ func (dp *DependencyContainer) GetEmailSenderRepository() emailSenderRepository.
 
 func (dp *DependencyContainer) SetEmailSenderRepository(emailDependency emailSenderRepository.EmailSenderRepository) {
 	dp.emailSenderRepository = emailDependency
-	logger.Info(fmt.Sprintf("Dependency EmailSenderRepository has been set. Implementation: %T\n", emailDependency))
+	logger.Info(fmt.Sprintf("Dependency EmailSenderRepository has been set. Implementation: %T", emailDependency))
 }
 
 func (dp *DependencyContainer) SetThumbnailImageRepository(thumbnailImageDependency thumbnailImageRepository.ThumbnailImageRepository) {
 	dp.thumbnailImageRepository = thumbnailImageDependency
-	logger.Info(fmt.Sprintf("Dependency ThumbnailImageRepository has been set. Implementation: %T\n", thumbnailImageDependency))
+	logger.Info(fmt.Sprintf("Dependency ThumbnailImageRepository has been set. Implementation: %T", thumbnailImageDependency))
 }
 
 func (dp *DependencyContainer) GetThumbnailImageRepository() thumbnailImageRepository.ThumbnailImageRepository {
-	if dp.imageRepository != nil {
+	if dp.thumbnailImageRepository != nil {
 		return dp.thumbnailImageRepository
+	}
+	panic("Dependency ThumbnailImageRepository not found.")
+}
+
+func (dp *DependencyContainer) SetCodeGeneratorRepository(codeGeneratorDependency codeGeneratorRepository.CodeGeneratorRepository) {
+	dp.codeGeneratorRepository = codeGeneratorDependency
+	logger.Info(fmt.Sprintf("Dependency CodeGeneratorRepository has been set. Implementation: %T", codeGeneratorDependency))
+}
+
+func (dp *DependencyContainer) GetCodeGeneratorRepository() codeGeneratorRepository.CodeGeneratorRepository {
+	if dp.codeGeneratorRepository != nil {
+		return dp.codeGeneratorRepository
 	}
 	panic("Dependency ThumbnailImageRepository not found.")
 }

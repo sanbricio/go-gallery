@@ -2,6 +2,7 @@ package dependency_dictionary
 
 import (
 	"go-gallery/src/infrastructure/logger"
+	codeGeneratorRepository "go-gallery/src/infrastructure/repository/codeGenerator"
 	emailSenderRepository "go-gallery/src/infrastructure/repository/emailSender"
 	imageRepository "go-gallery/src/infrastructure/repository/image"
 	thumbnailImageRepository "go-gallery/src/infrastructure/repository/image/thumbnailImage"
@@ -34,12 +35,18 @@ func FindUserDependency(code string, args map[string]string) userRepository.User
 	default:
 		return userRepository.NewUserPostgreSQLRepository(args)
 	}
-
 }
 
 func FindEmailSenderDependency(code string, args map[string]string) emailSenderRepository.EmailSenderRepository {
 	switch code {
 	default:
 		return emailSenderRepository.NewEmailSenderGoMailRepository(args)
+	}
+}
+
+func FindCodeGeneratorDependency(code string, args map[string]string) codeGeneratorRepository.CodeGeneratorRepository {
+	switch code {
+	default:
+		return codeGeneratorRepository.NewCodeGeneratorMemory(args)
 	}
 }
