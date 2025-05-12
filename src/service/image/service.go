@@ -57,6 +57,15 @@ func (s *ImageService) Delete(dto *imageDTO.ImageDeleteRequestDTO) (*dto.Message
 	return s.thumbnailImageRepository.Delete(dto)
 }
 
+func (s *ImageService) DeleteAll(dto *imageDTO.ImageDeleteRequestDTO) (int64, *exception.ApiException) {
+	_, err := s.imageRepository.DeleteAll(dto)
+	if err != nil {
+		return 0, err
+	}
+
+	return s.thumbnailImageRepository.DeleteAll(dto)
+}
+
 func (s *ImageService) FindAllThumbnails(owner, lastID string, pageSize int64) (*thumbnailImageDTO.ThumbnailImageCursorDTO, *exception.ApiException) {
 	return s.thumbnailImageRepository.FindAll(owner, lastID, pageSize)
 }

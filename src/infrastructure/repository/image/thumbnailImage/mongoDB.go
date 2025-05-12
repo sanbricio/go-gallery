@@ -276,6 +276,23 @@ func (r *ThumbnailImageMongoDBRepository) Delete(dtoR *imageDTO.ImageDeleteReque
 	}, nil
 }
 
+func (r *ThumbnailImageMongoDBRepository) DeleteAll(dto *imageDTO.ImageDeleteRequestDTO) (int64, *exception.ApiException) {
+	filter := bson.M{
+		OWNER: dto.Owner,
+	}
+
+	logger.Info(fmt.Sprintf("Attempting to delete all thumbnails with owner: '%s'", dto.Owner))
+
+	result, err := r.mongoThumbnailImage.DeleteMany(context.Background(), filter)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Error deleting thumbnails for owner '%s': %s", dto.Owner, err.Error()))
+		return 0, exception.NewApiException(500, "Error deleting thumbnails by owner")
+	}
+
+	logger.Info(fmt.Sprintf("Successfully deleted %d thumbnails for owner '%s'", result.DeletedCount, dto.Owner))
+	return result.DeletedCount, nil
+}
+
 func getObjectID(id *string) (primitive.ObjectID, *exception.ApiException) {
 	objectID, errObjectID := primitive.ObjectIDFromHex(*id)
 	if errObjectID != nil {

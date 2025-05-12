@@ -10,4 +10,5 @@ type ImageRepository interface {
 	Insert(dto *imageDTO.ImageUploadRequestDTO) (*imageDTO.ImageDTO, *exception.ApiException)
 	Update(dto *imageDTO.ImageUpdateRequestDTO) (*imageDTO.ImageUpdateResponseDTO, *exception.ApiException)
 	Delete(dto *imageDTO.ImageDeleteRequestDTO) (*imageDTO.ImageDTO, *exception.ApiException)
+	DeleteAll(dto *imageDTO.ImageDeleteRequestDTO) (int64, *exception.ApiException)
 }

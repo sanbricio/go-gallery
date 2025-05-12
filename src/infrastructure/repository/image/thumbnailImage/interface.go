@@ -11,5 +11,6 @@ type ThumbnailImageRepository interface {
 	Insert(dto *imageDTO.ImageDTO, rawContentFile []byte) (*imageDTO.ImageUploadResponseDTO, *exception.ApiException)
 	Update(dto *imageDTO.ImageUpdateRequestDTO) (*imageDTO.ImageUpdateResponseDTO, *exception.ApiException)
 	Delete(dto *imageDTO.ImageDeleteRequestDTO) (*dto.MessageResponseDTO, *exception.ApiException)
+	DeleteAll(dto *imageDTO.ImageDeleteRequestDTO) (int64, *exception.ApiException)
 	FindAll(owner, lastIDHex string, pageSize int64) (*thumbnailImageDTO.ThumbnailImageCursorDTO, *exception.ApiException)
 }

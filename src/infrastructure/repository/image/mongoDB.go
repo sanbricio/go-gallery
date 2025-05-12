@@ -193,6 +193,23 @@ func (r *ImageMongoDBRepository) Delete(dto *imageDTO.ImageDeleteRequestDTO) (*i
 	return &foundImages[0], nil
 }
 
+func (r *ImageMongoDBRepository) DeleteAll(dto *imageDTO.ImageDeleteRequestDTO) (int64, *exception.ApiException) {
+	filter := bson.M{
+		OWNER: dto.Owner,
+	}
+
+	logger.Info(fmt.Sprintf("Attempting to delete all images with owner: '%s'", dto.Owner))
+
+	result, err := r.mongoImage.DeleteMany(context.Background(), filter)
+	if err != nil {
+		logger.Error(fmt.Sprintf("Error deleting images for owner '%s': %s", dto.Owner, err.Error()))
+		return 0, exception.NewApiException(500, "Error deleting images by owner")
+	}
+
+	logger.Info(fmt.Sprintf("Successfully deleted %d images for owner '%s'", result.DeletedCount, dto.Owner))
+	return result.DeletedCount, nil
+}
+
 func (r *ImageMongoDBRepository) Update(dto *imageDTO.ImageUpdateRequestDTO) (*imageDTO.ImageUpdateResponseDTO, *exception.ApiException) {
 	objectID, errObjectID := getObjectID(&dto.Id)
 	if errObjectID != nil {

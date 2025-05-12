@@ -213,6 +213,7 @@ func (r *UserMongoDBRepository) Delete(dtoDeleteUser *userDTO.UserDTO) (int64, *
 	return deleteCount, nil
 }
 
+
 func (r *UserMongoDBRepository) checkUserIsCreated(dtoInsertUser *userDTO.UserDTO) *exception.ApiException {
 	filter := bson.M{
 		"$or": []bson.M{

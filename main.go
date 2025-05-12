@@ -89,7 +89,7 @@ func main() {
 
 	// Configure user authentication routes
 	logger.Info("Setting up user authentication routes...")
-	authController := userController.NewAuthController(userService, emailSenderService, jwtMiddleware)
+	authController := userController.NewAuthController(userService, emailSenderService, imageService, jwtMiddleware)
 	authGroup := app.Group("/api/auth")
 	authController.SetUpRoutes(authGroup)
 

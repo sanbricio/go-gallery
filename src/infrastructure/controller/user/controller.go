@@ -7,9 +7,11 @@ import (
 	codeGeneratorHandler "go-gallery/src/infrastructure/controller/handler/codeGenerator"
 	userHandler "go-gallery/src/infrastructure/controller/user/handler"
 	userMiddleware "go-gallery/src/infrastructure/controller/user/middlewares"
+	imageDTO "go-gallery/src/infrastructure/dto/image"
 	userDTO "go-gallery/src/infrastructure/dto/user"
 	log "go-gallery/src/infrastructure/logger"
 	emailService "go-gallery/src/service/email"
+	imageService "go-gallery/src/service/image"
 	userService "go-gallery/src/service/user"
 
 	"github.com/gofiber/fiber/v2"
@@ -26,14 +28,17 @@ const (
 type AuthController struct {
 	userService        *userService.UserService
 	emailSenderService *emailService.EmailSenderService
+	imageService       *imageService.ImageService
 	jwtMiddleware      *userMiddleware.JWTMiddleware
 }
 
-func NewAuthController(userService *userService.UserService, emailSenderService *emailService.EmailSenderService, jwtMiddleware *userMiddleware.JWTMiddleware) *AuthController {
+func NewAuthController(userService *userService.UserService, emailSenderService *emailService.EmailSenderService, imageService *imageService.ImageService,
+	jwtMiddleware *userMiddleware.JWTMiddleware) *AuthController {
 	logger = log.Instance()
 	return &AuthController{
 		userService:        userService,
 		emailSenderService: emailSenderService,
+		imageService:       imageService,
 		jwtMiddleware:      jwtMiddleware,
 	}
 }
@@ -304,6 +309,17 @@ func (c *AuthController) confirmDelete(ctx *fiber.Ctx) error {
 		logger.Error("Invalid verification code")
 		return ctx.Status(fiber.StatusUnauthorized).JSON(exception.NewApiException(fiber.StatusUnauthorized, "Invalid verification code"))
 	}
+
+	// Create request to delete all user images/thumbnails by owner
+	dtoDeleteImage := new(imageDTO.ImageDeleteRequestDTO)
+	dtoDeleteImage.Owner = claims.Username
+
+	_, errImageResponse := c.imageService.DeleteAll(dtoDeleteImage)
+	if errImageResponse != nil {
+		logger.Error(fmt.Sprintf("Error deleting all images for user %s: %s", claims.Username, errImageResponse.Message))
+	}
+
+	logger.Info(fmt.Sprintf("All images/thumbnails for user %s deleted successfully", claims.Username))
 
 	dtoUser := &userDTO.UserDTO{
 		Username: claims.Username,
