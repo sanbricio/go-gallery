@@ -4,7 +4,6 @@ import (
 	"go-gallery/src/commons/exception"
 	validators "go-gallery/src/commons/utils/validations"
 	thumbnailImageEntity "go-gallery/src/domain/entities/image/thumbnailImage"
-	imageDTO "go-gallery/src/infrastructure/dto/image"
 	thumbnailImageDTO "go-gallery/src/infrastructure/dto/image/thumbnailImage"
 )
 
@@ -16,19 +15,11 @@ type ThumbnailImageBuilder struct {
 	contentFile string
 	owner       string
 	size        string
+	imageSize   string
 }
 
 func NewThumbnailImageBuilder() *ThumbnailImageBuilder {
 	return &ThumbnailImageBuilder{}
-}
-
-func (b *ThumbnailImageBuilder) FromImageUploadRequestDTO(dto *imageDTO.ImageUploadRequestDTO) *ThumbnailImageBuilder {
-	b.name = dto.Name
-	b.extension = dto.Extension
-	b.owner = dto.Owner
-	b.size = dto.Size
-
-	return b
 }
 
 func (b *ThumbnailImageBuilder) FromDTO(dto *thumbnailImageDTO.ThumbnailImageDTO) *ThumbnailImageBuilder {
@@ -41,6 +32,7 @@ func (b *ThumbnailImageBuilder) FromDTO(dto *thumbnailImageDTO.ThumbnailImageDTO
 	b.contentFile = dto.ContentFile
 	b.owner = dto.Owner
 	b.size = dto.Size
+	b.imageSize = dto.ImageSize
 
 	return b
 }
@@ -79,13 +71,18 @@ func (b *ThumbnailImageBuilder) SetImageID(imageID *string) *ThumbnailImageBuild
 	return b
 }
 
+func (b *ThumbnailImageBuilder) SetImageSize(imageSize string) *ThumbnailImageBuilder {
+	b.imageSize = imageSize
+	return b
+}
+
 func (b *ThumbnailImageBuilder) BuildNew() (*thumbnailImageEntity.ThumbnailImage, *exception.BuilderException) {
 	err := b.validateCommons()
 	if err != nil {
 		return nil, err
 	}
 
-	return thumbnailImageEntity.NewThumbnailImage(nil, b.imageID, b.name, b.extension, b.contentFile, b.size, b.owner), nil
+	return thumbnailImageEntity.NewThumbnailImage(nil, b.imageID, b.name, b.extension, b.contentFile, b.size, b.owner, b.imageSize), nil
 }
 
 func (b *ThumbnailImageBuilder) Build() (*thumbnailImageEntity.ThumbnailImage, *exception.BuilderException) {
@@ -94,7 +91,7 @@ func (b *ThumbnailImageBuilder) Build() (*thumbnailImageEntity.ThumbnailImage, *
 		return nil, err
 	}
 
-	return thumbnailImageEntity.NewThumbnailImage(b.id, b.imageID, b.name, b.extension, b.contentFile, b.size, b.owner), nil
+	return thumbnailImageEntity.NewThumbnailImage(b.id, b.imageID, b.name, b.extension, b.contentFile, b.size, b.owner, b.imageSize), nil
 }
 
 func (b *ThumbnailImageBuilder) validateAll() *exception.BuilderException {
@@ -134,5 +131,10 @@ func (b *ThumbnailImageBuilder) validateCommons() *exception.BuilderException {
 	if err := validators.ValidateNonEmptyStringField("size", b.size); err != nil {
 		return exception.NewBuilderException("size", err.Error())
 	}
+
+	if err := validators.ValidateNonEmptyStringField("imageSize", b.imageSize); err != nil {
+		return exception.NewBuilderException("imageSize", err.Error())
+	}
+
 	return nil
 }

@@ -23,6 +23,8 @@ const (
 	IMAGE_COLLECTION string = "Image"
 	ID               string = "_id"
 	OWNER            string = "owner"
+	NAME             string = "name"
+	EXTENSION        string = "extension"
 )
 
 var logger log.Logger
@@ -118,9 +120,9 @@ func (r *ImageMongoDBRepository) find(filter bson.M) ([]imageDTO.ImageDTO, *exce
 
 func (r *ImageMongoDBRepository) Insert(dtoInsertImage *imageDTO.ImageUploadRequestDTO) (*imageDTO.ImageDTO, *exception.ApiException) {
 	filter := bson.M{
-		"name":      dtoInsertImage.Name,
-		"owner":     dtoInsertImage.Owner,
-		"extension": dtoInsertImage.Extension,
+		NAME:      dtoInsertImage.Name,
+		OWNER:     dtoInsertImage.Owner,
+		EXTENSION: dtoInsertImage.Extension,
 	}
 
 	logger.Info(fmt.Sprintf("Checking if the image already exists with filter: %+v", filter))
@@ -222,7 +224,7 @@ func (r *ImageMongoDBRepository) Update(dto *imageDTO.ImageUpdateRequestDTO) (*i
 
 	updateFields := bson.M{}
 	if dto.Name != "" {
-		updateFields["name"] = dto.Name
+		updateFields[NAME] = dto.Name
 	}
 
 	if len(updateFields) == 0 {

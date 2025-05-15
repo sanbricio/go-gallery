@@ -8,9 +8,10 @@ type ThumbnailImage struct {
 	contentFile string
 	size        string
 	owner       string
+	imageSize   string
 }
 
-func NewThumbnailImage(id, imageID *string, name, extension, contentFile, size, owner string) *ThumbnailImage {
+func NewThumbnailImage(id, imageID *string, name, extension, contentFile, size, owner, imageSize string) *ThumbnailImage { // NOSONAR
 	return &ThumbnailImage{
 		id:          id,
 		imageID:     imageID,
@@ -19,6 +20,7 @@ func NewThumbnailImage(id, imageID *string, name, extension, contentFile, size, 
 		contentFile: contentFile,
 		size:        size,
 		owner:       owner,
+		imageSize:   imageSize,
 	}
 }
 
@@ -48,4 +50,8 @@ func (img *ThumbnailImage) GetOwner() string {
 
 func (img *ThumbnailImage) GetImageID() *string {
 	return img.imageID
+}
+
+func (img *ThumbnailImage) GetImageSize() string {
+	return img.imageSize
 }

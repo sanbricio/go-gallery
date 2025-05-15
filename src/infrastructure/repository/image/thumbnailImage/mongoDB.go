@@ -27,6 +27,8 @@ const (
 	THUMBNAIL_IMAGE_COLLECTION string = "ThumbnailImage"
 	ID                         string = "_id"
 	OWNER                      string = "owner"
+	NAME                       string = "name"
+	EXTENSION                  string = "extension"
 	SORT                       int    = -1 // Ordenado de manera descendente (mas reciente primero)
 )
 
@@ -76,7 +78,7 @@ func connect(urlConnection string, databaseName string) *mongo.Database {
 
 func (r *ThumbnailImageMongoDBRepository) FindAll(owner, lastID string, pageSize int64) (*thumbnailImageDTO.ThumbnailImageCursorDTO, *exception.ApiException) {
 	filter := bson.M{
-		"owner": strings.TrimSpace(owner),
+		OWNER: strings.TrimSpace(owner),
 	}
 
 	logger.Info(fmt.Sprintf("Cursor-based search: filter=%+v, lastID=%s, pageSize=%d", filter, lastID, pageSize))
@@ -136,13 +138,13 @@ func (r *ThumbnailImageMongoDBRepository) find(filter bson.M, findOptions *optio
 func (r *ThumbnailImageMongoDBRepository) Insert(dto *imageDTO.ImageDTO, rawContentFile []byte) (*imageDTO.ImageUploadResponseDTO, *exception.ApiException) {
 	// Validamos que la miniatura no esta insertada en base de datos
 	filter := bson.M{
-		"name":      strings.TrimSpace(dto.Name),
-		"owner":     strings.TrimSpace(dto.Owner),
-		"extension": strings.TrimSpace(dto.Extension),
+		NAME:      strings.TrimSpace(dto.Name),
+		OWNER:     strings.TrimSpace(dto.Owner),
+		EXTENSION: strings.TrimSpace(dto.Extension),
 	}
 
 	logger.Info(fmt.Sprintf("Attempting to insert thumbnail for image: Name=%s, Owner=%s", dto.Name, dto.Owner))
-	// Si la miniatura ya existe, no la insertamos
+
 	results, err := r.find(filter, nil)
 	if err != nil && err.Status != 404 {
 		return nil, err
@@ -170,6 +172,7 @@ func (r *ThumbnailImageMongoDBRepository) Insert(dto *imageDTO.ImageDTO, rawCont
 		SetExtension(dto.Extension).
 		SetContentFile(utilsImage.EncondeImageToBase64(resizedBytes)).
 		SetSize(size).
+		SetImageSize(dto.Size).
 		BuildNew()
 
 	if errBuilder != nil {
@@ -210,7 +213,7 @@ func (r *ThumbnailImageMongoDBRepository) Update(dto *imageDTO.ImageUpdateReques
 
 	updateFields := bson.M{}
 	if dto.Name != "" {
-		updateFields["name"] = dto.Name
+		updateFields[NAME] = dto.Name
 	}
 
 	if len(updateFields) == 0 {
