@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API para la gestión de subida de fotos, con una autentificación",
+        "description": "API for managing photo uploads, with authentication",
         "title": "GoGallery",
         "contact": {
             "name": "Support GoGallery",
@@ -36,7 +36,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.DTODeleteUser"
+                            "$ref": "#/definitions/userDTO.UserDeleteDTO"
                         }
                     }
                 ],
@@ -44,7 +44,7 @@
                     "200": {
                         "description": "Se han eliminado los datos del usuario correctamente",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOMessageResponse"
+                            "$ref": "#/definitions/userDTO.UserRegisterResponseDTO"
                         }
                     },
                     "400": {
@@ -100,7 +100,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOLoginRequest"
+                            "$ref": "#/definitions/userDTO.LoginRequestDTO"
                         }
                     }
                 ],
@@ -108,7 +108,7 @@
                     "200": {
                         "description": "Se ha iniciado sesion correctamente",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOLoginResponse"
+                            "$ref": "#/definitions/userDTO.LoginResponseDTO"
                         },
                         "headers": {
                             "Set-Cookie": {
@@ -160,7 +160,7 @@
                     "200": {
                         "description": "Se ha cerrado sesión correctamente",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOMessageResponse"
+                            "$ref": "#/definitions/dto.MessageResponseDTO"
                         }
                     },
                     "401": {
@@ -177,6 +177,64 @@
                     },
                     "404": {
                         "description": "Usuario no encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/recover": {
+            "post": {
+                "description": "Confirma el código de la recuperación de la contraseña del usuario y la restablece por la que se indica en la petición",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Confirma el código para la recuperación de contraseña",
+                "parameters": [
+                    {
+                        "description": "Datos para restablecer contraseña",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userDTO.PasswordRecoveryConfirmDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Se ha realizado la recuperación de la contraseña correctamente",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponseDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Petición no válida",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "401": {
+                        "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "No se ha encontrado el usuario",
                         "schema": {
                             "$ref": "#/definitions/exception.ApiException"
                         }
@@ -210,7 +268,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOUser"
+                            "$ref": "#/definitions/userDTO.UserDTO"
                         }
                     }
                 ],
@@ -218,7 +276,7 @@
                     "201": {
                         "description": "Usuario creado",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTORegisterResponse"
+                            "$ref": "#/definitions/userDTO.UserRegisterResponseDTO"
                         }
                     },
                     "400": {
@@ -247,12 +305,12 @@
                 "tags": [
                     "auth"
                 ],
-                "summary": "Solicitar eliminación de cuenta",
+                "summary": "Solicita la eliminación de cuenta",
                 "responses": {
                     "200": {
                         "description": "Se ha enviado un código de confirmación al correo electrónico",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOMessageResponse"
+                            "$ref": "#/definitions/userDTO.UserRegisterResponseDTO"
                         }
                     },
                     "401": {
@@ -265,6 +323,52 @@
                         "description": "Los datos proporcionados no coinciden con el usuario autenticado",
                         "schema": {
                             "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    }
+                }
+            }
+        },
+        "/auth/request-recover": {
+            "post": {
+                "description": "Envía un código de verificación al correo electrónico para restablecer la contraseña del usuario",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Solicita la recuperación de contraseña del usuario",
+                "parameters": [
+                    {
+                        "description": "Correo para recuperar contraseña",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/userDTO.PasswordRecoveryRequestDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Se ha enviado un correo electrónico para recuperar la contraseña",
+                        "schema": {
+                            "$ref": "#/definitions/dto.MessageResponseDTO"
                         }
                     },
                     "404": {
@@ -307,7 +411,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOUpdateUser"
+                            "$ref": "#/definitions/userDTO.UserUpdateDTO"
                         }
                     }
                 ],
@@ -315,7 +419,7 @@
                     "200": {
                         "description": "Se han actualizado los datos del usuario correctamente.",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOMessageResponse"
+                            "$ref": "#/definitions/userDTO.UserRegisterResponseDTO"
                         }
                     },
                     "400": {
@@ -391,7 +495,7 @@
                 }
             }
         },
-        "/image/deleteImage/{id}": {
+        "/image/deleteImage": {
             "delete": {
                 "security": [
                     {
@@ -411,18 +515,20 @@
                 "summary": "Elimina una imagen",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "Identificador de la imagen",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
+                        "description": "Datos para eliminar la imagen",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/imageDTO.ImageDeleteRequestDTO"
+                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "Imagen eliminada correctamente",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOImage"
+                            "$ref": "#/definitions/dto.MessageResponseDTO"
                         }
                     },
                     "401": {
@@ -483,7 +589,142 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOImage"
+                            "$ref": "#/definitions/imageDTO.ImageDTO"
+                        }
+                    },
+                    "401": {
+                        "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "403": {
+                        "description": "Los datos proporcionados no coinciden con el usuario autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario/Imagen no encontrada",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Ha ocurrido un error inesperado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    }
+                }
+            }
+        },
+        "/image/getThumbnailImages": {
+            "get": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Obtiene una lista paginada de imágenes en miniatura del usuario autenticado, usando paginación por cursor (lastId y pageSize).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "thumbnail"
+                ],
+                "summary": "Listar imágenes en miniatura (thumbnails)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Último ID recibido para la paginación",
+                        "name": "lastID",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Cantidad de miniaturas a devolver (por defecto 10)",
+                        "name": "pageSize",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de miniaturas con el último id para poder realizar paginacione",
+                        "schema": {
+                            "$ref": "#/definitions/thumbnailImageDTO.ThumbnailImageCursorDTO"
+                        }
+                    },
+                    "401": {
+                        "description": "Usuario no autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "403": {
+                        "description": "Los datos proporcionados no coinciden con el usuario autenticado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "404": {
+                        "description": "No se encontraron thumbnails",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
+                    "500": {
+                        "description": "Error inesperado",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    }
+                }
+            }
+        },
+        "/image/updateImage": {
+            "put": {
+                "security": [
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Actualiza una imagen específica del usuario autentificado",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "image"
+                ],
+                "summary": "Actualiza el nombre de una imagen",
+                "parameters": [
+                    {
+                        "description": "Datos de actualización para la imagen",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/imageDTO.ImageUpdateRequestDTO"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Imagen actualizada correctamente",
+                        "schema": {
+                            "$ref": "#/definitions/imageDTO.ImageUpdateResponseDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "JSON invalido",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
                         }
                     },
                     "401": {
@@ -544,7 +785,7 @@
                     "200": {
                         "description": "Imagen subida correctamente",
                         "schema": {
-                            "$ref": "#/definitions/dto.DTOImage"
+                            "$ref": "#/definitions/imageDTO.ImageDTO"
                         }
                     },
                     "400": {
@@ -571,6 +812,12 @@
                             "$ref": "#/definitions/exception.ApiException"
                         }
                     },
+                    "409": {
+                        "description": "La imagen ya existe",
+                        "schema": {
+                            "$ref": "#/definitions/exception.ApiException"
+                        }
+                    },
                     "500": {
                         "description": "Ha ocurrido un error inesperado",
                         "schema": {
@@ -582,23 +829,34 @@
         }
     },
     "definitions": {
-        "dto.DTODeleteUser": {
-            "description": "Datos necesarios para proceder con la eliminación del usuario",
+        "dto.MessageResponseDTO": {
+            "description": "Respuesta con un mensaje para informar al usuario que ha ocurrido",
             "type": "object",
             "properties": {
-                "code": {
-                    "description": "Código de verificación para la eliminación\nexample \"123456\"",
+                "message": {
+                    "description": "Mensaje de respuesta\nexample \"Operación realizada con éxito\"",
                     "type": "string",
-                    "example": "123456"
-                },
-                "password": {
-                    "description": "Contraseña del usuario para confirmar la eliminación\nexample \"MiContraseñaSegura\"",
-                    "type": "string",
-                    "example": "MiContraseñaSegura"
+                    "example": "Ha funcionado correctamente"
                 }
             }
         },
-        "dto.DTOImage": {
+        "exception.ApiException": {
+            "description": "Estructura para manejar excepciones con un código de estado y un mensaje de error",
+            "type": "object",
+            "properties": {
+                "message": {
+                    "description": "Mensaje de error\nexample \"Solicitud incorrecta\"",
+                    "type": "string",
+                    "example": "Solicitud incorrecta"
+                },
+                "status": {
+                    "description": "Código de estado HTTP\nexample 400",
+                    "type": "integer",
+                    "example": 400
+                }
+            }
+        },
+        "imageDTO.ImageDTO": {
             "description": "Contiene la información de una imagen, incluyendo su identificador, nombre, extensión, contenido en base64 y propietario (usuario)",
             "type": "object",
             "properties": {
@@ -612,8 +870,8 @@
                     "type": "string",
                     "example": ".jpeg"
                 },
-                "id_image": {
-                    "description": "ID único de la imagen\nExample: 64a1f8b8e4b0c10d3c5b2e75",
+                "id": {
+                    "description": "ID de la imagen\nExample: 64a1f8b8e4b0c10d3c5b2e75",
                     "type": "string",
                     "example": "64a1f8b8e4b0c10d3c5b2e75"
                 },
@@ -634,7 +892,131 @@
                 }
             }
         },
-        "dto.DTOLoginRequest": {
+        "imageDTO.ImageDeleteRequestDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "ID de la imagen que queremos actualizar .",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                },
+                "owner": {
+                    "description": "Usuario propietario de la imagen.",
+                    "type": "string",
+                    "example": "usuario123"
+                },
+                "thumbnail_id": {
+                    "description": "ID de la imagen miniatura asociadas",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                }
+            }
+        },
+        "imageDTO.ImageUpdateRequestDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "ID de la imagen que queremos actualizar .",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                },
+                "name": {
+                    "description": "Nombre del archivo de imagen.",
+                    "type": "string",
+                    "example": "foto_perfil"
+                },
+                "owner": {
+                    "description": "Usuario propietario de la imagen.",
+                    "type": "string",
+                    "example": "usuario123"
+                },
+                "thumbnail_id": {
+                    "description": "ID de la imagen miniatura asociada",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                }
+            }
+        },
+        "imageDTO.ImageUpdateResponseDTO": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "ID de la imagen actualizada.",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                },
+                "owner": {
+                    "description": "Usuario propietario de la imagen.",
+                    "type": "string",
+                    "example": "usuario123"
+                },
+                "updated_fields": {
+                    "description": "Campos que han sido actualizados en la imagen, representados como un mapa clave-valor.\nLas claves son los nombres de los campos y los valores corresponden a los nuevos valores establecidos.",
+                    "type": "object",
+                    "additionalProperties": {}
+                }
+            }
+        },
+        "thumbnailImageDTO.ThumbnailImageCursorDTO": {
+            "description": "Contiene una lista de miniaturas y el identificador del último elemento para la paginación.",
+            "type": "object",
+            "properties": {
+                "lastID": {
+                    "description": "ID del último elemento para la paginación",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                },
+                "thumbnails": {
+                    "description": "Lista de miniaturas de imagen",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/thumbnailImageDTO.ThumbnailImageDTO"
+                    }
+                }
+            }
+        },
+        "thumbnailImageDTO.ThumbnailImageDTO": {
+            "description": "Contiene la información de la miniatura de una imagen, incluyendo su identificador, nombre, extensión, contenido en base64 y propietario (usuario)",
+            "type": "object",
+            "properties": {
+                "content_file": {
+                    "description": "Contenido de la miniatura en base64\nExample: /9j/4AAQSkZJRgABAQEAAAAAAAD...",
+                    "type": "string",
+                    "example": "/9j/4AAQSkZJRgABAQEAAAAAAAD."
+                },
+                "extension": {
+                    "description": "Extensión del archivo de miniatura\nExample: jpg",
+                    "type": "string",
+                    "example": ".jpeg"
+                },
+                "id": {
+                    "description": "Identificador de la miniatura\nExample: 64a1f8b8e4b0c10d3c5b2e75",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c10d3c5b2e75"
+                },
+                "imageID": {
+                    "description": "Identificador de la imagen\nExample: 64a1f8b8e4b0c20d3c5b2e90",
+                    "type": "string",
+                    "example": "64a1f8b8e4b0c20d3c5b2e90"
+                },
+                "name": {
+                    "description": "Nombre del archivo de la miniatura\nExample: prueba",
+                    "type": "string",
+                    "example": "prueba"
+                },
+                "owner": {
+                    "description": "Usuario propietario de la miniatura\nExample: usuario123",
+                    "type": "string",
+                    "example": "usuario123"
+                },
+                "size": {
+                    "description": "Tamaño de la miniatura en bytes\nExample: 204800",
+                    "type": "string",
+                    "example": "2.3 kB"
+                }
+            }
+        },
+        "userDTO.LoginRequestDTO": {
             "description": "Datos requeridos para realizar autentificación del usuario",
             "type": "object",
             "properties": {
@@ -644,13 +1026,13 @@
                     "example": "MiContraseñaSegura."
                 },
                 "username": {
-                    "description": "Nombre de usuario\nexample \"usuario\"",
+                    "description": "Nombre de usuario\nexample \"usuario123\"",
                     "type": "string",
-                    "example": "usuario"
+                    "example": "usuario123"
                 }
             }
         },
-        "dto.DTOLoginResponse": {
+        "userDTO.LoginResponseDTO": {
             "description": "Respuesta al iniciar sesión correctamente",
             "type": "object",
             "properties": {
@@ -659,15 +1041,20 @@
                     "type": "string",
                     "example": "usuario@example.com"
                 },
+                "firstname": {
+                    "description": "Nombre del usuario\nexample \"Juan\"",
+                    "type": "string",
+                    "example": "Juan"
+                },
+                "lastname": {
+                    "description": "Apellido del usuario\nexample \"Bricio\"",
+                    "type": "string",
+                    "example": "Bricio"
+                },
                 "message": {
                     "description": "Mensaje de confirmación\nexample \"Se ha iniciado sesión correctamente\"",
                     "type": "string",
                     "example": "Se ha iniciado sesión correctamente"
-                },
-                "name": {
-                    "description": "Nombre del usuario\nexample \"Juan Pérez\"",
-                    "type": "string",
-                    "example": "Juan Pérez"
                 },
                 "username": {
                     "description": "Nombre de usuario autenticado\nexample \"usuario123\"",
@@ -676,65 +1063,39 @@
                 }
             }
         },
-        "dto.DTOMessageResponse": {
-            "description": "Respuesta con un mensaje para informar al usuario que ha ocurrido",
+        "userDTO.PasswordRecoveryConfirmDTO": {
+            "description": "Datos requeridos para realizar la recuperación de la contraseña",
             "type": "object",
             "properties": {
-                "message": {
-                    "description": "Mensaje de respuesta\nexample \"Operación realizada con éxito\"",
+                "code": {
+                    "description": "Código de verificación para la eliminación",
                     "type": "string",
-                    "example": "Ha funcionado correctamente"
-                }
-            }
-        },
-        "dto.DTORegisterResponse": {
-            "description": "Respuesta generada después de crear un nuevo usuario",
-            "type": "object",
-            "properties": {
-                "firstname": {
-                    "description": "Nombre\nexample \"Juan\"",
-                    "type": "string",
-                    "example": "Juan"
+                    "example": "123456"
                 },
-                "message": {
-                    "description": "Mensaje de confirmación\nexample \"Se ha creado el usuario correctamente\"",
-                    "type": "string",
-                    "example": "Se ha creado el usuario correctamente"
-                },
-                "username": {
-                    "description": "Nombre de usuario\nexample \"usuario123\"",
-                    "type": "string",
-                    "example": "usuario123"
-                }
-            }
-        },
-        "dto.DTOUpdateUser": {
-            "description": "Datos que pueden ser actualizados del usuario existente",
-            "type": "object",
-            "properties": {
                 "email": {
-                    "description": "Correo electrónico\nexample \"nuevo.email@example.com\"",
+                    "description": "Correo electrónico del usuario",
                     "type": "string",
-                    "example": "nuevo.email@example.com"
+                    "example": "usuario@example.com"
                 },
-                "firstname": {
-                    "description": "Nombre\nexample \"Carlos\"",
-                    "type": "string",
-                    "example": "Carlos"
-                },
-                "lastname": {
-                    "description": "Apellido\nexample \"Gómez\"",
-                    "type": "string",
-                    "example": "Gómez"
-                },
-                "password": {
-                    "description": "Contraseña\nexample \"NuevaContraseñaSegura.\"",
+                "newPassword": {
+                    "description": "Nueva contraseña del usuario",
                     "type": "string",
                     "example": "NuevaContraseñaSegura."
                 }
             }
         },
-        "dto.DTOUser": {
+        "userDTO.PasswordRecoveryRequestDTO": {
+            "description": "Datos requeridos para realizar la recuperación de la contraseña",
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "Correo electrónico del usuario",
+                    "type": "string",
+                    "example": "usuario@example.com"
+                }
+            }
+        },
+        "userDTO.UserDTO": {
             "description": "Estructura que define los datos del usuario",
             "type": "object",
             "properties": {
@@ -765,19 +1126,66 @@
                 }
             }
         },
-        "exception.ApiException": {
-            "description": "Estructura para manejar excepciones con un código de estado y un mensaje de error",
+        "userDTO.UserDeleteDTO": {
+            "description": "Datos necesarios para proceder con la eliminación del usuario",
             "type": "object",
             "properties": {
-                "message": {
-                    "description": "Mensaje de error\nexample \"Solicitud incorrecta\"",
+                "code": {
+                    "description": "Código de verificación para la eliminación",
                     "type": "string",
-                    "example": "Solicitud incorrecta"
+                    "example": "123456"
                 },
-                "status": {
-                    "description": "Código de estado HTTP\nexample 400",
-                    "type": "integer",
-                    "example": 400
+                "password": {
+                    "description": "Contraseña del usuario para confirmar la eliminación",
+                    "type": "string",
+                    "example": "MiContraseñaSegura"
+                }
+            }
+        },
+        "userDTO.UserRegisterResponseDTO": {
+            "description": "Respuesta generada después de crear un nuevo usuario",
+            "type": "object",
+            "properties": {
+                "firstname": {
+                    "description": "Nombre\nexample \"Juan\"",
+                    "type": "string",
+                    "example": "Juan"
+                },
+                "message": {
+                    "description": "Mensaje de confirmación\nexample \"Se ha creado el usuario correctamente\"",
+                    "type": "string",
+                    "example": "Se ha creado el usuario correctamente"
+                },
+                "username": {
+                    "description": "Nombre de usuario\nexample \"usuario123\"",
+                    "type": "string",
+                    "example": "usuario123"
+                }
+            }
+        },
+        "userDTO.UserUpdateDTO": {
+            "description": "Datos que pueden ser actualizados del usuario existente",
+            "type": "object",
+            "properties": {
+                "email": {
+                    "description": "Correo electrónico\nexample \"nuevo.email@example.com\"",
+                    "type": "string",
+                    "example": "nuevo.email@example.com"
+                },
+                "firstname": {
+                    "description": "Nombre\nexample \"Carlos\"",
+                    "type": "string",
+                    "example": "Carlos"
+                },
+                "lastname": {
+                    "description": "Apellido\nexample \"Gómez\"",
+                    "type": "string",
+                    "example": "Gómez"
+                },
+                "password": {
+                    "description": "Contraseña\nexample \"NuevaContraseñaSegura.\"",
+                    "type": "string",
+                    "example": "NuevaContraseñaSegura."
                 }
             }
         }

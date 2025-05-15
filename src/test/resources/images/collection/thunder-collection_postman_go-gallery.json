@@ -1,0 +1,176 @@
+{
+    "info": {
+        "_postman_id": "0ab9e761-2005-4367-8018-173d4bf51448",
+        "name": "go-gallery",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": ""
+    },
+    "item": [
+        {
+            "name": "Delete User",
+            "request": {
+                "method": "DELETE",
+                "url": {
+                    "raw": "http://127.0.0.1:3000/api/auth/delete",
+                    "path": [
+                        "api",
+                        "auth",
+                        "delete"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "3000"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"username\": \"sanbricio\",\n  \"email\": \"sanbriciorojas11@gmail.com\",\n  \"password\": \"Padreame.\",\n  \"code\": \"251294\"\n}"
+                }
+            }
+        },
+        {
+            "name": "Request Delete",
+            "request": {
+                "method": "POST",
+                "url": {
+                    "raw": "http://127.0.0.1:3000/api/auth/request-delete",
+                    "path": [
+                        "api",
+                        "auth",
+                        "request-delete"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "3000"
+                }
+            }
+        },
+        {
+            "name": "User Login",
+            "request": {
+                "method": "POST",
+                "url": {
+                    "raw": "http://127.0.0.1:3000/api/auth/login",
+                    "path": [
+                        "api",
+                        "auth",
+                        "login"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "3000"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"username\": \"sanbricio\",\n  \"password\": \"Padreame.\"\n}\n"
+                }
+            }
+        },
+        {
+            "name": "User Register",
+            "request": {
+                "method": "POST",
+                "url": {
+                    "raw": "http://127.0.0.1:3000/api/auth/register",
+                    "path": [
+                        "api",
+                        "auth",
+                        "register"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "3000"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"username\": \"sanbricio\",\n  \"password\": \"Padreame.\",\n  \"email\": \"sanbriciorojas11@gmail.com\",\n  \"lastname\": \"Bricio Rojas\",\n  \"firstname\": \"Santiago\"\n}\n"
+                }
+            }
+        },
+        {
+            "name": "User Update",
+            "request": {
+                "method": "PUT",
+                "url": {
+                    "raw": "http://127.0.0.1:3000/auth/update",
+                    "path": [
+                        "auth",
+                        "update"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "3000"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"password\": \"Padreame.\",\n  \"email\": \"sanbriciorojas11@gmail.com\",\n  \"lastname\": \"Bricio Rojas\",\n  \"firstname\": \"Santi\"\n}\n"
+                }
+            }
+        },
+        {
+            "name": "User Logout",
+            "request": {
+                "method": "POST",
+                "url": {
+                    "raw": "http://127.0.0.1:3000/auth/logout",
+                    "path": [
+                        "auth",
+                        "logout"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "3000"
+                }
+            }
+        }
+    ]
+}

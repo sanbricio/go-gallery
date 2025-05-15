@@ -44,34 +44,34 @@ services:
     networks:
       - app_network
 
-  go-gallery:
-    container_name: go-gallery
-    image: go-gallery:v1.0.0
-    restart: always
-    ports:
-      - "${GO_GALLERY_API_PORT}:${GO_GALLERY_API_PORT}"
-    environment:
-      MONGODB_URL_CONNECTION: ${MONGODB_URL_CONNECTION}
-      MONGODB_DATABASE: ${MONGODB_DATABASE}
-      POSTGRESQL_USER: ${POSTGRESQL_USER}
-      POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
-      POSTGRESQL_DB: ${POSTGRESQL_DB}
-      POSTGRESQL_PORT: ${POSTGRESQL_PORT}
-      POSTGRESQL_HOST: ${POSTGRESQL_HOST}
-      JWT_SECRET: ${JWT_SECRET}
-      GO_GALLERY_API_PORT: ${GO_GALLERY_API_PORT}
-      USER_REPOSITORY: ${USER_REPOSITORY}
-      IMAGE_REPOSITORY: ${IMAGE_REPOSITORY}
-      EMAIL_SENDER_REPOSITORY: ${EMAIL_SENDER_REPOSITORY}
-      EMAIL_SENDER_HOST: ${EMAIL_SENDER_HOST}
-      EMAIL_SENDER_PORT: ${EMAIL_SENDER_PORT}
-      EMAIL_SENDER_USERNAME: ${EMAIL_SENDER_USERNAME}
-      EMAIL_SENDER_PASSWORD: ${EMAIL_SENDER_PASSWORD}
-    depends_on:
-      - mongodb
-      - postgres
-    networks:
-      - app_network
+  # go-gallery:
+  #   container_name: go-gallery
+  #   image: go-gallery:v1.0.0
+  #   restart: always
+  #   ports:
+  #     - "${GO_GALLERY_API_PORT}:${GO_GALLERY_API_PORT}"
+  #   environment:
+  #     MONGODB_URL_CONNECTION: ${MONGODB_URL_CONNECTION}
+  #     MONGODB_DATABASE: ${MONGODB_DATABASE}
+  #     POSTGRESQL_USER: ${POSTGRESQL_USER}
+  #     POSTGRESQL_PASSWORD: ${POSTGRESQL_PASSWORD}
+  #     POSTGRESQL_DB: ${POSTGRESQL_DB}
+  #     POSTGRESQL_PORT: ${POSTGRESQL_PORT}
+  #     POSTGRESQL_HOST: ${POSTGRESQL_HOST}
+  #     JWT_SECRET: ${JWT_SECRET}
+  #     GO_GALLERY_API_PORT: ${GO_GALLERY_API_PORT}
+  #     USER_REPOSITORY: ${USER_REPOSITORY}
+  #     IMAGE_REPOSITORY: ${IMAGE_REPOSITORY}
+  #     EMAIL_SENDER_REPOSITORY: ${EMAIL_SENDER_REPOSITORY}
+  #     EMAIL_SENDER_HOST: ${EMAIL_SENDER_HOST}
+  #     EMAIL_SENDER_PORT: ${EMAIL_SENDER_PORT}
+  #     EMAIL_SENDER_USERNAME: ${EMAIL_SENDER_USERNAME}
+  #     EMAIL_SENDER_PASSWORD: ${EMAIL_SENDER_PASSWORD}
+  #   depends_on:
+  #     - mongodb
+  #     - postgres
+  #   networks:
+  #     - app_network
 
 volumes:
   postgres_data:
