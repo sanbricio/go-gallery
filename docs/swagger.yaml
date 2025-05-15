@@ -138,45 +138,35 @@ definitions:
       su identificador, nombre, extensión, contenido en base64 y propietario (usuario)
     properties:
       content_file:
-        description: |-
-          Contenido de la miniatura en base64
-          Example: /9j/4AAQSkZJRgABAQEAAAAAAAD...
+        description: Contenido de la miniatura en base64
         example: /9j/4AAQSkZJRgABAQEAAAAAAAD.
         type: string
       extension:
-        description: |-
-          Extensión del archivo de miniatura
-          Example: jpg
+        description: Extensión del archivo de miniatura
         example: .jpeg
         type: string
       id:
-        description: |-
-          Identificador de la miniatura
-          Example: 64a1f8b8e4b0c10d3c5b2e75
+        description: Identificador de la miniatura
         example: 64a1f8b8e4b0c10d3c5b2e75
         type: string
+      image_size:
+        description: Tamaño de la imagen en bytes
+        example: 2.3 kB
+        type: string
       imageID:
-        description: |-
-          Identificador de la imagen
-          Example: 64a1f8b8e4b0c20d3c5b2e90
+        description: Identificador de la imagen
         example: 64a1f8b8e4b0c20d3c5b2e90
         type: string
       name:
-        description: |-
-          Nombre del archivo de la miniatura
-          Example: prueba
+        description: Nombre del archivo de la miniatura
         example: prueba
         type: string
       owner:
-        description: |-
-          Usuario propietario de la miniatura
-          Example: usuario123
+        description: Usuario propietario de la miniatura
         example: usuario123
         type: string
       size:
-        description: |-
-          Tamaño de la miniatura en bytes
-          Example: 204800
+        description: Tamaño de la miniatura en bytes
         example: 2.3 kB
         type: string
     type: object

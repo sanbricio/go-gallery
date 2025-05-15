@@ -987,37 +987,42 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "content_file": {
-                    "description": "Contenido de la miniatura en base64\nExample: /9j/4AAQSkZJRgABAQEAAAAAAAD...",
+                    "description": "Contenido de la miniatura en base64",
                     "type": "string",
                     "example": "/9j/4AAQSkZJRgABAQEAAAAAAAD."
                 },
                 "extension": {
-                    "description": "Extensión del archivo de miniatura\nExample: jpg",
+                    "description": "Extensión del archivo de miniatura",
                     "type": "string",
                     "example": ".jpeg"
                 },
                 "id": {
-                    "description": "Identificador de la miniatura\nExample: 64a1f8b8e4b0c10d3c5b2e75",
+                    "description": "Identificador de la miniatura",
                     "type": "string",
                     "example": "64a1f8b8e4b0c10d3c5b2e75"
                 },
                 "imageID": {
-                    "description": "Identificador de la imagen\nExample: 64a1f8b8e4b0c20d3c5b2e90",
+                    "description": "Identificador de la imagen",
                     "type": "string",
                     "example": "64a1f8b8e4b0c20d3c5b2e90"
                 },
+                "image_size": {
+                    "description": "Tamaño de la imagen en bytes",
+                    "type": "string",
+                    "example": "2.3 kB"
+                },
                 "name": {
-                    "description": "Nombre del archivo de la miniatura\nExample: prueba",
+                    "description": "Nombre del archivo de la miniatura",
                     "type": "string",
                     "example": "prueba"
                 },
                 "owner": {
-                    "description": "Usuario propietario de la miniatura\nExample: usuario123",
+                    "description": "Usuario propietario de la miniatura",
                     "type": "string",
                     "example": "usuario123"
                 },
                 "size": {
-                    "description": "Tamaño de la miniatura en bytes\nExample: 204800",
+                    "description": "Tamaño de la miniatura en bytes",
                     "type": "string",
                     "example": "2.3 kB"
                 }
