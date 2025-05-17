@@ -24,7 +24,7 @@ import (
 var logger log.Logger
 
 // @title						GoGallery
-// @version					v1.0.0
+// @version v1.1.1
 // @description				API for managing photo uploads, with authentication
 // @contact.name				Support GoGallery
 // @contact.email				gogalleryteam@gmail.com
