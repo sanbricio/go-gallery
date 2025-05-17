@@ -34,7 +34,7 @@ cd ./..
 
 # Update the version in main.go file
 grep -q "^// @version " "$MAIN_GO_FILE"
-sed -i "s|^// @version .*|// @version $VERSION|" "$MAIN_GO_FILE"
+sed -i 's|^// @version[[:space:]]\+.*|// @version '"$VERSION"'|' "$MAIN_GO_FILE"
 echo "✔ Version updated to $VERSION in main.go"
 
 # Check if swag is installed
