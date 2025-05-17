@@ -222,7 +222,12 @@ func (u *UserPostgreSQLRepository) Update(dtoUpdateUser *userDTO.UserDTO) (int64
 	}
 	if dtoUpdateUser.Password != "" {
 		query += "password = $" + fmt.Sprint(count) + ", "
-		args = append(args, dtoUpdateUser.Password)
+		password, err := userEntity.HashPassword(dtoUpdateUser.Password)
+		if err != nil {
+			logger.Error(fmt.Sprintf("Error hashing password for user %s: %s", dtoUpdateUser.Username, err.Error()))
+			return 0, exception.NewApiException(500, "Internal server error")
+		}
+		args = append(args, password)
 		count++
 	}
 
