@@ -346,7 +346,7 @@ info:
     name: Support GoGallery
   description: API for managing photo uploads, with authentication
   title: GoGallery
-  version: v1.1.1
+  version: v1.1.2
 paths:
   /auth/delete:
     delete:
